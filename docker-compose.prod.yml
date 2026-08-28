@@ -1,0 +1,130 @@
+# =============================================================================
+# Production Docker Compose for High School Tutor
+# =============================================================================
+
+services:
+  # 1. PostgreSQL Production Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: highschool-tutor-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-highschool_tutor_prod}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - tutor-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-highschool_tutor_prod}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Prisma Database Migration Init Service
+  db-migrate:
+    image: ${DOCKER_IMAGE:-ghcr.io/username/highschool-tutor:latest}
+    container_name: highschool-tutor-migrate
+    command: npx prisma migrate deploy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-highschool_tutor_prod}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - tutor-network
+    restart: on-failure
+
+  # 3. Next.js Production Web Application
+  app:
+    image: ${DOCKER_IMAGE:-ghcr.io/username/highschool-tutor:latest}
+    container_name: highschool-tutor-app
+    restart: unless-stopped
+    ports:
+      - "3004:3004"
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-highschool_tutor_prod}?schema=public
+      AUTH_SECRET: ${AUTH_SECRET}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
+      DEMO_NOTIFICATION_EMAIL: ${DEMO_NOTIFICATION_EMAIL}
+      GCASH_WEBHOOK_SECRET: ${GCASH_WEBHOOK_SECRET}
+      XENDIT_API_KEY: ${XENDIT_API_KEY}
+      CRON_SECRET: ${CRON_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+      db-migrate:
+        condition: service_completed_successfully
+    networks:
+      - tutor-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/api/health",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # 4. Automated PostgreSQL Daily Backup Service
+  db-backup:
+    image: prodrigestivill/postgres-backup-local:15-alpine
+    container_name: highschool-tutor-backup
+    restart: unless-stopped
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-highschool_tutor_prod}
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: 14
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - tutor-network
+
+  # 5. Cron Scheduler Sidecar
+  cron-scheduler:
+    image: alpine:3.20
+    container_name: highschool-tutor-cron
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      CRON_SECRET: ${CRON_SECRET}
+      APP_URL: http://app:3000
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        apk add --no-cache curl
+        echo "0 8 * * * curl -sf -H \"Authorization: Bearer $${CRON_SECRET}\" $${APP_URL}/api/reminders/send > /dev/null 2>&1" > /etc/crontabs/root
+        crond -f -l 2
+    networks:
+      - tutor-network
+
+volumes:
+  postgres_prod_data:
+
+networks:
+  tutor-network:
+    driver: bridge

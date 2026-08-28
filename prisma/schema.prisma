@@ -1,0 +1,269 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -----------------------------------------------------------------------------
+// Authentication & Core User Models (NextAuth.js v5 compatible)
+// -----------------------------------------------------------------------------
+
+enum AppRole {
+  ADMIN
+  STUDENT
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+
+  // Domain Relations
+  profile              Profile?
+  roles                UserRole[]
+  subscriptions        Subscription[]
+  payments             Payment[]
+  trialSubjects        TrialSubject[]
+  notificationSettings NotificationSettings?
+  reminderNotices      ReminderNotice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  role      AppRole  @default(STUDENT)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model Profile {
+  id           String   @id
+  fullName     String   @default("")
+  email        String   @default("")
+  school       String   @default("")
+  gradeLevel   String   @default("")
+  referralCode String   @unique @default(cuid())
+  referrer     String   @default("")
+  referredById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User      @relation(fields: [id], references: [id], onDelete: Cascade)
+  referredBy Profile?  @relation("Referrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals  Profile[] @relation("Referrals")
+
+  @@map("profiles")
+}
+
+// -----------------------------------------------------------------------------
+// Billing, Subscriptions & Payments
+// -----------------------------------------------------------------------------
+
+enum SubPlan {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubStatus {
+  TRIAL
+  PENDING
+  ACTIVE
+  EXPIRED
+}
+
+model Subscription {
+  id        String    @id @default(cuid())
+  userId    String
+  plan      SubPlan
+  status    SubStatus @default(PENDING)
+  amountPhp Int
+  startedAt DateTime?
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  userId         String
+  subscriptionId String?
+  amountPhp      Int
+  method         String        @default("gcash")
+  referenceNo    String
+  proofPath      String?
+  status         PaymentStatus @default(PENDING)
+  paidAt         DateTime      @default(now())
+  verifiedAt     DateTime?
+  adminNotes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("payments")
+}
+
+// -----------------------------------------------------------------------------
+// Curriculum & Trials
+// -----------------------------------------------------------------------------
+
+model TrialSubject {
+  id           String   @id @default(cuid())
+  userId       String
+  subjectSlug  String
+  subjectLabel String   @default("")
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subjectSlug])
+  @@index([userId])
+  @@map("trial_subjects")
+}
+
+model CachedLesson {
+  id           String   @id @default(cuid())
+  subjectSlug  String   @unique
+  subjectLabel String
+  lessons      Json
+  createdAt    DateTime @default(now())
+
+  @@map("cached_lessons")
+}
+
+model CachedQuiz {
+  id           String   @id @default(cuid())
+  subjectSlug  String
+  lessonNumber Int
+  lessonTitle  String
+  questions    Json
+  createdAt    DateTime @default(now())
+
+  @@unique([subjectSlug, lessonNumber])
+  @@map("cached_quizzes")
+}
+
+// -----------------------------------------------------------------------------
+// Webhooks & Notifications
+// -----------------------------------------------------------------------------
+
+model WebhookEvent {
+  id          String   @id @default(cuid())
+  provider    String   @default("gcash")
+  eventKey    String
+  referenceNo String   @default("")
+  status      String   @default("")
+  payload     Json     @default("{}")
+  result      String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@unique([provider, eventKey])
+  @@map("webhook_events")
+}
+
+model NotificationSettings {
+  userId       String   @id
+  emailEnabled Boolean  @default(true)
+  smsEnabled   Boolean  @default(false)
+  phone        String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_settings")
+}
+
+model ReminderNotice {
+  id          String   @id @default(cuid())
+  userId      String
+  kind        String
+  periodKey   String   @default("")
+  channel     String   @default("email")
+  destination String   @default("")
+  result      String   @default("sent")
+  detail      String   @default("")
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, periodKey, channel])
+  @@map("reminder_notices")
+}

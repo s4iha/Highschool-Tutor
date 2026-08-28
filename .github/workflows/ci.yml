@@ -1,0 +1,146 @@
+name: Continuous Integration (CI)
+
+on:
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: Fast Code Quality & Typecheck
+  # ---------------------------------------------------------------------------
+  code-quality:
+    name: Lint, Typecheck & Quality Checks
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://mock:mock@localhost:5432/mock?sslmode=disable
+      AUTH_SECRET: test-secret-key-for-ci-pipeline-runs-only
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run Linter
+        run: npm run lint
+
+      - name: Run TypeScript Typecheck
+        run: npx tsc --noEmit
+
+  # ---------------------------------------------------------------------------
+  # Job 2: Integration & Database Schema Validation
+  # ---------------------------------------------------------------------------
+  integration:
+    name: Database Schema & Integration Verification
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: highschool_tutor_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/highschool_tutor_test?sslmode=disable
+      AUTH_SECRET: test-secret-key-for-ci-pipeline-runs-only
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Push Schema to Test Database
+        run: npx prisma db push
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Build & Verification
+  # ---------------------------------------------------------------------------
+  build-verification:
+    name: Next.js Standalone Build Verification
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://mock:mock@localhost:5432/mock?sslmode=disable
+      AUTH_SECRET: test-secret-key-for-ci-pipeline-runs-only
+      NEXT_TELEMETRY_DISABLED: 1
+      NODE_ENV: production
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Cache Next.js Build
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx', '**/*.css', 'prisma/schema.prisma') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build Next.js Application
+        run: npm run build
+
+  # ---------------------------------------------------------------------------
+  # Job 4: CI Gate Status
+  # ---------------------------------------------------------------------------
+  ci-status:
+    name: CI Pipeline Status
+    runs-on: ubuntu-latest
+    needs: [code-quality, integration, build-verification]
+    if: always()
+    steps:
+      - name: Evaluate Pipeline Results
+        run: |
+          if [ "${{ needs.code-quality.result }}" != "success" ] || \
+             [ "${{ needs.integration.result }}" != "success" ] || \
+             [ "${{ needs.build-verification.result }}" != "success" ]; then
+            echo "CI pipeline failed. One or more parallel jobs did not succeed."
+            exit 1
+          fi
+          echo "All CI verification checks passed successfully!"
