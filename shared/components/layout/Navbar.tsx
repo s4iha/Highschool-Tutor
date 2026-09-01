@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { BookOpen, Sparkles, GraduationCap, Flame, ShieldCheck } from "lucide-react";
+import { BookOpen, Sparkles, GraduationCap } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { Badge } from "@/shared/components/ui/badge";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Navbar() {
   const pathname = usePathname();
+
+  // Hide Navbar on authentication pages
+  if (pathname.startsWith("/login") || pathname.startsWith("/register")) {
+    return null;
+  }
 
   const links = [
     { href: "/", label: "Subjects Catalog", icon: BookOpen },
@@ -20,9 +26,13 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-6">
           <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-md shadow-indigo-500/20">
-              <GraduationCap className="size-5" />
-            </div>
+            <Image 
+              src="/logo/highschool-tutor-bg-removed.png" 
+              alt="HighSchool Tutor Logo" 
+              width={36} 
+              height={36} 
+              className="object-contain"
+            />
             <div className="flex flex-col">
               <span className="text-base font-bold tracking-tight text-foreground">
                 HighSchool<span className="text-indigo-600 dark:text-indigo-400">Tutor</span>
@@ -57,15 +67,13 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="hidden sm:flex items-center gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">
-            <Flame className="size-3.5 fill-amber-500 text-amber-500 animate-pulse" />
-            <span>DepEd MATATAG Aligned</span>
-          </Badge>
-
-          <Badge variant="success" className="flex items-center gap-1 font-mono text-[11px]">
-            <ShieldCheck className="size-3.5" />
-            <span>Gemini 2.5 AI Active</span>
-          </Badge>
+          <ThemeToggle />
+          <Link
+            href="/login"
+            className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+          >
+            Sign In
+          </Link>
         </div>
       </div>
     </header>
