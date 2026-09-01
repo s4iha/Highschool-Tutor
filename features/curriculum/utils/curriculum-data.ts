@@ -118,3 +118,11 @@ export const DIALECTS = [
 export function isEnglishSubject(subject: Subject) {
   return /english|reading and writing|oral communication/i.test(subject.name);
 }
+
+export function getSubjectBySlug(slug: string): Subject | undefined {
+  return SUBJECT_BY_SLUG.get(slug);
+}
+
+export function getSubjectsByGrade(grade: string): Subject[] {
+  return SUBJECTS.filter((s) => s.grade === grade);
+}
