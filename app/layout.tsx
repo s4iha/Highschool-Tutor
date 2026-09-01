@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, IBM_Plex_Sans, Source_Sans_3 } from "next/font/googl
 import { Navbar } from "@/shared/components/layout/Navbar";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
+import { Toaster } from "@/shared/components/ui/sonner";
+import { UpgradeModal } from "@/shared/components/ui/UpgradeModal";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +40,8 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <QueryProvider>
+            <Toaster richColors position="top-right" closeButton />
+            <UpgradeModal />
             <Navbar />
             <main className="flex-1">{children}</main>
             <footer className="border-t border-border/40 bg-card/40 py-8 text-center text-xs text-muted-foreground">
