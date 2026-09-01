@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, IBM_Plex_Sans, Source_Sans_3 } from "next/font/google";
 import { Navbar } from "@/shared/components/layout/Navbar";
+import { QueryProvider } from "@/providers/QueryProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -34,18 +36,22 @@ export default function RootLayout({
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", ibmPlexSans.variable, sourceSans3Heading.variable)}
     >
       <body className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <footer className="border-t border-border/40 bg-card/40 py-8 text-center text-xs text-muted-foreground">
-          <div className="container mx-auto px-4">
-            <p className="font-medium text-foreground/80">
-              HighSchool Tutor • Philippine DepEd K-12 Curriculum & MATATAG Aligned
-            </p>
-            <p className="mt-1">
-              Powered by Google Gemini 2.5 AI • PostgreSQL Prisma Infrastructure
-            </p>
-          </div>
-        </footer>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <QueryProvider>
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <footer className="border-t border-border/40 bg-card/40 py-8 text-center text-xs text-muted-foreground">
+              <div className="container mx-auto px-4">
+                <p className="font-medium text-foreground/80">
+                  HighSchool Tutor • Philippine DepEd K-12 Curriculum & MATATAG Aligned
+                </p>
+                <p className="mt-1">
+                  Powered by Google Gemini 2.5 AI • PostgreSQL Prisma Infrastructure
+                </p>
+              </div>
+            </footer>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
