@@ -1,5 +1,15 @@
 # Project Backlog & Change Log
 
+## [2026-09-01]
+### Task 002 - Transfer Curriculum, Lesson Viewer, and AI Quiz Engine
+- Transferred DepEd Philippine K-12 and MATATAG curriculum metadata, course codes, and schemas for Junior High School (Grades 7–10) and Senior High School STEM (Grades 11–12) into `features/curriculum/`.
+- Integrated Google Gemini 2.5 AI REST service (`gemini-service.ts`) for on-demand quiz question generation, lesson outlines, real-time Socratic AI tutoring, and multi-dialect translation (English, Filipino, Taglish, Cebuano, Ilocano).
+- Built Next.js Server Actions (`curriculum.actions.ts`) with PostgreSQL Prisma caching layer (`cached_lessons` and `cached_quizzes`) and persistent attempt recording (`quiz_attempts`).
+- Installed and styled core Shadcn UI component primitives in `shared/components/ui/` with modern HSL tokens and Tailwind CSS v4.
+- Implemented rich, responsive frontend components: `SubjectCatalog`, `LessonList`, `QuizRunner`, `AITutorDrawer`, `TranslationControls`, `Navbar`, and `CurriculumGuard`.
+- Configured dynamic App Router pages: `app/page.tsx`, `app/curriculum/[slug]/page.tsx`, and `app/curriculum/[slug]/quiz/[lesson]/page.tsx`.
+- Verified TypeScript compilation (`npx tsc --noEmit`), ESLint linting (`npm run lint`), and Next.js production build (`npm run build`) pass cleanly with 0 errors.
+
 ## [2026-08-28]
 ### Task 001 - Scaffold Feature-Driven Architecture, CI/CD, and Prisma Schema
 - Scaffolded strict Feature-Driven Architecture directory structure (`features/` and `shared/`) modeled after `educore-app`.
