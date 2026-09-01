@@ -30,6 +30,7 @@ model User {
   subscriptions        Subscription[]
   payments             Payment[]
   trialSubjects        TrialSubject[]
+  quizAttempts         QuizAttempt[]
   notificationSettings NotificationSettings?
   reminderNotices      ReminderNotice[]
 
@@ -218,6 +219,25 @@ model CachedQuiz {
 
   @@unique([subjectSlug, lessonNumber])
   @@map("cached_quizzes")
+}
+
+model QuizAttempt {
+  id           String   @id @default(cuid())
+  userId       String?
+  subjectSlug  String
+  subjectCode  String   @default("")
+  lessonNumber Int
+  lessonTitle  String
+  score        Int
+  total        Int
+  mode         String   @default("study")
+  createdAt    DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, subjectSlug, lessonNumber])
+  @@index([subjectSlug, lessonNumber])
+  @@map("quiz_attempts")
 }
 
 // -----------------------------------------------------------------------------
