@@ -1,6 +1,16 @@
 # Project Backlog & Change Log
 
 ## [2026-09-01]
+### Task 004 - Toast Integration, Tier Guardrails, Auth System Alignment, Admin Portal, Testing & Documentation
+- Configured Sonner toast system with OKLCH status tokens (`--success`, `--warning`, `--info`, `--destructive`) across light and dark modes in `app/globals.css` and mounted `<Toaster />` globally.
+- Aligned `AuthPage` design system with global theme tokens (`bg-primary`, `text-primary-foreground`) and integrated official logo (`/logo/highschool-tutor-bg-removed.png`).
+- Reorganized `SubjectCatalog` with structured category headings for Junior High School (Grades 7–10) and Senior High School STEM (Grades 11–12) with grade level filter tabs.
+- Implemented Free Tier vs. Premium Tier guardrails (max 3 trial subjects, first 3 lessons accessible) with `<UpgradeModal />` and Sonner toast triggers in `LessonList`.
+- Built Unified Admin Portal (`/admin`) powered by TanStack Query (`useAdminPortal.ts`) and versioned Next.js App Router Route Handlers (`app/api/v1/admin/metrics`, `students`, `settings`).
+- Setup Jest testing suite with `ts-jest` for CI with 16 unit test cases covering tier guardrails, curriculum data, and schema validation.
+- Created landing page screenshot specifications in `docs/resources/landing-page-screenshots.md` and completed PRD, Database Schema, and API Endpoints documentation in `docs/`.
+- Verified TypeScript compilation (`npx tsc --noEmit`), ESLint linting (`npm run lint`), Jest tests (`npm run test`), and Next.js production build (`npm run build`) pass with 0 errors.
+
 ### Task 003 - Pagination, Auth UI, Hybrid Lessons, and Dark Mode
 - Added `next-themes` and `ThemeToggle` for dark mode support.
 - Refactored `AITutorDrawer` trigger into a Floating Action Button in `QuizRunner`.
