@@ -1,23 +1,20 @@
-import type { Config } from "jest";
+/* eslint-disable @typescript-eslint/no-require-imports */
+const nextJest = require('next/jest');
 
-const config: Config = {
-  preset: "ts-jest",
-  testEnvironment: "node",
+const createJestConfig = nextJest({
+  dir: './',
+});
+
+/** @type {import('jest').Config} */
+const customJestConfig = {
+  testEnvironment: 'node',
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/$1",
+    '^@/(.*)$': '<rootDir>/$1',
   },
-  modulePathIgnorePatterns: ["<rootDir>/.next/"],
-  testMatch: ["<rootDir>/tests/**/*.test.ts", "<rootDir>/tests/**/*.test.tsx"],
-  transform: {
-    "^.+\\.tsx?$": [
-      "ts-jest",
-      {
-        tsconfig: {
-          jsx: "react-jsx",
-        },
-      },
-    ],
-  },
+  testMatch: [
+    '<rootDir>/tests/unit/**/*.test.{ts,tsx}',
+    '<rootDir>/tests/integration/**/*.test.{ts,tsx}',
+  ],
 };
 
-export default config;
+module.exports = createJestConfig(customJestConfig);
