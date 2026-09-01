@@ -450,6 +450,18 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
         currentQuestion={currentQ}
         language={language}
       />
+
+      {/* Socratic Tutor FAB */}
+      <button
+        onClick={() => setTutorOpen(true)}
+        className="fixed bottom-6 right-6 flex size-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition-transform hover:scale-105 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 z-40"
+        aria-label="Open AI Tutor"
+      >
+        <Bot className="size-6" />
+        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white border border-background">
+          <Sparkles className="size-2.5" />
+        </span>
+      </button>
     </div>
   );
 }

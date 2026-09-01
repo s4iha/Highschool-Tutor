@@ -14,6 +14,8 @@ export function SubjectCatalog() {
   const [search, setSearch] = React.useState("");
   const [levelFilter, setLevelFilter] = React.useState<"all" | "Junior High School" | "Senior High School">("all");
   const [gradeFilter, setGradeFilter] = React.useState<string>("all");
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const pageSize = 12;
 
   const filteredSubjects = React.useMemo(() => {
     return SUBJECTS.filter((subject) => {
@@ -34,6 +36,13 @@ export function SubjectCatalog() {
     if (levelFilter === "Senior High School") return ["Grade 11", "Grade 12"];
     return ["Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"];
   }, [levelFilter]);
+
+  const paginatedSubjects = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredSubjects.slice(startIndex, startIndex + pageSize);
+  }, [filteredSubjects, currentPage]);
+
+  const totalPages = Math.ceil(filteredSubjects.length / pageSize);
 
   return (
     <div className="space-y-8 py-6">
@@ -64,6 +73,7 @@ export function SubjectCatalog() {
             onValueChange={(val) => {
               setLevelFilter(val as typeof levelFilter);
               setGradeFilter("all");
+              setCurrentPage(1);
             }}
           >
             <TabsList>
@@ -75,7 +85,10 @@ export function SubjectCatalog() {
 
           <select
             value={gradeFilter}
-            onChange={(e) => setGradeFilter(e.target.value)}
+            onChange={(e) => {
+              setGradeFilter(e.target.value);
+              setCurrentPage(1);
+            }}
             aria-label="Filter by Grade Level"
             className="h-9 rounded-lg border border-input bg-background px-3 text-xs font-medium text-foreground shadow-sm focus:outline-none focus:ring-1 focus:ring-ring cursor-pointer"
           >
@@ -93,7 +106,10 @@ export function SubjectCatalog() {
           <Input
             placeholder="Search subject or code..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-9 text-sm"
           />
         </div>
@@ -109,9 +125,10 @@ export function SubjectCatalog() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredSubjects.map((subject) => {
-            const isSHS = subject.level === "Senior High School";
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {paginatedSubjects.map((subject) => {
+              const isSHS = subject.level === "Senior High School";
             return (
               <Card
                 key={subject.slug}
@@ -166,6 +183,31 @@ export function SubjectCatalog() {
               </Card>
             );
           })}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 pt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <span className="text-sm font-medium text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>
