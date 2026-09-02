@@ -1,6 +1,14 @@
 # Project Backlog & Change Log
 
 ## [2026-09-01]
+### Task 005 - Migrate Landing Page and Dashboard Components from College Tutor
+- Migrated and adapted landing page components from College Tutor (`HeroSection`, `StatsBar`, `AboutSection`, `CategorySection`, `PopularSubjectsSection`, `AcademicWorkflowDemo`, `CtaBanner`) into `features/landing/components/`.
+- Refactored all components to follow Highschool Tutor's Feature-Driven Architecture (FDA) and Shadcn UI primitives (`Button`, `Badge`, `Card`, `Input`), supporting both light and dark mode tokens.
+- Adapted academic curriculum, grade levels, and tracks from university majors to Philippine DepEd K-12 MATATAG standards (Junior High Core Grades 7–10, STEM, ABM, HUMSS, and SHS Core).
+- Refactored dashboard components (`DashboardShell`, `DashboardHeader`, `DashboardSidebar`, `StudentDashboardView`) with Zustand state management (`useDashboardStore`), interactive Socratic AI tutor space, DepEd DO 015 s. 2026 quiz transmutation records, and integrated `useUpgradeModalStore`.
+- Created student dashboard route at `app/(dashboard)/dashboard/page.tsx`, assembled full landing page on `app/page.tsx`, and mounted dynamic responsive `Footer` in `app/layout.tsx`.
+- Verified zero TypeScript compilation errors (`npx tsc --noEmit`), full test suite pass (`npm test`, 17/17 tests passing), and clean Next.js production build (`npm run build`).
+
 ### Task 004 - Toast Integration, Tier Guardrails, Auth System Alignment, Admin Portal, Testing & Documentation
 - Configured Sonner toast system with OKLCH status tokens (`--success`, `--warning`, `--info`, `--destructive`) across light and dark modes in `app/globals.css` and mounted `<Toaster />` globally.
 - Aligned `AuthPage` design system with global theme tokens (`bg-primary`, `text-primary-foreground`) and integrated official logo (`/logo/highschool-tutor-bg-removed.png`).
