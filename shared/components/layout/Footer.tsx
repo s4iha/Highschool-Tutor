@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { ArrowRight, GraduationCap } from "lucide-react";
+import { GraduationCap, ShieldCheck } from "lucide-react";
 
 export function Footer() {
   const pathname = usePathname();
@@ -50,23 +50,32 @@ export function Footer() {
               Standardized Philippine High School curriculum platform covering Grades 7 to 12. Providing 12 sequential lesson modules, 24 verified quizzes, and real-time Socratic AI explanations.
             </p>
 
-            <div className="pt-2 flex items-center gap-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+            <div className="pt-2 flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
                 <GraduationCap className="w-3.5 h-3.5" />
                 <span>DepEd DO 015 s. 2026 Ready</span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>RA 10173 Compliant</span>
               </div>
             </div>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider font-heading">
               Navigation
             </h4>
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li>
                 <Link href="/" className="hover:text-primary transition-colors">
                   Home
+                </Link>
+              </li>
+              <li>
+                <Link href="/how-it-works" className="hover:text-primary transition-colors">
+                  How It Works
                 </Link>
               </li>
               <li>
@@ -87,15 +96,15 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Tracks & Strands */}
+          {/* Academic Strands */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-              Academic Strands
+            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider font-heading">
+              Curriculum Strands
             </h4>
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li>
                 <Link href="/#categories" className="hover:text-primary transition-colors">
-                  Junior High School (Grades 7-10)
+                  Junior High School (Grades 7–10)
                 </Link>
               </li>
               <li>
@@ -121,39 +130,60 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter / Updates */}
+          {/* Legal & Compliance */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-              DepEd Updates
+            <h4 className="text-xs font-bold text-foreground uppercase tracking-wider font-heading">
+              Legal &amp; Privacy
             </h4>
-            <p className="text-xs text-muted-foreground">
-              Receive newly released DepEd MATATAG lessons and AI practice quizzes directly.
-            </p>
-            <form onSubmit={(e) => e.preventDefault()} className="space-y-2">
-              <input
-                type="email"
-                placeholder="Enter your school email"
-                className="w-full bg-muted text-xs text-foreground px-3.5 py-2.5 rounded-xl border border-border focus:outline-none focus:border-primary placeholder:text-muted-foreground"
-              />
-              <button
-                type="submit"
-                className="w-full py-2 px-3 text-xs font-bold text-primary-foreground bg-primary hover:bg-primary/90 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                <span>Subscribe</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </form>
+            <ul className="space-y-2 text-xs text-muted-foreground">
+              <li>
+                <Link href="/privacy" className="hover:text-primary transition-colors">
+                  Privacy Policy (RA 10173)
+                </Link>
+              </li>
+              <li>
+                <Link href="/terms" className="hover:text-primary transition-colors">
+                  Terms of Service
+                </Link>
+              </li>
+              <li>
+                <Link href="/how-it-works" className="hover:text-primary transition-colors">
+                  Academic Integrity Guidelines
+                </Link>
+              </li>
+            </ul>
+
+            <div className="pt-2">
+              <h5 className="text-[11px] font-bold text-foreground uppercase tracking-wider mb-1 font-heading">
+                DepEd Updates
+              </h5>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                DepEd MATATAG curriculum and DO 015 s. 2026 transmutation standards.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
           <p>© {new Date().getFullYear()} HighSchool Tutor by SGWS. All rights reserved.</p>
-          <p className="font-medium">
-            Philippine DepEd K-12 MATATAG &amp; DO 015 s. 2026 Aligned • Powered by Google Gemini 2.5 AI
-          </p>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-primary transition-colors">
+              Terms of Service
+            </Link>
+            <span>•</span>
+            <Link href="/how-it-works" className="hover:text-primary transition-colors">
+              How It Works
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
   );
 }
+
+export default Footer;
