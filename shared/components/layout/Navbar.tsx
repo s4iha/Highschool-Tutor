@@ -13,13 +13,19 @@ export function Navbar() {
   const pathname = usePathname();
   const { openUpgradeModal } = useUpgradeModalStore();
 
-  // Hide Navbar on authentication pages
-  if (pathname.startsWith("/login") || pathname.startsWith("/register")) {
+  // Hide Navbar on authentication, dashboard, and admin pages
+  if (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin")
+  ) {
     return null;
   }
 
   const links = [
-    { href: "/", label: "Subjects Catalog", icon: BookOpen },
+    { href: "/#subjects", label: "Subjects Catalog", icon: BookOpen },
+    { href: "/dashboard", label: "Student Dashboard", icon: BookOpen },
     { href: "/admin", label: "Admin Portal", icon: Shield },
   ];
 
