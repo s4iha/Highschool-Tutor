@@ -25,4 +25,39 @@ export const prisma =
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
+/**
+ * Execute Prisma operations within a PostgreSQL RLS-scoped transaction for a given user.
+ */
+export async function runWithUser<T>(
+  userId: string,
+  fn: (tx: PrismaClient) => Promise<T>
+): Promise<T> {
+  return await prisma.$transaction(async (tx) => {
+    // Set PostgreSQL session variables for RLS policies
+    await tx.$executeRawUnsafe(
+      `SELECT set_config('app.current_user_id', $1, true)`,
+      userId
+    );
+    await tx.$executeRawUnsafe(
+      `SELECT set_config('app.is_admin', 'false', true)`
+    );
+    return await fn(tx as unknown as PrismaClient);
+  });
+}
+
+/**
+ * Execute Prisma operations with full ADMIN bypass privileges for RLS.
+ */
+export async function runAsAdmin<T>(
+  fn: (tx: PrismaClient) => Promise<T>
+): Promise<T> {
+  return await prisma.$transaction(async (tx) => {
+    await tx.$executeRawUnsafe(
+      `SELECT set_config('app.is_admin', 'true', true)`
+    );
+    return await fn(tx as unknown as PrismaClient);
+  });
+}
+
 export default prisma;
+
