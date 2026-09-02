@@ -3,12 +3,15 @@
 import React from "react";
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardHeader from "./DashboardHeader";
+import { useUser } from "@/features/auth/hooks/useUser";
 
 interface DashboardShellProps {
   children: React.ReactNode;
 }
 
 export default function DashboardShell({ children }: DashboardShellProps) {
+  useUser();
+
   return (
     <div className="min-h-screen flex bg-background text-foreground selection:bg-primary/20 selection:text-primary transition-colors duration-200">
       {/* Responsive Dashboard Sidebar */}
