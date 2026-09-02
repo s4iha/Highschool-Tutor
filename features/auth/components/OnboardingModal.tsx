@@ -12,7 +12,7 @@ import {
   DialogDescription,
 } from "@/shared/components/ui/dialog";
 import { Button } from "@/shared/components/ui/button";
-import { Sparkles, GraduationCap } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 
 export function OnboardingModal() {
   const { isOpen, closeOnboardingModal } = useOnboardingModalStore();
@@ -28,7 +28,7 @@ export function OnboardingModal() {
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        const error = await res.json();
+        const error = (await res.json()) as { error?: string };
         throw new Error(error.error || "Failed to save profile");
       }
       return res.json();
@@ -39,12 +39,26 @@ export function OnboardingModal() {
       });
       closeOnboardingModal();
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Something went wrong.";
       toast.error("Setup Failed", {
-        description: err.message || "Something went wrong.",
+        description: msg,
       });
     },
   });
+
+  const isSeniorHigh = gradeLevel === "Grade 11" || gradeLevel === "Grade 12";
+
+  const handleGradeChange = (newGrade: string) => {
+    setGradeLevel(newGrade);
+    if (newGrade === "Grade 11" || newGrade === "Grade 12") {
+      if (track === "JHS Core") {
+        setTrack("STEM Strand");
+      }
+    } else {
+      setTrack("JHS Core");
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,7 +66,8 @@ export function OnboardingModal() {
       toast.error("Please provide your full name");
       return;
     }
-    mutation.mutate({ fullName, gradeLevel, track });
+    const finalTrack = isSeniorHigh ? track : "JHS Core";
+    mutation.mutate({ fullName, gradeLevel, track: finalTrack });
   };
 
   return (
@@ -95,35 +110,40 @@ export function OnboardingModal() {
             </label>
             <select
               value={gradeLevel}
-              onChange={(e) => setGradeLevel(e.target.value)}
+              onChange={(e) => handleGradeChange(e.target.value)}
               className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
             >
-              <option value="Grade 7">Grade 7 (Junior High School)</option>
-              <option value="Grade 8">Grade 8 (Junior High School)</option>
-              <option value="Grade 9">Grade 9 (Junior High School)</option>
-              <option value="Grade 10">Grade 10 (Junior High School)</option>
-              <option value="Grade 11">Grade 11 (Senior High School)</option>
-              <option value="Grade 12">Grade 12 (Senior High School)</option>
+              <optgroup label="Junior High School (Grades 7–10)">
+                <option value="Grade 7">Grade 7 (Junior High School)</option>
+                <option value="Grade 8">Grade 8 (Junior High School)</option>
+                <option value="Grade 9">Grade 9 (Junior High School)</option>
+                <option value="Grade 10">Grade 10 (Junior High School)</option>
+              </optgroup>
+              <optgroup label="Senior High School (Grades 11–12)">
+                <option value="Grade 11">Grade 11 (Senior High School)</option>
+                <option value="Grade 12">Grade 12 (Senior High School)</option>
+              </optgroup>
             </select>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Curriculum Track / Strand
-            </label>
-            <select
-              value={track}
-              onChange={(e) => setTrack(e.target.value)}
-              className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
-            >
-              <option value="JHS Core">Junior High Core Curriculum</option>
-              <option value="STEM Strand">STEM Strand (Science, Tech, Engineering, Math)</option>
-              <option value="ABM Strand">ABM Strand (Accountancy, Business, Management)</option>
-              <option value="HUMSS Strand">HUMSS Strand (Humanities & Social Sciences)</option>
-              <option value="GAS Strand">General Academic Strand (GAS)</option>
-              <option value="TVL Track">Technical-Vocational-Livelihood (TVL)</option>
-            </select>
-          </div>
+          {isSeniorHigh && (
+            <div className="space-y-1.5 animate-in fade-in-50 duration-200">
+              <label className="text-xs font-semibold text-foreground">
+                Senior High Track / Strand
+              </label>
+              <select
+                value={track}
+                onChange={(e) => setTrack(e.target.value)}
+                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
+              >
+                <option value="STEM Strand">STEM Strand (Science, Tech, Engineering, Math)</option>
+                <option value="ABM Strand">ABM Strand (Accountancy, Business, Management)</option>
+                <option value="HUMSS Strand">HUMSS Strand (Humanities &amp; Social Sciences)</option>
+                <option value="GAS Strand">General Academic Strand (GAS)</option>
+                <option value="TVL Track">Technical-Vocational-Livelihood (TVL Track)</option>
+              </select>
+            </div>
+          )}
 
           <Button
             type="submit"

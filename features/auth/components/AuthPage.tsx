@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, GraduationCap } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { useOnboardingModalStore } from "@/shared/hooks/useOnboardingModalStore";
+import { authClient } from "@/features/auth/lib/auth-client";
 
 interface AuthPageProps {
   type: "login" | "register";
@@ -18,17 +19,19 @@ function AuthPageContent({ type }: AuthPageProps) {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
-  const isLogin = type === "login";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { openOnboardingModal } = useOnboardingModalStore();
+
+  const isLogin = type === "login";
 
   useEffect(() => {
     const authError = searchParams.get("error");
     if (authError) {
-      toast.error("Authentication Error", {
-        description: authError,
+      toast.error("Authentication Notice", {
+        description: decodeURIComponent(authError),
       });
     }
   }, [searchParams]);
@@ -42,7 +45,7 @@ function AuthPageContent({ type }: AuthPageProps) {
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) {
-        const data = await res.json();
+        const data = (await res.json()) as { error?: string };
         throw new Error(data.error || "Authentication failed");
       }
       return res.json();
@@ -60,39 +63,10 @@ function AuthPageContent({ type }: AuthPageProps) {
       router.push(callbackUrl);
       router.refresh();
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : "Please check your credentials.";
       toast.error(isLogin ? "Sign In Failed" : "Registration Failed", {
-        description: err.message || "Please check your credentials.",
-      });
-    },
-  });
-
-  const googleMutation = useMutation({
-    mutationFn: async (credentialPayload: string) => {
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: credentialPayload }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Google authentication failed");
-      }
-      return res.json();
-    },
-    onSuccess: (data) => {
-      toast.success("Signed in with Google", {
-        description: `Welcome, ${data.user?.name || data.user?.email}`,
-      });
-      if (!data.user?.hasOnboarded) {
-        openOnboardingModal();
-      }
-      router.push(callbackUrl);
-      router.refresh();
-    },
-    onError: (err: any) => {
-      toast.error("Google Sign-In Failed", {
-        description: err.message || "Failed to authenticate with Google.",
+        description: msg,
       });
     },
   });
@@ -102,9 +76,20 @@ function AuthPageContent({ type }: AuthPageProps) {
     authMutation.mutate();
   };
 
-  const handleGoogleSignIn = () => {
-    // Initiate real Google OAuth 2.0 flow
-    window.location.href = `/api/auth/google/url?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+  const handleGoogleSignIn = async () => {
+    try {
+      setIsGoogleLoading(true);
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: callbackUrl,
+      });
+    } catch (err: unknown) {
+      setIsGoogleLoading(false);
+      const msg = err instanceof Error ? err.message : "Failed to authenticate with Google.";
+      toast.error("Google Sign-In Failed", {
+        description: msg,
+      });
+    }
   };
 
   return (
@@ -242,7 +227,7 @@ function AuthPageContent({ type }: AuthPageProps) {
 
               <button
                 type="submit"
-                disabled={authMutation.isPending || googleMutation.isPending}
+                disabled={authMutation.isPending || isGoogleLoading}
                 className="inline-flex h-9 sm:h-10 w-full mt-2 items-center justify-center gap-2 rounded-xl bg-primary text-xs sm:text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow-md shadow-primary/20"
               >
                 {authMutation.isPending ? (
@@ -268,7 +253,7 @@ function AuthPageContent({ type }: AuthPageProps) {
               <button
                 type="button"
                 onClick={handleGoogleSignIn}
-                disabled={googleMutation.isPending || authMutation.isPending}
+                disabled={isGoogleLoading || authMutation.isPending}
                 className="inline-flex h-9 sm:h-10 w-full items-center justify-center gap-2 rounded-xl border border-border/60 bg-background text-xs sm:text-sm font-semibold text-foreground transition-all hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none shadow-xs"
               >
                 <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -290,7 +275,7 @@ function AuthPageContent({ type }: AuthPageProps) {
                   />
                   <path d="M1 1h22v22H1z" fill="none" />
                 </svg>
-                <span>{googleMutation.isPending ? "Connecting..." : "Google"}</span>
+                <span>{isGoogleLoading ? "Connecting..." : "Google"}</span>
               </button>
             </form>
           </div>
