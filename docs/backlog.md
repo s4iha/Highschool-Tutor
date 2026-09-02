@@ -1,6 +1,19 @@
 # Project Backlog & Change Log
 
 ## [2026-09-02]
+### Task 007 - Security RLS, Admin Access Protection, Dashboard & Sidebar Optimizations, and Auth Refactoring
+- **PostgreSQL Strict Row Level Security (RLS)**: Created SQL migration `prisma/migrations/20260902120000_enable_strict_rls/migration.sql` implementing session functions `current_user_id()` & `is_admin()`, enabling RLS on all 11 domain tables (`users`, `profiles`, `user_roles`, `subscriptions`, `payments`, `trial_subjects`, `quiz_attempts`, `notification_settings`, `reminder_notices`, `cached_lessons`, `cached_quizzes`), and integrated transaction runners `runWithUser(userId, fn)` and `runAsAdmin(fn)` in `lib/prisma.ts`.
+- **Admin Access Route Protection**: Enforced strict role checking in Next.js 16 `proxy.ts` middleware. Any user without the `ADMIN` role attempting to access `/admin/:path*` is automatically redirected to `/dashboard`. Injected `role` into JWT authentication tokens across login, registration, Google OAuth callback, and profile endpoints.
+- **Lesson Mode Selection Modal**: Replaced inline dual buttons in `LessonList.tsx` with a single "Start Lesson" action that opens a clean modal dialog to let students choose between Study Mode (Socratic AI hints) and Exam Mode (DepEd DO 015 graded test).
+- **Logout Functionality**: Created `/api/auth/logout` endpoint that clears the `auth_token` cookie and added a logout button with icon and toast notifications to the footer of `DashboardSidebar.tsx`.
+- **Dynamic Onboarding Modal**: Updated `OnboardingModal.tsx` to conditionally hide track/strand fields for Junior High School (Grades 7–10) and only display Senior High School strands (STEM, ABM, HUMSS, GAS, TVL) for Grades 11 and 12.
+- **Sidebar Optimizations**: Enlarged logo in `DashboardSidebar.tsx` to `size-11` (44x44px), removed the DepEd curriculum tracks section, removed redundant navigation links (Grades Transmutation, Subscriptions), and connected real student profile metadata.
+- **Real Data in Settings Tab**: Created `/api/user/profile` GET/PUT endpoint and integrated TanStack Query `useQuery` / `useMutation` in `StudentDashboardView.tsx` to fetch and update real profile and AI tutor preferences.
+- **Favicon Update**: Updated metadata in `app/layout.tsx` to set the squared logo (`/logo/highschool-tutor-logo-favicon-squared.png`) as the official favicon.
+- **Feature-Driven Architecture Compliance**: Relocated Better Auth configuration files into `features/auth/lib/` and updated all consumer imports.
+- **Better Auth Google OAuth Integration**: Connected `authClient.signIn.social({ provider: "google" })` directly in `AuthPage.tsx` with loading states and toast notifications, configured `prismaAdapter(prisma)` in `features/auth/lib/auth.ts`, and updated `prisma/schema.prisma` with standard Better Auth models (`user`, `session`, `account`, `verification`).
+- **Verification Results**: Verified zero TypeScript compilation errors (`npx tsc --noEmit`), full test pass (`npm test`, 17/17 tests passing), ESLint check pass (`npm run lint`), and clean Next.js 16 standalone production build (`npm run build`).
+
 ### Task 006 - Authentication, JWT Middleware Route Protection, and UI Fixes
 - Removed redundant toast message when clicking 'Unlock Lesson' in `LessonList.tsx`.
 - Moved sidebar collapse button in `DashboardSidebar.tsx` to the absolute right edge (`-right-3`) on the border to avoid overlapping with the logo.
