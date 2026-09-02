@@ -89,7 +89,7 @@ export function PopularSubjectsSection() {
   ];
 
   return (
-    <section id="popular-subjects" className="py-16 lg:py-24 bg-muted/40 relative transition-colors duration-200">
+    <section id="subjects" className="py-16 lg:py-24 bg-muted/40 relative transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Eyebrow Header */}
         <div className="flex items-center justify-center gap-3 mb-3">
