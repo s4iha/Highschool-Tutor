@@ -46,7 +46,7 @@ services:
     container_name: highschool-tutor-app
     restart: unless-stopped
     ports:
-      - "3004:3004"
+      - "3009:3000"
     environment:
       PORT: 3000
       NODE_ENV: production
