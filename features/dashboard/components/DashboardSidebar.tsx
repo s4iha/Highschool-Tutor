@@ -77,12 +77,12 @@ export default function DashboardSidebar() {
   ];
 
   const studentNavItems: { id: DashboardTab; label: string; icon: any; badge?: string }[] = [
-    { id: "overview", label: "Academic Overview", icon: LayoutDashboard, badge: "Active" },
+    { id: "overview", label: "Dashboard", icon: LayoutDashboard, badge: "Active" },
     { id: "subjects", label: "Enrolled Subjects", icon: BookOpen, badge: "6 Subjects" },
     { id: "quizzes", label: "DepEd Quizzes", icon: Award, badge: "24 Quizzes" },
     { id: "scorecards", label: "Grades & Transmutation", icon: CheckCircle2, badge: "94.2%" },
     { id: "ai-tutor", label: "Gemini AI Tutor", icon: Bot, badge: "24/7" },
-    { id: "settings", label: "Student Settings", icon: Settings },
+    { id: "settings", label: "Settings", icon: Settings },
   ];
 
   const filteredTracks = highschoolTracks.filter((track) =>
@@ -91,7 +91,7 @@ export default function DashboardSidebar() {
   );
 
   const sidebarContent = (
-    <div className="flex flex-col h-full">
+    <div className="relative flex flex-col h-full">
       {/* Sidebar Header: Logo and Brand */}
       <div className="p-4 border-b border-border flex items-center justify-between gap-3">
         <Link
@@ -119,20 +119,6 @@ export default function DashboardSidebar() {
           )}
         </Link>
 
-        {/* Collapse Toggle Button (Desktop) */}
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          className="hidden lg:flex p-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {sidebarCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <ChevronLeft className="w-4 h-4" />
-          )}
-        </button>
-
         {/* Close Button (Mobile) */}
         <button
           type="button"
@@ -143,6 +129,20 @@ export default function DashboardSidebar() {
           <X className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Collapse Toggle Button (Desktop) */}
+      <button
+        type="button"
+        onClick={toggleSidebar}
+        className="hidden lg:flex absolute -right-3 top-6 z-40 p-1 rounded-full bg-card border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm"
+        aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+      >
+        {sidebarCollapsed ? (
+          <ChevronRight className="w-3.5 h-3.5" />
+        ) : (
+          <ChevronLeft className="w-3.5 h-3.5" />
+        )}
+      </button>
 
       {/* Nav items list */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5">
@@ -302,7 +302,7 @@ export default function DashboardSidebar() {
     <>
       {/* Desktop Persistent Sidebar */}
       <aside
-        className={`hidden lg:block bg-card border-r border-border transition-all duration-200 z-30 shrink-0 ${
+        className={`relative hidden lg:block bg-card border-r border-border transition-all duration-200 z-30 shrink-0 ${
           sidebarCollapsed ? "w-20" : "w-64"
         }`}
       >

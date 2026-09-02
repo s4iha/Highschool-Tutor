@@ -94,17 +94,6 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
 
   const handleLockedLessonClick = (e: React.MouseEvent, lesson: Lesson) => {
     e.preventDefault();
-    toast.warning("Lesson Locked in Free Tier", {
-      description: `Free tier students can access lessons 1–${FREE_TIER_MAX_LESSONS_PER_SUBJECT}. Upgrade to unlock all competencies!`,
-      action: {
-        label: "Upgrade",
-        onClick: () =>
-          openUpgradeModal({
-            featureName: lesson.title,
-            reason: `Unlock all 12 lessons & full DepEd competencies for ${subject.name}.`,
-          }),
-      },
-    });
     openUpgradeModal({
       featureName: lesson.title,
       reason: `Unlock all 12 lessons & full DepEd competencies for ${subject.name}.`,

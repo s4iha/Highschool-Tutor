@@ -37,7 +37,7 @@ export function UpgradeModal() {
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && closeUpgradeModal()}>
-      <DialogContent className="max-w-lg rounded-3xl p-6 sm:p-8 bg-card border-border/60 shadow-2xl">
+      <DialogContent className="max-w-lg rounded-3xl p-6 sm:p-8 bg-card border-border/60 shadow-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-2 text-center items-center">
           <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20 shadow-xs mb-1">
             <Crown className="size-6 text-primary" />

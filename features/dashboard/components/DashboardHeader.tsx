@@ -31,7 +31,7 @@ export default function DashboardHeader() {
     }
     switch (activeTab) {
       case "overview":
-        return "Academic Overview & DepEd Progress";
+        return "Dashboard";
       case "subjects":
         return "Enrolled High School Subjects";
       case "quizzes":
