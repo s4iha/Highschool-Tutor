@@ -27,6 +27,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "HighSchool Tutor - DepEd K-12 AI Learning Platform",
   description: "Master Junior and Senior High School subjects with DepEd-aligned quizzes and real-time Google Gemini Socratic tutoring.",
+  icons: {
+    icon: "/logo/highschool-tutor-logo-favicon-squared.png",
+    shortcut: "/logo/highschool-tutor-logo-favicon-squared.png",
+    apple: "/logo/highschool-tutor-logo-favicon-squared.png",
+  },
 };
 
 export default function RootLayout({

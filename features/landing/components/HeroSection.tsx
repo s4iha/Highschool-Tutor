@@ -10,7 +10,6 @@ import {
   Calendar,
   Layers,
   TrendingUp,
-  BookOpen,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";

@@ -7,15 +7,17 @@ import { Menu, Sun, Moon, User, Shield, Bell } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useDashboardStore } from "../hooks/useDashboardStore";
 
+const emptySubscribe = () => () => {};
+
 export default function DashboardHeader() {
   const pathname = usePathname();
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
+  const { setTheme, resolvedTheme } = useTheme();
+  const mounted = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const { role, setRole, setMobileSidebarOpen, activeTab } = useDashboardStore();
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");

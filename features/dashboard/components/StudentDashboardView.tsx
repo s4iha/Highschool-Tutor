@@ -6,35 +6,22 @@ import {
   BookOpen,
   Award,
   Bot,
-  CheckCircle2,
-  Sparkles,
   ArrowRight,
-  RotateCcw,
-  Clock,
-  Check,
   Send,
   Layers,
-  Calendar,
-  AlertCircle,
   ChevronRight,
   Crown,
-  User,
-  Shield,
   GraduationCap,
   TrendingUp,
-  BarChart3,
-  Search,
-  Filter,
   Save,
-  Globe,
-  Sliders,
-  FileText,
 } from "lucide-react";
 import { useDashboardStore, DashboardTab } from "../hooks/useDashboardStore";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
+import { useUser } from "@/features/auth/hooks/useUser";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
-import { Card } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 
 interface StudentDashboardViewProps {
@@ -44,21 +31,17 @@ interface StudentDashboardViewProps {
 export default function StudentDashboardView({
   activeTab: propActiveTab,
 }: StudentDashboardViewProps = {}) {
+  const { user } = useUser();
   const store = useDashboardStore();
   const activeTab = propActiveTab || store.activeTab;
   const setActiveTab = store.setActiveTab;
   const { openUpgradeModal } = useUpgradeModalStore();
 
-  // Student Profile Metadata
-  const studentProfile = {
-    name: "Juan Dela Cruz",
-    email: "juan.delacruz@deped.edu.ph",
-    lrn: "109283746501",
-    gradeLevel: "Grade 11",
-    strand: "Science, Technology, Engineering, and Mathematics (STEM)",
-    section: "11 - Archimedes",
-    semester: "1st Semester (SY 2026-2027)",
-  };
+  // Dynamic Student Profile Data from database
+  const studentName = user?.profile?.fullName || user?.name || "Student";
+  const studentGrade = user?.profile?.gradeLevel || "Grade 11";
+  const studentTrack = user?.profile?.track || "STEM Strand";
+  const studentSchool = user?.profile?.school || "DepEd High School";
 
   // State for AI Tutor Interactive Box
   const [aiQuery, setAiQuery] = useState("");
@@ -68,17 +51,13 @@ export default function StudentDashboardView({
   >([
     {
       sender: "ai",
-      text: "Magandang araw Juan! Ako ang iyong Gemini Socratic AI Tutor para sa DepEd K-12 MATATAG. Anong subject o lesson ang nais mong talakayin ngayon?",
+      text: "Magandang araw! Ako ang iyong Gemini Socratic AI Tutor para sa DepEd K-12 MATATAG. Anong subject o lesson ang nais mong talakayin ngayon?",
       time: "10:00 AM",
     },
   ]);
   const [isAiResponding, setIsAiResponding] = useState(false);
 
-  // Settings form states
-  const [studentFullName, setStudentFullName] = useState(studentProfile.name);
-  const [studentContactEmail, setStudentContactEmail] = useState(studentProfile.email);
-  const [tutorPersona, setTutorPersona] = useState<"socratic" | "detailed" | "exam-prep">("socratic");
-  const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
+
 
   // High School Enrolled Subjects
   const enrolledSubjects = [
@@ -199,8 +178,8 @@ export default function StudentDashboardView({
           : "Photosynthesis consists of two main stages: Light-Dependent Reactions (in thylakoids) producing ATP and NADPH, and the Light-Independent / Calvin Cycle (in stroma) synthesizing glucose.";
       } else {
         responseText = aiLanguage === "taglish"
-          ? `Magandang tanong! Sa ating DepEd MATATAG curriculum para sa ${studentProfile.gradeLevel}, mahalagang unawain ang pangunahing konsepto bago mag-memorize ng formula. Nais mo ba ng step-by-step example?`
-          : `Great question! In our DepEd MATATAG curriculum for ${studentProfile.gradeLevel}, it is vital to master foundational principles before memorizing formulas. Would you like a step-by-step example?`;
+          ? `Magandang tanong! Sa ating DepEd MATATAG curriculum para sa ${studentGrade}, mahalagang unawain ang pangunahing konsepto bago mag-memorize ng formula. Nais mo ba ng step-by-step example?`
+          : `Great question! In our DepEd MATATAG curriculum for ${studentGrade}, it is vital to master foundational principles before memorizing formulas. Would you like a step-by-step example?`;
       }
 
       setAiChatLogs((prev) => [
@@ -223,13 +202,13 @@ export default function StudentDashboardView({
               <div className="space-y-2 max-w-2xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-bold border border-white/20">
                   <GraduationCap className="w-3.5 h-3.5" />
-                  <span>DepEd LRN: {studentProfile.lrn}</span>
+                  <span>{studentSchool}</span>
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
-                  Welcome back, {studentProfile.name}! 👋
+                  Welcome back, {studentName}! 👋
                 </h2>
                 <p className="text-xs sm:text-sm text-white/90 leading-relaxed font-medium">
-                  {studentProfile.gradeLevel} • {studentProfile.strand} • {studentProfile.section}
+                  {studentGrade} • {studentTrack}
                 </p>
               </div>
 
@@ -690,78 +669,209 @@ export default function StudentDashboardView({
 
       {/* Student Settings Tab */}
       {activeTab === "settings" && (
-        <div className="p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-xs space-y-6 max-w-3xl">
-          <div>
-            <h3 className="text-xl font-black text-foreground">
-              Student Profile &amp; AI Preferences
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Customize your Socratic AI tutor persona and contact details.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Full Name</label>
-              <Input
-                value={studentFullName}
-                onChange={(e) => setStudentFullName(e.target.value)}
-                className="rounded-xl text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">DepEd LRN</label>
-              <Input
-                value={studentProfile.lrn}
-                disabled
-                className="rounded-xl text-xs bg-muted cursor-not-allowed font-mono"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">School Email</label>
-              <Input
-                value={studentContactEmail}
-                onChange={(e) => setStudentContactEmail(e.target.value)}
-                className="rounded-xl text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">AI Tutor Persona</label>
-              <select
-                value={tutorPersona}
-                onChange={(e) => setTutorPersona(e.target.value as any)}
-                className="w-full bg-card text-xs text-foreground p-2.5 rounded-xl border border-border focus:outline-none focus:border-primary"
-              >
-                <option value="socratic">Socratic (Guides you with hints and questions)</option>
-                <option value="detailed">Comprehensive (Full step-by-step breakdown)</option>
-                <option value="exam-prep">Exam Reviewer (Focuses on periodic test tips)</option>
-              </select>
-            </div>
-
-            <div className="pt-4 flex items-center justify-between">
-              <Button
-                onClick={() => {
-                  setSaveSuccessMsg(true);
-                  setTimeout(() => setSaveSuccessMsg(false), 3000);
-                }}
-                className="rounded-xl text-xs font-bold gap-1.5"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save Preferences</span>
-              </Button>
-
-              {saveSuccessMsg && (
-                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                  ✓ Preferences successfully updated!
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
+        <StudentSettingsTab key={user?.id || "guest"} user={user} />
       )}
     </div>
   );
 }
+
+interface StudentUserProps {
+  id?: string;
+  email?: string | null;
+  name?: string | null;
+  profile?: {
+    fullName?: string;
+    gradeLevel?: string;
+    track?: string;
+    school?: string;
+    hasOnboarded?: boolean;
+  } | null;
+}
+
+function StudentSettingsTab({ user }: { user: StudentUserProps | null | undefined }) {
+  const queryClient = useQueryClient();
+  const [studentFullName, setStudentFullName] = useState(
+    user?.profile?.fullName || user?.name || ""
+  );
+  const [schoolName, setSchoolName] = useState(user?.profile?.school || "");
+  const [selectedGrade, setSelectedGrade] = useState(
+    user?.profile?.gradeLevel || "Grade 11"
+  );
+  const [selectedTrack, setSelectedTrack] = useState(
+    user?.profile?.track || "STEM Strand"
+  );
+  const [tutorPersona, setTutorPersona] = useState<
+    "socratic" | "detailed" | "exam-prep"
+  >("socratic");
+
+  const profileMutation = useMutation({
+    mutationFn: async (data: {
+      fullName: string;
+      school?: string;
+      gradeLevel?: string;
+      track?: string;
+    }) => {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const errorData = (await res.json()) as { error?: string };
+        throw new Error(errorData.error || "Failed to save profile");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      toast.success("Preferences Saved Successfully!", {
+        description: "Your student profile and AI preferences have been updated.",
+      });
+    },
+    onError: (err: unknown) => {
+      const msg =
+        err instanceof Error ? err.message : "Failed to update profile settings.";
+      toast.error("Save Failed", {
+        description: msg,
+      });
+    },
+  });
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentFullName.trim()) {
+      toast.error("Full name is required");
+      return;
+    }
+    profileMutation.mutate({
+      fullName: studentFullName,
+      school: schoolName,
+      gradeLevel: selectedGrade,
+      track: selectedTrack,
+    });
+  };
+
+  return (
+    <form
+      onSubmit={handleSaveSettings}
+      className="p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-xs space-y-6 max-w-3xl"
+    >
+      <div>
+        <h3 className="text-xl font-black text-foreground font-heading">
+          Student Profile &amp; AI Preferences
+        </h3>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Customize your Socratic AI tutor persona, grade level, and school details.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-foreground">Full Name</label>
+          <Input
+            value={studentFullName}
+            onChange={(e) => setStudentFullName(e.target.value)}
+            placeholder="Juan Dela Cruz"
+            className="rounded-xl text-xs h-10"
+            required
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-foreground">Registered Email</label>
+          <Input
+            value={user?.email || "student@highschooltutor.ph"}
+            disabled
+            className="rounded-xl text-xs bg-muted cursor-not-allowed h-10 font-mono"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-foreground">School / Institution</label>
+          <Input
+            value={schoolName}
+            onChange={(e) => setSchoolName(e.target.value)}
+            placeholder="e.g. Manila Science High School"
+            className="rounded-xl text-xs h-10"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground">Grade Level</label>
+            <select
+              value={selectedGrade}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedGrade(val);
+                if (val === "Grade 11" || val === "Grade 12") {
+                  if (selectedTrack === "JHS Core") setSelectedTrack("STEM Strand");
+                } else {
+                  setSelectedTrack("JHS Core");
+                }
+              }}
+              className="w-full bg-background text-xs text-foreground p-2.5 rounded-xl border border-input focus:outline-none focus:ring-2 focus:ring-primary h-10"
+            >
+              <optgroup label="Junior High School (Grades 7–10)">
+                <option value="Grade 7">Grade 7 (Junior High School)</option>
+                <option value="Grade 8">Grade 8 (Junior High School)</option>
+                <option value="Grade 9">Grade 9 (Junior High School)</option>
+                <option value="Grade 10">Grade 10 (Junior High School)</option>
+              </optgroup>
+              <optgroup label="Senior High School (Grades 11–12)">
+                <option value="Grade 11">Grade 11 (Senior High School)</option>
+                <option value="Grade 12">Grade 12 (Senior High School)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          {(selectedGrade === "Grade 11" || selectedGrade === "Grade 12") && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground">Track / Strand</label>
+              <select
+                value={selectedTrack}
+                onChange={(e) => setSelectedTrack(e.target.value)}
+                className="w-full bg-background text-xs text-foreground p-2.5 rounded-xl border border-input focus:outline-none focus:ring-2 focus:ring-primary h-10"
+              >
+                <option value="STEM Strand">STEM (Science, Tech, Engineering, Math)</option>
+                <option value="ABM Strand">ABM (Accountancy, Business, Management)</option>
+                <option value="HUMSS Strand">HUMSS (Humanities &amp; Social Sciences)</option>
+                <option value="GAS Strand">General Academic Strand (GAS)</option>
+                <option value="TVL Track">Technical-Vocational-Livelihood (TVL Track)</option>
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-foreground">AI Tutor Persona</label>
+          <select
+            value={tutorPersona}
+            onChange={(e) =>
+              setTutorPersona(
+                e.target.value as "socratic" | "detailed" | "exam-prep"
+              )
+            }
+            className="w-full bg-background text-xs text-foreground p-2.5 rounded-xl border border-input focus:outline-none focus:ring-2 focus:ring-primary h-10"
+          >
+            <option value="socratic">Socratic (Guides you with hints and questions)</option>
+            <option value="detailed">Comprehensive (Full step-by-step breakdown)</option>
+            <option value="exam-prep">Exam Reviewer (Focuses on periodic test tips)</option>
+          </select>
+        </div>
+
+        <div className="pt-4 flex items-center justify-between">
+          <Button
+            type="submit"
+            disabled={profileMutation.isPending}
+            className="rounded-xl text-xs font-bold gap-1.5 shadow-sm"
+          >
+            <Save className="w-4 h-4" />
+            <span>{profileMutation.isPending ? "Saving..." : "Save Preferences"}</span>
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
+}
+

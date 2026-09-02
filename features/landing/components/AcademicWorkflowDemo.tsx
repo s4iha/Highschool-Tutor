@@ -2,16 +2,12 @@
 
 import React, { useState } from "react";
 import {
-  BookOpen,
-  Award,
   Bot,
   CheckCircle2,
   XCircle,
   Sparkles,
   RotateCcw,
   Check,
-  Calendar,
-  Layers,
   Lightbulb,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";

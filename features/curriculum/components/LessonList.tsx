@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner";
 import type { Subject, Lesson, LessonProgressStatus } from "../types/curriculum.types";
 import { getLessonsAction, getSubjectProgressAction } from "../actions/curriculum.actions";
-import { canAccessLesson, FREE_TIER_MAX_LESSONS_PER_SUBJECT } from "../utils/tier-guardrails";
+import { canAccessLesson } from "../utils/tier-guardrails";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 import {
   Card,
@@ -30,6 +30,14 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/shared/components/ui/dialog";
 
 interface LessonListProps {
   subject: Subject;
@@ -48,6 +56,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
   }>({ lessonScores: {}, totalMastered: 0, totalLessons: 0 });
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
+  const [selectedLessonForMode, setSelectedLessonForMode] = React.useState<Lesson | null>(null);
 
   const { openUpgradeModal } = useUpgradeModalStore();
 
@@ -329,34 +338,14 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
 
                     <div className="flex items-center gap-2 shrink-0">
                       {isAccessible ? (
-                        <>
-                          <Button
-                            asChild
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5 text-xs rounded-xl"
-                          >
-                            <Link
-                              href={`/curriculum/${subject.slug}/quiz/${lesson.number}?mode=study`}
-                            >
-                              <Sparkles className="size-3.5 text-primary" />
-                              <span>Study Mode</span>
-                            </Link>
-                          </Button>
-
-                          <Button
-                            asChild
-                            size="sm"
-                            className="gap-1.5 text-xs rounded-xl"
-                          >
-                            <Link
-                              href={`/curriculum/${subject.slug}/quiz/${lesson.number}?mode=exam`}
-                            >
-                              <Play className="size-3.5 fill-current" />
-                              <span>Exam Mode</span>
-                            </Link>
-                          </Button>
-                        </>
+                        <Button
+                          onClick={() => setSelectedLessonForMode(lesson)}
+                          size="sm"
+                          className="gap-1.5 text-xs rounded-xl font-bold shadow-xs"
+                        >
+                          <Play className="size-3.5 fill-current" />
+                          <span>Start Lesson</span>
+                        </Button>
                       ) : (
                         <Button
                           onClick={(e) => handleLockedLessonClick(e, lesson)}
@@ -376,6 +365,88 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
           </div>
         )}
       </div>
+
+      {/* Mode Selection Modal */}
+      {selectedLessonForMode && (
+        <Dialog
+          open={!!selectedLessonForMode}
+          onOpenChange={(open) => !open && setSelectedLessonForMode(null)}
+        >
+          <DialogContent className="sm:max-w-lg rounded-3xl p-6">
+            <DialogHeader className="space-y-2">
+              <div className="flex items-center gap-2 text-primary text-xs font-bold uppercase tracking-wider">
+                <BookOpen className="size-4" />
+                <span>Lesson {selectedLessonForMode.number}</span>
+              </div>
+              <DialogTitle className="text-xl font-bold font-heading text-foreground">
+                {selectedLessonForMode.title}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground">
+                Select your preferred learning mode to start practicing this DepEd competency.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+              {/* Study Mode Card */}
+              <div className="p-5 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+                      <Sparkles className="size-5" />
+                    </div>
+                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
+                      Untimed &amp; Guided
+                    </Badge>
+                  </div>
+                  <h3 className="font-bold text-sm text-foreground">Study Mode</h3>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Interactive learning with instant answers, Socratic hints, and step-by-step Gemini AI explanations.
+                  </p>
+                </div>
+
+                <Button asChild size="sm" variant="outline" className="w-full rounded-xl text-xs font-bold gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
+                  <Link
+                    href={`/curriculum/${subject.slug}/quiz/${selectedLessonForMode.number}?mode=study`}
+                    onClick={() => setSelectedLessonForMode(null)}
+                  >
+                    <Sparkles className="size-3.5" />
+                    <span>Launch Study Mode</span>
+                  </Link>
+                </Button>
+              </div>
+
+              {/* Exam Mode Card */}
+              <div className="p-5 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      <Trophy className="size-5" />
+                    </div>
+                    <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                      DO 015 Graded
+                    </Badge>
+                  </div>
+                  <h3 className="font-bold text-sm text-foreground">Exam Mode</h3>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Timed assessment with DepEd DO 015 s. 2026 grade transmutation, recorded scores, and descriptor.
+                  </p>
+                </div>
+
+                <Button asChild size="sm" className="w-full rounded-xl text-xs font-bold gap-1.5 shadow-xs">
+                  <Link
+                    href={`/curriculum/${subject.slug}/quiz/${selectedLessonForMode.number}?mode=exam`}
+                    onClick={() => setSelectedLessonForMode(null)}
+                  >
+                    <Play className="size-3.5 fill-current" />
+                    <span>Launch Exam Mode</span>
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
+

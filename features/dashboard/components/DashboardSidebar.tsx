@@ -1,34 +1,31 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
-  GraduationCap,
   LayoutDashboard,
   BookOpen,
   Award,
   Bot,
-  CheckCircle2,
   Settings,
-  Shield,
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   LogOut,
   X,
   Crown,
-  Search,
-  Sparkles,
 } from "lucide-react";
 import { useDashboardStore, DashboardTab } from "../hooks/useDashboardStore";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
+import { useUser } from "@/features/auth/hooks/useUser";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
+import { toast } from "sonner";
 
 export default function DashboardSidebar() {
-  const pathname = usePathname();
+  const router = useRouter();
+  const { user } = useUser();
   const {
     activeTab,
     setActiveTab,
@@ -36,83 +33,68 @@ export default function DashboardSidebar() {
     toggleSidebar,
     mobileSidebarOpen,
     setMobileSidebarOpen,
-    setSelectedSubject,
   } = useDashboardStore();
   const { openUpgradeModal } = useUpgradeModalStore();
 
-  const [curriculumMenuOpen, setCurriculumMenuOpen] = useState(false);
-  const [curriculumSearch, setCurriculumSearch] = useState("");
-
-  const highschoolTracks = [
-    {
-      id: "jhs",
-      name: "Junior High School",
-      grade: "Grades 7-10",
-      subjects: ["Mathematics", "Science", "English", "Filipino", "Araling Panlipunan"],
-    },
-    {
-      id: "stem",
-      name: "STEM Strand",
-      grade: "Grades 11-12",
-      subjects: ["Pre-Calculus", "Basic Calculus", "General Biology", "General Chemistry", "General Physics"],
-    },
-    {
-      id: "abm",
-      name: "ABM Strand",
-      grade: "Grades 11-12",
-      subjects: ["Business Math", "Org & Management", "Principles of Marketing", "Applied Economics"],
-    },
-    {
-      id: "humss",
-      name: "HUMSS Strand",
-      grade: "Grades 11-12",
-      subjects: ["Philippine Politics", "Creative Writing", "World Religions", "Community Engagement"],
-    },
-    {
-      id: "shs-core",
-      name: "SHS Core Subjects",
-      grade: "Grades 11-12",
-      subjects: ["Oral Communication", "Komunikasyon", "21st Century Literature", "General Mathematics", "Earth & Life Science"],
-    },
-  ];
-
-  const studentNavItems: { id: DashboardTab; label: string; icon: any; badge?: string }[] = [
-    { id: "overview", label: "Dashboard", icon: LayoutDashboard, badge: "Active" },
-    { id: "subjects", label: "Enrolled Subjects", icon: BookOpen, badge: "6 Subjects" },
-    { id: "quizzes", label: "DepEd Quizzes", icon: Award, badge: "24 Quizzes" },
-    { id: "scorecards", label: "Grades & Transmutation", icon: CheckCircle2, badge: "94.2%" },
-    { id: "ai-tutor", label: "Gemini AI Tutor", icon: Bot, badge: "24/7" },
+  const studentNavItems: {
+    id: DashboardTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+    badge?: string;
+  }[] = [
+    { id: "overview", label: "Dashboard", icon: LayoutDashboard },
+    { id: "subjects", label: "Enrolled Subjects", icon: BookOpen },
+    { id: "quizzes", label: "DepEd Quizzes", icon: Award },
+    { id: "ai-tutor", label: "Gemini AI Tutor", icon: Bot, badge: "Socratic" },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
-  const filteredTracks = highschoolTracks.filter((track) =>
-    track.name.toLowerCase().includes(curriculumSearch.toLowerCase()) ||
-    track.subjects.some((s) => s.toLowerCase().includes(curriculumSearch.toLowerCase()))
-  );
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      toast.success("Logged out successfully");
+      router.push("/login");
+      router.refresh();
+    } catch {
+      toast.error("Logout failed");
+    }
+  };
+
+  const displayName = user?.profile?.fullName || user?.name || "Student";
+  const displayGrade = user?.profile?.gradeLevel
+    ? `${user.profile.gradeLevel} • ${user.profile.track || "DepEd K-12"}`
+    : "DepEd MATATAG Student";
+
+  const userInitials = displayName
+    .split(" ")
+    .map((n: string) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "ST";
 
   const sidebarContent = (
-    <div className="relative flex flex-col h-full">
-      {/* Sidebar Header: Logo and Brand */}
+    <div className="relative flex flex-col h-full bg-card">
+      {/* Sidebar Header: Logo and Brand (Increased Size) */}
       <div className="p-4 border-b border-border flex items-center justify-between gap-3">
         <Link
           href="/"
-          className="flex items-center gap-2.5 min-w-0 transition-opacity hover:opacity-90"
+          className="flex items-center gap-3 min-w-0 transition-opacity hover:opacity-90"
         >
-          <div className="relative size-9 shrink-0 overflow-hidden rounded-xl bg-primary/10 p-1 flex items-center justify-center border border-primary/20 shadow-xs">
+          <div className="relative size-11 shrink-0 overflow-hidden rounded-2xl bg-primary/10 p-1.5 flex items-center justify-center border border-primary/20 shadow-xs">
             <Image
-              src="/logo/highschool-tutor-bg-removed.png"
+              src="/logo/highschool-tutor-logo-favicon-squared.png"
               alt="HighSchool Tutor"
-              width={36}
-              height={36}
+              width={44}
+              height={44}
               className="object-contain"
             />
           </div>
           {!sidebarCollapsed && (
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-black tracking-tight text-foreground truncate">
+              <span className="text-base font-black tracking-tight text-foreground truncate">
                 HighSchool<span className="text-primary">Tutor</span>
               </span>
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider truncate">
                 DepEd K-12 MATATAG
               </span>
             </div>
@@ -160,7 +142,7 @@ export default function DashboardSidebar() {
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-xs"
+                    ? "bg-primary text-primary-foreground shadow-xs font-bold"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 } ${sidebarCollapsed ? "justify-center px-2" : ""}`}
                 title={sidebarCollapsed ? item.label : undefined}
@@ -187,74 +169,11 @@ export default function DashboardSidebar() {
             );
           })}
         </div>
-
-        {/* Quick Curriculum Tracks Submenu */}
-        {!sidebarCollapsed && (
-          <div className="pt-4 border-t border-border mt-4">
-            <button
-              type="button"
-              onClick={() => setCurriculumMenuOpen(!curriculumMenuOpen)}
-              className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-bold text-muted-foreground uppercase tracking-wider rounded-lg hover:bg-muted transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <GraduationCap className="w-3.5 h-3.5 text-primary" />
-                <span>DepEd Curriculum Tracks</span>
-              </div>
-              <ChevronDown
-                className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                  curriculumMenuOpen ? "rotate-180 text-primary" : ""
-                }`}
-              />
-            </button>
-
-            {curriculumMenuOpen && (
-              <div className="mt-2 space-y-2 pl-2">
-                <div className="relative mb-2">
-                  <Search className="w-3 h-3 absolute left-2.5 top-2.5 text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Search strands & subjects..."
-                    value={curriculumSearch}
-                    onChange={(e) => setCurriculumSearch(e.target.value)}
-                    className="w-full bg-muted text-[11px] text-foreground pl-7 pr-2.5 py-1.5 rounded-lg border border-border focus:outline-none focus:border-primary placeholder:text-muted-foreground"
-                  />
-                </div>
-
-                <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
-                  {filteredTracks.map((track) => (
-                    <div key={track.id} className="p-2 bg-muted/40 rounded-xl border border-border/60">
-                      <div className="flex items-center justify-between text-[11px] font-bold text-foreground">
-                        <span>{track.name}</span>
-                        <span className="text-[9px] text-muted-foreground">{track.grade}</span>
-                      </div>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {track.subjects.map((sub) => (
-                          <button
-                            key={sub}
-                            type="button"
-                            onClick={() => {
-                              setSelectedSubject(sub);
-                              setActiveTab("subjects");
-                              setMobileSidebarOpen(false);
-                            }}
-                            className="text-[10px] px-1.5 py-0.5 rounded-md bg-card hover:bg-primary/10 hover:text-primary transition-colors text-muted-foreground border border-border"
-                          >
-                            {sub}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Upgrade Banner in Sidebar */}
       {!sidebarCollapsed && (
-        <div className="p-3 mx-3 mb-3 rounded-2xl bg-gradient-to-r from-primary/15 via-primary/10 to-teal-500/10 border border-primary/20 space-y-2">
+        <div className="p-3.5 mx-3 mb-3 rounded-2xl bg-gradient-to-br from-primary/15 via-primary/10 to-teal-500/10 border border-primary/20 space-y-2">
           <div className="flex items-center gap-2 text-primary font-bold text-xs">
             <Crown className="w-4 h-4 text-primary" />
             <span>HighSchool Premium</span>
@@ -277,22 +196,36 @@ export default function DashboardSidebar() {
         </div>
       )}
 
-      {/* Student Profile Footer */}
-      <div className="p-3 border-t border-border bg-card">
-        <div className={`flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}>
-          <div className="w-9 h-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold text-xs border border-primary/30 shrink-0">
-            JD
-          </div>
-          {!sidebarCollapsed && (
-            <div className="flex-1 min-w-0">
-              <span className="text-xs font-bold text-foreground block truncate">
-                Juan Dela Cruz
-              </span>
-              <span className="text-[10px] text-muted-foreground block truncate">
-                Grade 11 • STEM Track
-              </span>
+      {/* Student Profile & Logout Footer */}
+      <div className="p-3 border-t border-border bg-card/80 backdrop-blur-xs">
+        <div className={`flex items-center gap-3 ${sidebarCollapsed ? "flex-col justify-center" : "justify-between"}`}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="size-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold text-xs border border-primary/30 shrink-0">
+              {userInitials}
             </div>
-          )}
+            {!sidebarCollapsed && (
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-bold text-foreground block truncate">
+                  {displayName}
+                </span>
+                <span className="text-[10px] text-muted-foreground block truncate">
+                  {displayGrade}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className={`p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer ${
+              sidebarCollapsed ? "w-full flex justify-center" : ""
+            }`}
+            title="Log Out"
+            aria-label="Log out of account"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>
@@ -328,3 +261,4 @@ export default function DashboardSidebar() {
     </>
   );
 }
+
