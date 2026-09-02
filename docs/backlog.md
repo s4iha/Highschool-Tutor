@@ -1,5 +1,17 @@
 # Project Backlog & Change Log
 
+## [2026-09-02]
+### Task 006 - Authentication, JWT Middleware Route Protection, and UI Fixes
+- Removed redundant toast message when clicking 'Unlock Lesson' in `LessonList.tsx`.
+- Moved sidebar collapse button in `DashboardSidebar.tsx` to the absolute right edge (`-right-3`) on the border to avoid overlapping with the logo.
+- Polished `AuthPage.tsx` with complete overflow and scrollbar prevention across all zoom levels, removed the sparkle icon, and added 'See Password' toggle functionality.
+- Relocated Sonner `<Toaster />` alignment from top-right to bottom-right globally in `app/layout.tsx`.
+- Implemented custom JWT authentication pipeline (`lib/jwt.ts`), Next.js 16 App Router `proxy.ts` middleware route protection for `/curriculum` and `/dashboard` routes, and REST API endpoints (`/api/auth/login`, `/api/auth/register`, `/api/auth/google`, `/api/user/me`, `/api/user/onboarding`).
+- Built non-dismissible `OnboardingModal.tsx` powered by Zustand (`useOnboardingModalStore`) and TanStack Query mutations to collect student name, grade level, and curriculum track.
+- Added Google sign-in functionality with TanStack Query integration.
+- Updated Prisma schema with `passwordHash`, `track`, and `hasOnboarded` fields, synchronized schema via `prisma db push`, and regenerated Prisma client.
+- Verified zero TypeScript compilation errors, full unit test suite pass (`npm test`, 17/17 tests passing), and clean Next.js 16 standalone production build (`npm run build`).
+
 ## [2026-09-01]
 ### Task 005 - Migrate Landing Page and Dashboard Components from College Tutor
 - Migrated and adapted landing page components from College Tutor (`HeroSection`, `StatsBar`, `AboutSection`, `CategorySection`, `PopularSubjectsSection`, `AcademicWorkflowDemo`, `CtaBanner`) into `features/landing/components/`.
