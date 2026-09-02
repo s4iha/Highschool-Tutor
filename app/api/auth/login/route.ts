@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const { email, password } = validated.data;
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { profile: true },
+      include: { profile: true, roles: true },
     });
 
     if (!user || !user.passwordHash) {
@@ -42,10 +42,13 @@ export async function POST(req: Request) {
       );
     }
 
+    const role = user.roles?.[0]?.role || "STUDENT";
+
     const token = await signToken({
       userId: user.id,
       email: user.email!,
       name: user.name || "",
+      role,
     });
 
     const response = NextResponse.json({
@@ -54,6 +57,7 @@ export async function POST(req: Request) {
         id: user.id,
         email: user.email,
         name: user.name,
+        role,
         hasOnboarded: user.profile?.hasOnboarded || false,
       },
     });

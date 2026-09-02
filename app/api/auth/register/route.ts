@@ -42,6 +42,11 @@ export async function POST(req: Request) {
         email,
         passwordHash,
         name: name || "",
+        roles: {
+          create: {
+            role: "STUDENT",
+          },
+        },
         profile: {
           create: {
             email,
@@ -50,13 +55,16 @@ export async function POST(req: Request) {
           },
         },
       },
-      include: { profile: true },
+      include: { profile: true, roles: true },
     });
+
+    const role = user.roles?.[0]?.role || "STUDENT";
 
     const token = await signToken({
       userId: user.id,
       email: user.email!,
       name: user.name || "",
+      role,
     });
 
     const response = NextResponse.json({
@@ -65,6 +73,7 @@ export async function POST(req: Request) {
         id: user.id,
         email: user.email,
         name: user.name,
+        role,
         hasOnboarded: false,
       },
     });

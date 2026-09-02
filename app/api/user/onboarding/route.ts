@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { verifyToken } from "@/lib/jwt";
-import { cookies } from "next/headers";
+import { getCurrentUser } from "@/features/auth/lib/session";
 import { z } from "zod";
 
 const onboardingSchema = z.object({
@@ -12,15 +11,9 @@ const onboardingSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
+    const sessionUser = await getCurrentUser();
 
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const payload = await verifyToken(token);
-    if (!payload || !payload.userId) {
+    if (!sessionUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -37,7 +30,7 @@ export async function POST(req: Request) {
     const { fullName, gradeLevel, track } = validated.data;
 
     const profile = await prisma.profile.upsert({
-      where: { id: payload.userId },
+      where: { id: sessionUser.id },
       update: {
         fullName,
         gradeLevel,
@@ -45,9 +38,9 @@ export async function POST(req: Request) {
         hasOnboarded: true,
       },
       create: {
-        id: payload.userId,
+        id: sessionUser.id,
         fullName,
-        email: payload.email,
+        email: sessionUser.email,
         gradeLevel,
         track,
         hasOnboarded: true,
@@ -56,7 +49,7 @@ export async function POST(req: Request) {
 
     // Also update User name
     await prisma.user.update({
-      where: { id: payload.userId },
+      where: { id: sessionUser.id },
       data: { name: fullName },
     });
 
@@ -69,3 +62,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

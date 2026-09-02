@@ -1,24 +1,17 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { verifyToken } from "@/lib/jwt";
-import { cookies } from "next/headers";
+import { getCurrentUser } from "@/features/auth/lib/session";
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("auth_token")?.value;
+    const sessionUser = await getCurrentUser();
 
-    if (!token) {
-      return NextResponse.json({ user: null });
-    }
-
-    const payload = await verifyToken(token);
-    if (!payload || !payload.userId) {
+    if (!sessionUser) {
       return NextResponse.json({ user: null });
     }
 
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: { id: sessionUser.id },
       include: { profile: true },
     });
 
@@ -31,11 +24,13 @@ export async function GET() {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: sessionUser.role,
         profile: user.profile
           ? {
               fullName: user.profile.fullName,
               gradeLevel: user.profile.gradeLevel,
               track: user.profile.track,
+              school: user.profile.school,
               hasOnboarded: user.profile.hasOnboarded,
             }
           : null,
@@ -49,3 +44,4 @@ export async function GET() {
     );
   }
 }
+

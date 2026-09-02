@@ -6,39 +6,80 @@ const JWT_SECRET = process.env.JWT_SECRET || "highschool-tutor-secret-key-for-de
 const key = new TextEncoder().encode(JWT_SECRET);
 
 export async function proxy(request: NextRequest) {
-  const token = request.cookies.get("auth_token")?.value;
+  const customToken = request.cookies.get("auth_token")?.value;
+  const betterAuthToken =
+    request.cookies.get("better-auth.session_token")?.value ||
+    request.cookies.get("__Secure-better-auth.session_token")?.value;
+  const hasToken = Boolean(customToken || betterAuthToken);
   const pathname = request.nextUrl.pathname;
 
-  // Paths that require authentication
+  // 1. Admin Portal Protection: Strictly ADMIN role only
+  if (pathname.startsWith("/admin")) {
+    if (!hasToken) {
+      const url = new URL("/login", request.url);
+      url.searchParams.set("callbackUrl", encodeURI(pathname));
+      return NextResponse.redirect(url);
+    }
+
+    if (customToken) {
+      try {
+        const { payload } = await jwtVerify(customToken, key, { algorithms: ["HS256"] });
+        const role = (payload as unknown as { role?: string }).role;
+        if (role !== "ADMIN") {
+          // Redirect non-admin students directly to their student dashboard
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        }
+      } catch {
+        if (!betterAuthToken) {
+          const url = new URL("/login", request.url);
+          url.searchParams.set("callbackUrl", encodeURI(pathname));
+          return NextResponse.redirect(url);
+        }
+      }
+    }
+    return NextResponse.next();
+  }
+
+  // 2. Paths that require authentication (Students & Admins)
   const isProtectedPath =
     pathname.startsWith("/curriculum") ||
     pathname.startsWith("/dashboard");
 
   if (isProtectedPath) {
-    if (!token) {
+    if (!hasToken) {
       const url = new URL("/login", request.url);
       url.searchParams.set("callbackUrl", encodeURI(pathname));
       return NextResponse.redirect(url);
     }
 
-    try {
-      await jwtVerify(token, key, { algorithms: ["HS256"] });
-      return NextResponse.next();
-    } catch (err) {
-      const url = new URL("/login", request.url);
-      url.searchParams.set("callbackUrl", encodeURI(pathname));
-      return NextResponse.redirect(url);
+    if (customToken) {
+      try {
+        await jwtVerify(customToken, key, { algorithms: ["HS256"] });
+      } catch {
+        if (!betterAuthToken) {
+          const url = new URL("/login", request.url);
+          url.searchParams.set("callbackUrl", encodeURI(pathname));
+          return NextResponse.redirect(url);
+        }
+      }
     }
+
+    return NextResponse.next();
   }
 
-  // Redirect to dashboard if trying to access auth pages while already logged in
+  // 3. Redirect to dashboard if trying to access auth pages while already logged in
   if (pathname === "/login" || pathname === "/register") {
-    if (token) {
-      try {
-        await jwtVerify(token, key, { algorithms: ["HS256"] });
+    if (hasToken) {
+      if (customToken) {
+        try {
+          await jwtVerify(customToken, key, { algorithms: ["HS256"] });
+          return NextResponse.redirect(new URL("/dashboard", request.url));
+        } catch {
+          // Token is invalid, check if better auth token is present
+        }
+      }
+      if (betterAuthToken) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
-      } catch (err) {
-        // Token is invalid, let them view the auth page
       }
     }
   }
@@ -48,9 +89,11 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/admin/:path*",
     "/curriculum/:path*",
     "/dashboard/:path*",
     "/login",
     "/register",
   ],
 };
+
