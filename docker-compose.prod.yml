@@ -28,7 +28,7 @@ services:
 
   # 2. Prisma Database Migration Init Service
   db-migrate:
-    image: ${DOCKER_IMAGE:-ghcr.io/username/highschool-tutor:latest}
+    image: ${DOCKER_IMAGE:-ghcr.io/s4iha/highschool-tutor:latest}
     container_name: highschool-tutor-migrate
     command: npx prisma migrate deploy
     environment:
@@ -42,7 +42,7 @@ services:
 
   # 3. Next.js Production Web Application
   app:
-    image: ${DOCKER_IMAGE:-ghcr.io/username/highschool-tutor:latest}
+    image: ${DOCKER_IMAGE:-ghcr.io/s4iha/highschool-tutor:latest}
     container_name: highschool-tutor-app
     restart: unless-stopped
     ports:
@@ -54,6 +54,9 @@ services:
       AUTH_SECRET: ${AUTH_SECRET}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       NEXTAUTH_URL: ${NEXTAUTH_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
       RESEND_API_KEY: ${RESEND_API_KEY}
       RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
       DEMO_NOTIFICATION_EMAIL: ${DEMO_NOTIFICATION_EMAIL}
