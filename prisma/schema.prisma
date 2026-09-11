@@ -71,6 +71,7 @@ model Account {
   password              String?   @db.Text
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  issuer                String?   @db.Text
 
   @@map("account")
 }
