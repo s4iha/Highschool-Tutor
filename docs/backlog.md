@@ -1,5 +1,12 @@
 # Project Backlog & Change Log
 
+## [2026-09-11]
+### Task 009 - Upgrade Better Auth to 1.7.4 and Fix Google OAuth Database Adapter
+- **Prisma Adapter Configuration**: Added `prismaAdapter(prisma, { provider: "postgresql" })` to Better Auth configuration in `features/auth/lib/auth.ts` and set resilient `baseURL` fallback (`NEXTAUTH_URL` || `BETTER_AUTH_URL` || `http://localhost:3000`).
+- **Better Auth 1.7.4 Upgrade**: Upgraded `better-auth` from `1.7.2` to `1.7.4` to eliminate the breaking `issuer` query requirement that caused `PrismaClientValidationError` during Google OAuth callbacks.
+- **Database Schema Synchronization**: Added nullable `issuer` field to the `Account` model in `prisma/schema.prisma` for backwards compatibility, pushed schema via `prisma db push`, and regenerated Prisma Client via `prisma generate`.
+- **Verification Results**: Verified successful initialization of Better Auth handler, zero runtime crashes, and clean Prisma client compilation.
+
 ## [2026-09-02]
 ### Task 008 - Migrate Landing Navigation, Privacy Policy, Terms of Service, and How It Works Pages
 - **Privacy Policy Page (`/privacy`)**: Built comprehensive privacy policy component in `features/landing/components/PrivacyPolicy.tsx` and App Router route `app/privacy/page.tsx` adhering to Republic Act No. 10173 (Data Privacy Act of 2012), detailing zero student data sales, encrypted Google Gemini inference, local offline storage, and student data rights.
