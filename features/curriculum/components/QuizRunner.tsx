@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
@@ -33,6 +34,8 @@ interface QuizRunnerProps {
 }
 
 export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const initialMode = (searchParams.get("mode") as "study" | "exam") || "study";
 
@@ -160,6 +163,11 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
       total: questions.length,
       mode,
     });
+    // Invalidate queries so that returning to LessonList or Dashboard updates immediately in real-time
+    await queryClient.invalidateQueries({ queryKey: ["subject-progress", subject.slug] });
+    await queryClient.invalidateQueries({ queryKey: ["user-quiz-attempts"] });
+    await queryClient.invalidateQueries({ queryKey: ["lessons", subject.slug] });
+    router.refresh();
     setSavingAttempt(false);
   };
 
@@ -190,7 +198,14 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
   if (isSubmitted) {
     const finalScore = calculateScore();
     const percent = Math.round((finalScore / questions.length) * 100);
-    const isMastered = percent >= 75;
+
+    // DepEd DO 015 s. 2026 Transmutation
+    let transmuted = 60;
+    if (percent >= 100) transmuted = 100;
+    else if (percent >= 60) transmuted = Math.round(75 + ((percent - 60) * 25) / 40);
+    else transmuted = Math.round(60 + (percent / 60) * 14);
+
+    const isMastered = transmuted >= 75;
 
     return (
       <div className="mx-auto max-w-2xl py-10 space-y-8">
@@ -214,13 +229,13 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
                 {finalScore}
               </span>
               <span className="text-base font-semibold text-muted-foreground">
-                / {questions.length} ({percent}%)
+                / {questions.length} (Raw: {percent}% • Transmuted: {transmuted}%)
               </span>
             </div>
 
             <div className="pt-2">
-              <Badge variant={isMastered ? "success" : "warning"} className="text-sm px-3 py-1">
-                {isMastered ? "Mastered Competency" : "Needs Review (<75%)"}
+              <Badge variant={isMastered ? "success" : "warning"} className="text-sm px-3 py-1 font-bold">
+                {isMastered ? `Mastered Competency (${transmuted}%)` : `Needs Review (${transmuted}% < 75%)`}
               </Badge>
             </div>
           </div>
@@ -230,11 +245,16 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
               <RotateCcw className="size-4" />
               <span>Retake Quiz</span>
             </Button>
-            <Button asChild className="w-full sm:w-auto gap-2">
-              <Link href={`/curriculum/${subject.slug}`}>
-                <BookOpen className="size-4" />
-                <span>Back to Lessons</span>
-              </Link>
+            <Button
+              onClick={async () => {
+                await queryClient.invalidateQueries({ queryKey: ["subject-progress", subject.slug] });
+                await queryClient.invalidateQueries({ queryKey: ["user-quiz-attempts"] });
+                router.push(`/curriculum/${subject.slug}`);
+              }}
+              className="w-full sm:w-auto gap-2 cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              <BookOpen className="size-4" />
+              <span>Back to Lessons</span>
             </Button>
           </CardFooter>
         </Card>

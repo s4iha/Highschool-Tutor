@@ -1,9 +1,8 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Sun, Moon, User, Shield, Bell } from "lucide-react";
+import { Menu, Sun, Moon, Bell } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useDashboardStore } from "../hooks/useDashboardStore";
 
@@ -17,7 +16,7 @@ export default function DashboardHeader() {
     () => true,
     () => false
   );
-  const { role, setRole, setMobileSidebarOpen, activeTab } = useDashboardStore();
+  const { setMobileSidebarOpen, activeTab } = useDashboardStore();
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
@@ -26,7 +25,7 @@ export default function DashboardHeader() {
   // Compute dynamic page title for breadcrumb
   const getBreadcrumbTitle = () => {
     if (pathname.startsWith("/curriculum/")) {
-      return "Study Studio (Lessons, Quizzes & AI Tutor)";
+      return "Study Studio (Lessons, Practice Tests & AI Tutor)";
     }
     if (pathname.startsWith("/admin")) {
       return "DepEd Administrative & Metrics Portal";
@@ -36,8 +35,6 @@ export default function DashboardHeader() {
         return "Dashboard";
       case "subjects":
         return "Enrolled High School Subjects";
-      case "quizzes":
-        return "DepEd Quizzes & Transmutation";
       case "scorecards":
         return "Quarterly Grades & Scorecards";
       case "ai-tutor":
@@ -74,34 +71,8 @@ export default function DashboardHeader() {
         </div>
       </div>
 
-      {/* Right: Mock Role Switcher, Theme Toggle, Notifications */}
-      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-        {/* Interactive Mock Role Switcher Control */}
-        <div className="bg-muted p-0.5 sm:p-1 rounded-xl sm:rounded-2xl flex items-center gap-0.5 sm:gap-1 border border-border shadow-xs">
-          <button
-            type="button"
-            onClick={() => setRole("student")}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black transition-all cursor-pointer ${
-              role === "student"
-                ? "bg-card text-primary shadow-xs border border-border"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <User className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Student View</span>
-            <span className="hidden sm:inline md:hidden">Student</span>
-          </button>
-
-          <Link
-            href="/admin"
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black transition-all text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">Admin Portal</span>
-            <span className="hidden sm:inline md:hidden">Admin</span>
-          </Link>
-        </div>
-
+      {/* Right: Theme Toggle, Notifications, User Avatar */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* Theme Toggle */}
         <button
           type="button"
@@ -126,6 +97,7 @@ export default function DashboardHeader() {
           <Bell className="w-4 h-4" />
           <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary" />
         </button>
+
       </div>
     </header>
   );

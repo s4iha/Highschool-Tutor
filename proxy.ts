@@ -67,8 +67,8 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. Redirect to dashboard if trying to access auth pages while already logged in
-  if (pathname === "/login" || pathname === "/register") {
+  // 3. Redirect to dashboard if trying to access landing or auth pages while already logged in
+  if (pathname === "/" || pathname === "/login" || pathname === "/register") {
     if (hasToken) {
       if (customToken) {
         try {
@@ -89,6 +89,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/admin/:path*",
     "/curriculum/:path*",
     "/dashboard/:path*",

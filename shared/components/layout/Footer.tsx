@@ -9,11 +9,12 @@ import { GraduationCap, ShieldCheck } from "lucide-react";
 export function Footer() {
   const pathname = usePathname();
 
-  // Hide footer on dashboard, admin, and auth routes
+  // Hide footer on dashboard, curriculum, admin, and auth routes
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/curriculum") ||
     pathname.startsWith("/admin")
   ) {
     return null;

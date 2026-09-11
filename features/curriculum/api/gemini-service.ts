@@ -137,7 +137,7 @@ export async function generateQuizForLesson(
   lessonTitle: string
 ): Promise<QuizQuestion[]> {
   const prompt = `You are an expert DepEd high school teacher.
-Create a 5-question multiple choice quiz for:
+Create a 24-question multiple choice quiz for:
 Subject: ${subject.name} (${subject.grade}, ${subject.term})
 Lesson ${lessonNumber}: ${lessonTitle}
 

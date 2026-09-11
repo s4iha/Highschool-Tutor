@@ -28,31 +28,41 @@ export function AITutorDrawer({
   currentQuestion,
   language,
 }: AITutorDrawerProps) {
-  const [messages, setMessages] = React.useState<TutorMessage[]>([
-    {
-      role: "assistant",
-      content: `Kumusta! I am your AI Socratic Tutor for **${subjectName}**. How can I help you understand this question about **${lessonTitle}**?`,
-    },
-  ]);
+  const [conversation, setConversation] = React.useState<TutorMessage[]>([]);
   const [input, setInput] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  // Compute greeting dynamically based on current language selection
+  const isTaglishOrFilipino =
+    language.toLowerCase().includes("taglish") ||
+    language.toLowerCase().includes("filipino");
+  const greeting = isTaglishOrFilipino
+    ? `Kumusta! Ako ang iyong AI Socratic Tutor para sa **${subjectName}**. Paano kita matutulungan sa pagsusuri ng tanong na ito tungkol sa **${lessonTitle}**?`
+    : `Hello! I am your AI Socratic Tutor for **${subjectName}**. How can I help you understand this question about **${lessonTitle}**?`;
+
+  const allMessages: TutorMessage[] = React.useMemo(
+    () => [{ role: "assistant", content: greeting }, ...conversation],
+    [greeting, conversation]
+  );
 
   // Auto-scroll to bottom of chat
   React.useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [messages, loading]);
+  }, [allMessages, loading]);
 
   const handleSendMessage = async (textToSend?: string) => {
     const messageText = (textToSend || input).trim();
     if (!messageText || loading) return;
 
     const userMessage: TutorMessage = { role: "user", content: messageText };
-    setMessages((prev) => [...prev, userMessage]);
+    setConversation((prev) => [...prev, userMessage]);
     if (!textToSend) setInput("");
     setLoading(true);
+
+    const historyForAi = [...allMessages, userMessage];
 
     const res = await askTutorAction({
       subjectSlug,
@@ -62,14 +72,14 @@ export function AITutorDrawer({
       answer: currentQuestion.answer,
       explanation: currentQuestion.explanation,
       language,
-      history: messages,
+      history: historyForAi,
       message: messageText,
     });
 
     if (res.success && res.reply) {
-      setMessages((prev) => [...prev, { role: "assistant", content: res.reply! }]);
+      setConversation((prev) => [...prev, { role: "assistant", content: res.reply! }]);
     } else {
-      setMessages((prev) => [
+      setConversation((prev) => [
         ...prev,
         {
           role: "assistant",
@@ -119,7 +129,7 @@ export function AITutorDrawer({
           </div>
 
           {/* Messages */}
-          {messages.map((msg, idx) => {
+          {allMessages.map((msg, idx) => {
             const isBot = msg.role === "assistant";
             return (
               <div

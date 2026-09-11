@@ -8,6 +8,7 @@ export interface SessionUser {
   email: string;
   name: string;
   role: string;
+  image?: string | null;
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
@@ -68,6 +69,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       email: user.email,
       name: user.name || "",
       role,
+      image: user.image || null,
     };
   } catch (error) {
     console.error("getCurrentUser error:", error);

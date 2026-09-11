@@ -15,7 +15,8 @@ import {
   Crown,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { Subject, Lesson, LessonProgressStatus } from "../types/curriculum.types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Subject, Lesson } from "../types/curriculum.types";
 import { getLessonsAction, getSubjectProgressAction } from "../actions/curriculum.actions";
 import { canAccessLesson } from "../utils/tier-guardrails";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
@@ -45,56 +46,46 @@ interface LessonListProps {
 }
 
 export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
-  const [lessons, setLessons] = React.useState<Lesson[]>([]);
-  const [progress, setProgress] = React.useState<{
-    lessonScores: Record<
-      number,
-      { bestScore: number; status: LessonProgressStatus; attemptsCount: number }
-    >;
-    totalMastered: number;
-    totalLessons: number;
-  }>({ lessonScores: {}, totalMastered: 0, totalLessons: 0 });
-  const [loading, setLoading] = React.useState(true);
+  const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = React.useState(false);
   const [selectedLessonForMode, setSelectedLessonForMode] = React.useState<Lesson | null>(null);
 
   const { openUpgradeModal } = useUpgradeModalStore();
 
-  React.useEffect(() => {
-    let isMounted = true;
-    const fetchInitialData = async () => {
-      const [lessonsRes, progressRes] = await Promise.all([
-        getLessonsAction(subject.slug),
-        getSubjectProgressAction(subject.slug),
-      ]);
+  const { data: lessons = [], isLoading: loadingLessons } = useQuery({
+    queryKey: ["lessons", subject.slug],
+    queryFn: async () => {
+      const res = await getLessonsAction(subject.slug);
+      return res.success ? res.lessons : [];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
-      if (isMounted) {
-        if (lessonsRes.success) {
-          setLessons(lessonsRes.lessons);
-        }
-        setProgress(progressRes);
-        setLoading(false);
-      }
-    };
+  const { data: progressData, isLoading: loadingProgress, refetch: refetchProgress } = useQuery({
+    queryKey: ["subject-progress", subject.slug],
+    queryFn: async () => {
+      return await getSubjectProgressAction(subject.slug);
+    },
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+  });
 
-    fetchInitialData();
+  const progress = progressData || {
+    lessonScores: {},
+    totalAttempted: 0,
+    totalMastered: 0,
+    totalLessons: 0,
+  };
 
-    return () => {
-      isMounted = false;
-    };
-  }, [subject.slug]);
+  const loading = loadingLessons || loadingProgress;
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    const [lessonsRes, progressRes] = await Promise.all([
-      getLessonsAction(subject.slug),
-      getSubjectProgressAction(subject.slug),
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["lessons", subject.slug] }),
+      queryClient.invalidateQueries({ queryKey: ["subject-progress", subject.slug] }),
     ]);
-
-    if (lessonsRes.success) {
-      setLessons(lessonsRes.lessons);
-    }
-    setProgress(progressRes);
+    await refetchProgress();
     setRefreshing(false);
     toast.success("Progress Synchronized", {
       description: "Latest scores and lesson outlines have been updated.",
@@ -109,10 +100,19 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
     });
   };
 
-  const masteryPercent =
-    lessons.length > 0
-      ? Math.round((progress.totalMastered / lessons.length) * 100)
-      : 0;
+  const totalLessonsCount = lessons.length > 0 ? lessons.length : 12;
+  const attemptedCount = progress.totalAttempted || 0;
+  const masteredCount = progress.totalMastered || 0;
+
+  // Real-time progress percentages
+  const progressPercent = Math.min(
+    100,
+    Math.round((attemptedCount / totalLessonsCount) * 100)
+  );
+  const masteryPercent = Math.min(
+    100,
+    Math.round((masteredCount / totalLessonsCount) * 100)
+  );
 
   return (
     <div className="space-y-8 py-6">
@@ -208,17 +208,33 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Trophy className="size-4 text-amber-500" />
                 <span>Subject Mastery Progress</span>
+                {attemptedCount > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary font-bold"
+                  >
+                    {masteredCount} Mastered •{" "}
+                    {attemptedCount - masteredCount > 0
+                      ? `${attemptedCount - masteredCount} Needs Review`
+                      : "All Passed"}
+                  </Badge>
+                )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {progress.totalMastered} of {lessons.length} lessons mastered
-                (Passing Grade ≥ 75%)
+                {attemptedCount} of {totalLessonsCount} lessons completed •{" "}
+                {masteredCount} mastered (DepEd DO 015 Passing Grade ≥ 75%)
               </p>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-64">
-              <Progress value={masteryPercent} className="h-2.5 flex-1" />
-              <span className="font-mono text-sm font-bold text-primary">
-                {masteryPercent}%
-              </span>
+              <Progress value={progressPercent} className="h-2.5 flex-1" />
+              <div className="flex flex-col items-end shrink-0">
+                <span className="font-mono text-sm font-bold text-primary">
+                  {progressPercent}%
+                </span>
+                <span className="text-[10px] text-muted-foreground font-medium">
+                  {masteryPercent}% mastered
+                </span>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -302,12 +318,12 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                         ) : isMastered ? (
                           <Badge variant="default" className="gap-1 text-xs bg-success text-success-foreground hover:bg-success">
                             <CheckCircle2 className="size-3" />
-                            <span>Mastered ({Math.round(stat.bestScore)}%)</span>
+                            <span>Mastered ({stat.transmutedGrade}%)</span>
                           </Badge>
                         ) : isNeedsReview ? (
                           <Badge variant="secondary" className="gap-1 text-xs bg-warning/20 text-warning-foreground">
                             <AlertCircle className="size-3" />
-                            <span>Needs Review ({Math.round(stat.bestScore)}%)</span>
+                            <span>Needs Review ({stat.transmutedGrade}%)</span>
                           </Badge>
                         ) : (
                           <Badge

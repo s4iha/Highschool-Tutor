@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 import {
   Code,
@@ -16,6 +17,7 @@ export function CategorySection() {
   const categories = [
     {
       id: 1,
+      slug: "junior-high-core",
       name: "Junior High Core",
       count: "32+ Subjects",
       desc: "Grades 7-10: English, Math, Science, AP, Filipino, MAPEH, TLE & EsP",
@@ -26,6 +28,7 @@ export function CategorySection() {
     },
     {
       id: 2,
+      slug: "stem-strand",
       name: "STEM Strand",
       count: "24+ Subjects",
       desc: "Pre-Calculus, Basic Calculus, General Biology, Chemistry & Physics",
@@ -36,6 +39,7 @@ export function CategorySection() {
     },
     {
       id: 3,
+      slug: "abm-strand",
       name: "ABM Strand",
       count: "18+ Subjects",
       desc: "Business Mathematics, Organization & Management, Principles of Marketing & Economics",
@@ -46,6 +50,7 @@ export function CategorySection() {
     },
     {
       id: 4,
+      slug: "humss-strand",
       name: "HUMSS Strand",
       count: "20+ Subjects",
       desc: "Philippine Politics & Governance, Creative Writing, World Religions & Trends",
@@ -56,6 +61,7 @@ export function CategorySection() {
     },
     {
       id: 5,
+      slug: "shs-core",
       name: "SHS Core Subjects",
       count: "36+ Subjects",
       desc: "Oral Communication, Komunikasyon, 21st Century Lit, General Math & Earth Sci",
@@ -94,9 +100,10 @@ export function CategorySection() {
           {categories.map((category) => {
             const IconComponent = category.icon;
             return (
-              <div
+              <Link
                 key={category.id}
-                className={`bg-card rounded-3xl p-6 border border-border shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group transform hover:-translate-y-1 ${category.accent}`}
+                href={`/tracks/${category.slug}`}
+                className={`bg-card rounded-3xl p-6 border border-border shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between group transform hover:-translate-y-1 block cursor-pointer ${category.accent}`}
               >
                 <div>
                   {/* Top: Icon & Count Badge */}
@@ -133,7 +140,7 @@ export function CategorySection() {
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

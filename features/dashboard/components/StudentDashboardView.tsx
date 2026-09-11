@@ -14,19 +14,105 @@ import {
   GraduationCap,
   TrendingUp,
   Save,
+  Sun,
+  Moon,
+  Monitor,
+  Palette,
+  User as UserIcon,
+  Check,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { useDashboardStore, DashboardTab } from "../hooks/useDashboardStore";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 import { useUser } from "@/features/auth/hooks/useUser";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Input } from "@/shared/components/ui/input";
+import { cn } from "@/lib/utils";
+import { getUserQuizAttemptsAction } from "@/features/curriculum/actions/curriculum.actions";
 
 interface StudentDashboardViewProps {
   activeTab?: DashboardTab;
 }
+
+const taglishGreeting =
+  "Magandang araw! Ako ang iyong Gemini Socratic AI Tutor para sa DepEd K-12 MATATAG. Anong subject o lesson ang nais mong talakayin ngayon?";
+const englishGreeting =
+  "Good day! I am your Gemini Socratic AI Tutor for DepEd K-12 MATATAG. Which high school subject or lesson would you like to explore today?";
+
+// Baseline High School Enrolled Subjects (Grade 11 STEM)
+const DEFAULT_ENROLLED_SUBJECTS = [
+  {
+    code: "G11-S1-GENMATH",
+    name: "General Mathematics",
+    grade: "Grade 11 • Semester 1",
+    slug: "g11-s1-genmath",
+    progress: 0,
+    currentLesson: "Not started",
+    quizzesDone: "0 of 12",
+    averageScore: 0,
+    status: "Not Started",
+  },
+  {
+    code: "G11-S1-PRECALC",
+    name: "Pre-Calculus",
+    grade: "Grade 11 STEM • Semester 1",
+    slug: "g11-s1-precalc",
+    progress: 0,
+    currentLesson: "Not started",
+    quizzesDone: "0 of 12",
+    averageScore: 0,
+    status: "Not Started",
+  },
+  {
+    code: "G11-S1-EARTHSCI",
+    name: "Earth and Life Science",
+    grade: "Grade 11 • Semester 1",
+    slug: "g11-s1-earthsci",
+    progress: 0,
+    currentLesson: "Not started",
+    quizzesDone: "0 of 12",
+    averageScore: 0,
+    status: "Not Started",
+  },
+  {
+    code: "G11-S1-ORALCOMM",
+    name: "Oral Communication in Context",
+    grade: "Grade 11 • Semester 1",
+    slug: "g11-s1-oralcomm",
+    progress: 0,
+    currentLesson: "Not started",
+    quizzesDone: "0 of 12",
+    averageScore: 0,
+    status: "Not Started",
+  },
+  {
+    code: "G11-S1-KOMFIL",
+    name: "Komunikasyon at Pananaliksik",
+    grade: "Grade 11 • Semester 1",
+    slug: "g11-s1-komfil",
+    progress: 0,
+    currentLesson: "Not started",
+    quizzesDone: "0 of 12",
+    averageScore: 0,
+    status: "Not Started",
+  },
+  {
+    code: "G11-S1-EAPP",
+    name: "English for Academic Purposes (EAPP)",
+    grade: "Grade 11 • Semester 1",
+    slug: "g11-s1-eapp",
+    progress: 0,
+    currentLesson: "Not started",
+    quizzesDone: "0 of 12",
+    averageScore: 0,
+    status: "Not Started",
+  },
+];
 
 export default function StudentDashboardView({
   activeTab: propActiveTab,
@@ -36,6 +122,27 @@ export default function StudentDashboardView({
   const activeTab = propActiveTab || store.activeTab;
   const setActiveTab = store.setActiveTab;
   const { openUpgradeModal } = useUpgradeModalStore();
+
+  const subjectsViewMode = store.subjectsViewMode || "grid";
+  const setSubjectsViewMode = store.setSubjectsViewMode;
+
+  const emptySubscribe = () => () => {};
+  const isMounted = React.useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+  const effectiveViewMode = isMounted ? subjectsViewMode : "grid";
+
+  // Query real user quiz attempts from PostgreSQL
+  const { data: userAttemptsData } = useQuery({
+    queryKey: ["user-quiz-attempts", user?.id],
+    queryFn: async () => {
+      const res = await getUserQuizAttemptsAction(20);
+      return res.success ? res.attempts : [];
+    },
+    enabled: !!user?.id,
+  });
 
   // Dynamic Student Profile Data from database
   const studentName = user?.profile?.fullName || user?.name || "Student";
@@ -51,111 +158,93 @@ export default function StudentDashboardView({
   >([
     {
       sender: "ai",
-      text: "Magandang araw! Ako ang iyong Gemini Socratic AI Tutor para sa DepEd K-12 MATATAG. Anong subject o lesson ang nais mong talakayin ngayon?",
+      text: taglishGreeting,
       time: "10:00 AM",
     },
   ]);
   const [isAiResponding, setIsAiResponding] = useState(false);
 
+  const handleLanguageChange = (lang: "taglish" | "english") => {
+    setAiLanguage(lang);
+    setAiChatLogs((prev) => {
+      if (prev.length === 0) {
+        return [{
+          sender: "ai",
+          text: lang === "taglish" ? taglishGreeting : englishGreeting,
+          time: "Just now",
+        }];
+      }
+      // If the first message is the default greeting, update it immediately
+      if (
+        prev.length > 0 &&
+        prev[0].sender === "ai" &&
+        (prev[0].text === taglishGreeting || prev[0].text === englishGreeting)
+      ) {
+        const next = [...prev];
+        next[0] = {
+          ...next[0],
+          text: lang === "taglish" ? taglishGreeting : englishGreeting,
+        };
+        return next;
+      }
+      return prev;
+    });
+  };
 
 
-  // High School Enrolled Subjects
-  const enrolledSubjects = [
-    {
-      code: "G11-S1-GENMATH",
-      name: "General Mathematics",
-      grade: "Grade 11 • Semester 1",
-      slug: "g11-s1-genmath",
-      progress: 75,
-      currentLesson: "Lesson 5: Rational Equations and Inequalities",
-      quizzesDone: "6 of 8",
-      averageScore: 94,
-      status: "On Track",
-    },
-    {
-      code: "G11-S1-PRECALC",
-      name: "Pre-Calculus",
-      grade: "Grade 11 STEM • Semester 1",
-      slug: "g11-s1-precalc",
-      progress: 60,
-      currentLesson: "Lesson 4: Conic Sections (Parabolas & Ellipses)",
-      quizzesDone: "5 of 8",
-      averageScore: 91,
-      status: "On Track",
-    },
-    {
-      code: "G11-S1-EARTHSCI",
-      name: "Earth and Life Science",
-      grade: "Grade 11 • Semester 1",
-      slug: "g11-s1-earthsci",
-      progress: 88,
-      currentLesson: "Lesson 7: Geologic Processes on Earth's Surface",
-      quizzesDone: "7 of 8",
-      averageScore: 96,
-      status: "Mastered",
-    },
-    {
-      code: "G11-S1-ORALCOMM",
-      name: "Oral Communication in Context",
-      grade: "Grade 11 • Semester 1",
-      slug: "g11-s1-oralcomm",
-      progress: 80,
-      currentLesson: "Lesson 6: Communicative Strategies in Public Speaking",
-      quizzesDone: "6 of 8",
-      averageScore: 92,
-      status: "On Track",
-    },
-    {
-      code: "G11-S1-KOMFIL",
-      name: "Komunikasyon at Pananaliksik",
-      grade: "Grade 11 • Semester 1",
-      slug: "g11-s1-komfil",
-      progress: 70,
-      currentLesson: "Aralin 5: Gamit ng Wika sa Lipunan",
-      quizzesDone: "5 of 8",
-      averageScore: 90,
-      status: "On Track",
-    },
-    {
-      code: "G11-S1-EAPP",
-      name: "English for Academic Purposes (EAPP)",
-      grade: "Grade 11 • Semester 1",
-      slug: "g11-s1-eapp",
-      progress: 65,
-      currentLesson: "Lesson 5: Critical Approaches in Writing a Review",
-      quizzesDone: "5 of 8",
-      averageScore: 93,
-      status: "On Track",
-    },
-  ];
 
-  // Recent Quizzes Activity
-  const recentQuizzes = [
-    {
-      title: "Quiz 5: Solving Rational Equations",
-      subject: "General Mathematics",
-      rawScore: "19 / 20",
-      transmutedGrade: 96,
-      date: "Today, 9:30 AM",
-      status: "PASSED (Outstanding)",
-    },
-    {
-      title: "Quiz 4: Ellipses and Hyperbolas",
-      subject: "Pre-Calculus",
-      rawScore: "17 / 20",
-      transmutedGrade: 92,
-      date: "Yesterday",
-      status: "PASSED (Outstanding)",
-    },
-    {
-      title: "Quiz 6: Plate Tectonics & Earthquakes",
-      subject: "Earth and Life Science",
-      rawScore: "20 / 20",
-      transmutedGrade: 98,
-      date: "2 days ago",
-      status: "PASSED (Outstanding)",
-    },
-  ];
+
+
+
+
+  // Dynamically enhance enrolled subjects with user's real attempts
+  const dynamicEnrolledSubjects = React.useMemo(() => {
+    if (!userAttemptsData || userAttemptsData.length === 0) {
+      return DEFAULT_ENROLLED_SUBJECTS;
+    }
+
+    const attemptsBySubject: Record<
+      string,
+      { count: number; bestScores: Record<number, number>; latestLesson?: string }
+    > = {};
+
+    for (const a of userAttemptsData) {
+      if (!attemptsBySubject[a.subjectSlug]) {
+        attemptsBySubject[a.subjectSlug] = {
+          count: 0,
+          bestScores: {},
+          latestLesson: a.title,
+        };
+      }
+      attemptsBySubject[a.subjectSlug].count += 1;
+      const currentBest = attemptsBySubject[a.subjectSlug].bestScores[a.lessonNumber] || 0;
+      if (a.transmutedGrade > currentBest) {
+        attemptsBySubject[a.subjectSlug].bestScores[a.lessonNumber] = a.transmutedGrade;
+      }
+    }
+
+    return DEFAULT_ENROLLED_SUBJECTS.map((sub) => {
+      const userSubAttempts = attemptsBySubject[sub.slug];
+      if (!userSubAttempts || userSubAttempts.count === 0) {
+        return sub;
+      }
+      const uniqueLessonsAttempted = Object.keys(userSubAttempts.bestScores).length;
+      const realProgress = Math.min(100, Math.round((uniqueLessonsAttempted / 12) * 100));
+      const scoresArray = Object.values(userSubAttempts.bestScores);
+      const avgScore = Math.round(
+        scoresArray.reduce((acc, curr) => acc + curr, 0) / scoresArray.length
+      );
+
+      return {
+        ...sub,
+        progress: realProgress,
+        currentLesson: userSubAttempts.latestLesson || sub.currentLesson,
+        quizzesDone: `${uniqueLessonsAttempted} of 12`,
+        averageScore: avgScore,
+        status: avgScore >= 75 ? "Mastered" : "Needs Review",
+      };
+    });
+  }, [userAttemptsData]);
 
   const handleSendAiMessage = (preset?: string) => {
     const query = preset || aiQuery;
@@ -237,7 +326,7 @@ export default function StudentDashboardView({
 
             <div className="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-1">
               <div className="flex items-center justify-between text-muted-foreground">
-                <span className="text-xs font-bold">Quizzes Done</span>
+                <span className="text-xs font-bold">Practice Tests Taken</span>
                 <Award className="w-4 h-4 text-emerald-500" />
               </div>
               <span className="text-2xl font-black text-foreground">34 / 48</span>
@@ -310,11 +399,11 @@ export default function StudentDashboardView({
             <div className="lg:col-span-7 p-6 rounded-3xl bg-card border border-border shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-bold text-foreground">
-                  Recent DepEd Quiz Transmutations
+                  Recent Practice Test Transmutations
                 </h4>
                 <button
                   type="button"
-                  onClick={() => setActiveTab("quizzes")}
+                  onClick={() => setActiveTab("subjects")}
                   className="text-xs font-bold text-primary hover:underline"
                 >
                   View All &rarr;
@@ -322,7 +411,7 @@ export default function StudentDashboardView({
               </div>
 
               <div className="space-y-3">
-                {recentQuizzes.map((quiz, i) => (
+                {(userAttemptsData || []).slice(0, 3).map((quiz, i) => (
                   <div
                     key={i}
                     className="p-4 rounded-2xl bg-muted/40 border border-border flex items-center justify-between gap-3 hover:bg-muted/70 transition-colors"
@@ -412,155 +501,172 @@ export default function StudentDashboardView({
                 Enrolled High School Subjects (Grade 11 STEM)
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Full 12-lesson study studios with 24 standardized DepEd quizzes per subject.
+                Full 12-lesson study studios with 24 standardized practice tests per subject.
               </p>
             </div>
-            <Button
-              size="sm"
-              onClick={() =>
-                openUpgradeModal({
-                  featureName: "All High School Subjects",
-                  reason: "Upgrade to unlock all 130+ DepEd subjects across Junior & Senior High.",
-                })
-              }
-              className="rounded-xl text-xs font-bold gap-1.5"
-            >
-              <Crown className="w-3.5 h-3.5" />
-              <span>Unlock More Subjects</span>
-            </Button>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {enrolledSubjects.map((sub) => (
-              <div
-                key={sub.code}
-                className="p-5 rounded-3xl bg-card border border-border shadow-xs flex flex-col justify-between hover:shadow-md transition-all group"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
-                      {sub.code}
-                    </span>
-                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
-                      Avg: {sub.averageScore}%
-                    </Badge>
-                  </div>
-
-                  <h4 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
-                    {sub.name}
-                  </h4>
-
-                  <p className="text-xs text-muted-foreground">
-                    {sub.currentLesson}
-                  </p>
-
-                  <div className="space-y-1.5 pt-2">
-                    <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
-                      <span>Progress</span>
-                      <span className="text-foreground">{sub.progress}%</span>
-                    </div>
-                    <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-primary h-full rounded-full transition-all duration-500"
-                        style={{ width: `${sub.progress}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-5 pt-3 border-t border-border flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground font-medium">
-                    {sub.quizzesDone} Quizzes
-                  </span>
-                  <Button asChild size="sm" className="rounded-xl text-xs font-bold gap-1">
-                    <Link href={`/curriculum/${sub.slug}`}>
-                      <span>Open Studio</span>
-                      <ChevronRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </Button>
-                </div>
+            <div className="flex items-center gap-2.5">
+              {/* View Mode Toggle: Cards vs List */}
+              <div className="flex items-center p-1 rounded-xl bg-muted border border-border">
+                <button
+                  type="button"
+                  onClick={() => setSubjectsViewMode("grid")}
+                  aria-label="Grid card view"
+                  title="Grid Card View"
+                  className={cn(
+                    "p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
+                    effectiveViewMode === "grid"
+                      ? "bg-card text-foreground shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-[11px]">Cards</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSubjectsViewMode("list")}
+                  aria-label="Compact list view"
+                  title="Compact List View"
+                  className={cn(
+                    "p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer",
+                    effectiveViewMode === "list"
+                      ? "bg-card text-foreground shadow-xs font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline text-[11px]">List</span>
+                </button>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
 
-      {/* Quizzes & Transmutation Tab */}
-      {activeTab === "quizzes" && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-xl font-black text-foreground">
-              DepEd DO 015 s. 2026 Quiz &amp; Transmutation Records
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Verified assessment scores converted to DepEd MATATAG transmutation grades.
-            </p>
+              <Button
+                size="sm"
+                onClick={() =>
+                  openUpgradeModal({
+                    featureName: "All High School Subjects",
+                    reason: "Upgrade to unlock all 130+ DepEd subjects across Junior & Senior High.",
+                  })
+                }
+                className="rounded-xl text-xs font-bold gap-1.5"
+              >
+                <Crown className="w-3.5 h-3.5" />
+                <span>Unlock More Subjects</span>
+              </Button>
+            </div>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-border shadow-xs">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-muted text-muted-foreground font-bold uppercase tracking-wider text-[11px] border-b border-border">
-                <tr>
-                  <th className="p-4">Assessment Title</th>
-                  <th className="p-4">Subject</th>
-                  <th className="p-4">Raw Score</th>
-                  <th className="p-4">Transmuted Grade</th>
-                  <th className="p-4">DepEd Descriptor</th>
-                  <th className="p-4">Date Completed</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border bg-card font-medium text-card-foreground">
-                {recentQuizzes.map((q, i) => (
-                  <tr key={i} className="hover:bg-muted/40 transition-colors">
-                    <td className="p-4 font-bold text-foreground">{q.title}</td>
-                    <td className="p-4">{q.subject}</td>
-                    <td className="p-4 font-mono">{q.rawScore}</td>
-                    <td className="p-4 font-black text-primary text-sm">{q.transmutedGrade}%</td>
-                    <td className="p-4">
-                      <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-                        {q.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-muted-foreground">{q.date}</td>
+          {/* Render List View vs Card Grid */}
+          {effectiveViewMode === "list" ? (
+            <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-xs">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-muted/70 text-muted-foreground font-bold uppercase tracking-wider text-[11px] border-b border-border">
+                  <tr>
+                    <th className="p-4">Subject</th>
+                    <th className="p-4">Current Module / Lesson</th>
+                    <th className="p-4">Progress</th>
+                    <th className="p-4">Average</th>
+                    <th className="p-4">Practice Tests</th>
+                    <th className="p-4 text-right">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Scorecards & Grades Tab */}
-      {activeTab === "scorecards" && (
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-xl font-black text-foreground">
-              Quarterly Gradebook &amp; DO 015 Breakdown
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Weighted components: Written Work (33%), Performance Tasks (50%), and Quarterly Assessment (17%).
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="p-6 rounded-3xl bg-card border border-border shadow-xs space-y-3">
-              <span className="text-xs font-bold text-muted-foreground uppercase">Written Work (WW)</span>
-              <span className="text-3xl font-black text-primary block">95.0%</span>
-              <p className="text-xs text-muted-foreground">Quizzes, problem sets, and module exercises.</p>
+                </thead>
+                <tbody className="divide-y divide-border font-medium text-card-foreground">
+                  {dynamicEnrolledSubjects.map((sub) => (
+                    <tr key={sub.code} className="hover:bg-muted/30 transition-colors">
+                      <td className="p-4">
+                        <span className="font-bold text-foreground text-sm">{sub.name}</span>
+                      </td>
+                      <td className="p-4 text-muted-foreground max-w-xs truncate">
+                        {sub.currentLesson}
+                      </td>
+                      <td className="p-4">
+                        <div className="w-28 space-y-1">
+                          <div className="flex justify-between text-[10px] font-bold">
+                            <span>{sub.progress}%</span>
+                          </div>
+                          <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className="bg-primary h-full rounded-full transition-all duration-500"
+                              style={{ width: `${sub.progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary font-bold">
+                          {sub.averageScore}%
+                        </Badge>
+                      </td>
+                      <td className="p-4 text-muted-foreground font-medium">
+                        {sub.quizzesDone}
+                      </td>
+                      <td className="p-4 text-right">
+                        <Button asChild size="sm" className="rounded-xl text-xs font-bold gap-1">
+                          <Link href={`/curriculum/${sub.slug}`}>
+                            <span>Open Studio</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {dynamicEnrolledSubjects.map((sub) => (
+                <div
+                  key={sub.code}
+                  className="p-5 rounded-3xl bg-card border border-border shadow-xs flex flex-col justify-between hover:shadow-md transition-all group"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
+                        {sub.code}
+                      </span>
+                      <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
+                        Avg: {sub.averageScore}%
+                      </Badge>
+                    </div>
 
-            <div className="p-6 rounded-3xl bg-card border border-border shadow-xs space-y-3">
-              <span className="text-xs font-bold text-muted-foreground uppercase">Performance Tasks (PT)</span>
-              <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400 block">93.5%</span>
-              <p className="text-xs text-muted-foreground">Laboratory experiments, practical computations.</p>
-            </div>
+                    <h4 className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                      {sub.name}
+                    </h4>
 
-            <div className="p-6 rounded-3xl bg-card border border-border shadow-xs space-y-3">
-              <span className="text-xs font-bold text-muted-foreground uppercase">Quarterly Assessment (QA)</span>
-              <span className="text-3xl font-black text-teal-600 dark:text-teal-400 block">96.0%</span>
-              <p className="text-xs text-muted-foreground">1st Periodical Examination.</p>
+                    <p className="text-xs text-muted-foreground">
+                      {sub.currentLesson}
+                    </p>
+
+                    <div className="space-y-1.5 pt-2">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                        <span>Progress</span>
+                        <span className="text-foreground">{sub.progress}%</span>
+                      </div>
+                      <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+                        <div
+                          className="bg-primary h-full rounded-full transition-all duration-500"
+                          style={{ width: `${sub.progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 pt-3 border-t border-border flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground font-medium">
+                      {sub.quizzesDone} Practice Tests
+                    </span>
+                    <Button asChild size="sm" className="rounded-xl text-xs font-bold gap-1">
+                      <Link href={`/curriculum/${sub.slug}`}>
+                        <span>Open Studio</span>
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -580,22 +686,22 @@ export default function StudentDashboardView({
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setAiLanguage("taglish")}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
+                onClick={() => handleLanguageChange("taglish")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                   aiLanguage === "taglish"
                     ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                    : "bg-muted text-muted-foreground border-border"
+                    : "bg-muted text-muted-foreground border-border hover:text-foreground"
                 }`}
               >
                 🇵🇭 Taglish Mode
               </button>
               <button
                 type="button"
-                onClick={() => setAiLanguage("english")}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
+                onClick={() => handleLanguageChange("english")}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                   aiLanguage === "english"
                     ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                    : "bg-muted text-muted-foreground border-border"
+                    : "bg-muted text-muted-foreground border-border hover:text-foreground"
                 }`}
               >
                 🇺🇸 English Mode
@@ -704,6 +810,9 @@ function StudentSettingsTab({ user }: { user: StudentUserProps | null | undefine
     "socratic" | "detailed" | "exam-prep"
   >("socratic");
 
+  const { theme, setTheme } = useTheme();
+  const [activeSettingsSection, setActiveSettingsSection] = useState<"profile" | "preferences">("preferences");
+
   const profileMutation = useMutation({
     mutationFn: async (data: {
       fullName: string;
@@ -752,126 +861,271 @@ function StudentSettingsTab({ user }: { user: StudentUserProps | null | undefine
   };
 
   return (
-    <form
-      onSubmit={handleSaveSettings}
-      className="p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-xs space-y-6 max-w-3xl"
-    >
+    <div className="p-6 sm:p-8 rounded-3xl bg-card border border-border shadow-xs space-y-6 max-w-3xl">
       <div>
         <h3 className="text-xl font-black text-foreground font-heading">
-          Student Profile &amp; AI Preferences
+          Student Preferences &amp; Settings
         </h3>
         <p className="text-xs text-muted-foreground mt-0.5">
-          Customize your Socratic AI tutor persona, grade level, and school details.
+          Configure your interface theme, learning preferences, and academic profile.
         </p>
       </div>
 
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-foreground">Full Name</label>
-          <Input
-            value={studentFullName}
-            onChange={(e) => setStudentFullName(e.target.value)}
-            placeholder="Juan Dela Cruz"
-            className="rounded-xl text-xs h-10"
-            required
-          />
-        </div>
+      {/* Settings Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-border pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveSettingsSection("preferences")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeSettingsSection === "preferences"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "bg-muted text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Palette className="w-3.5 h-3.5" />
+          <span>Preferences &amp; Theme</span>
+        </button>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-foreground">Registered Email</label>
-          <Input
-            value={user?.email || "student@highschooltutor.ph"}
-            disabled
-            className="rounded-xl text-xs bg-muted cursor-not-allowed h-10 font-mono"
-          />
-        </div>
+        <button
+          type="button"
+          onClick={() => setActiveSettingsSection("profile")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+            activeSettingsSection === "profile"
+              ? "bg-primary text-primary-foreground shadow-xs"
+              : "bg-muted text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <UserIcon className="w-3.5 h-3.5" />
+          <span>Student Profile</span>
+        </button>
+      </div>
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-foreground">School / Institution</label>
-          <Input
-            value={schoolName}
-            onChange={(e) => setSchoolName(e.target.value)}
-            placeholder="e.g. Manila Science High School"
-            className="rounded-xl text-xs h-10"
-          />
-        </div>
+      {activeSettingsSection === "preferences" ? (
+        /* PREFERENCES & THEME TAB */
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <div>
+              <h4 className="text-sm font-bold text-foreground">Theme &amp; Display Preference</h4>
+              <p className="text-xs text-muted-foreground">
+                Customize your visual study workspace. Select Light mode for daytime focus, Dark mode for low-light evening studying, or synchronize automatically with your device settings.
+              </p>
+            </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Light Mode Card */}
+              <div
+                onClick={() => {
+                  setTheme("light");
+                  toast.success("Theme changed to Light Mode");
+                }}
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center text-center gap-2.5 ${
+                  theme === "light"
+                    ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20"
+                    : "border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40"
+                }`}
+              >
+                <div className="size-11 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center border border-amber-500/20 shadow-2xs">
+                  <Sun className="size-5" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-foreground block">Light Mode</span>
+                  <span className="text-[10px] text-muted-foreground">Clean, bright daytime paper style</span>
+                </div>
+                {theme === "light" && (
+                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30 mt-1 bg-primary/10">
+                    <Check className="size-3 mr-1" /> Active
+                  </Badge>
+                )}
+              </div>
+
+              {/* Dark Mode Card */}
+              <div
+                onClick={() => {
+                  setTheme("dark");
+                  toast.success("Theme changed to Dark Mode");
+                }}
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center text-center gap-2.5 ${
+                  theme === "dark"
+                    ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20"
+                    : "border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40"
+                }`}
+              >
+                <div className="size-11 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center border border-blue-500/20 shadow-2xs">
+                  <Moon className="size-5" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-foreground block">Dark Mode</span>
+                  <span className="text-[10px] text-muted-foreground">Reduced eye strain for nighttime study</span>
+                </div>
+                {theme === "dark" && (
+                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30 mt-1 bg-primary/10">
+                    <Check className="size-3 mr-1" /> Active
+                  </Badge>
+                )}
+              </div>
+
+              {/* System Default Mode Card */}
+              <div
+                onClick={() => {
+                  setTheme("system");
+                  toast.success("Theme set to System Default");
+                }}
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col items-center text-center gap-2.5 ${
+                  theme === "system"
+                    ? "border-primary bg-primary/5 shadow-xs ring-1 ring-primary/20"
+                    : "border-border/60 bg-muted/20 hover:border-border hover:bg-muted/40"
+                }`}
+              >
+                <div className="size-11 rounded-2xl bg-purple-500/10 text-purple-500 flex items-center justify-center border border-purple-500/20 shadow-2xs">
+                  <Monitor className="size-5" />
+                </div>
+                <div>
+                  <span className="text-xs font-bold text-foreground block">System Default</span>
+                  <span className="text-[10px] text-muted-foreground">Automatically match your operating system</span>
+                </div>
+                {theme === "system" && (
+                  <Badge variant="outline" className="text-[10px] text-primary border-primary/30 mt-1 bg-primary/10">
+                    <Check className="size-3 mr-1" /> Active
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-border space-y-3">
+            <div>
+              <h4 className="text-sm font-bold text-foreground">Socratic AI &amp; Curriculum Defaults</h4>
+              <p className="text-xs text-muted-foreground">
+                Set default interaction mode for your AI tutor sessions and grading standards.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 space-y-1">
+                <span className="text-xs font-bold text-foreground">Language Assistance</span>
+                <p className="text-[11px] text-muted-foreground">
+                  Default dialect: English &amp; Filipino/Taglish. Switchable anytime during chat.
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 space-y-1">
+                <span className="text-xs font-bold text-foreground">Grade Transmutation Formula</span>
+                <p className="text-[11px] text-muted-foreground">
+                  DepEd Order No. 015, s. 2026 MATATAG Standard (Active).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* STUDENT PROFILE TAB */
+        <form onSubmit={handleSaveSettings} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-foreground">Grade Level</label>
+            <label className="text-xs font-bold text-foreground">Full Name</label>
+            <Input
+              value={studentFullName}
+              onChange={(e) => setStudentFullName(e.target.value)}
+              placeholder="Juan Dela Cruz"
+              className="rounded-xl text-xs h-10"
+              required
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground">Registered Email</label>
+            <Input
+              value={user?.email || "student@highschooltutor.ph"}
+              disabled
+              className="rounded-xl text-xs bg-muted cursor-not-allowed h-10 font-mono"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground">School / Institution</label>
+            <Input
+              value={schoolName}
+              onChange={(e) => setSchoolName(e.target.value)}
+              placeholder="e.g. Manila Science High School"
+              className="rounded-xl text-xs h-10"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-foreground">Grade Level</label>
+              <select
+                value={selectedGrade}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setSelectedGrade(val);
+                  if (val === "Grade 11" || val === "Grade 12") {
+                    if (selectedTrack === "JHS Core") setSelectedTrack("STEM Strand");
+                  } else {
+                    setSelectedTrack("JHS Core");
+                  }
+                }}
+                className="w-full bg-background text-xs text-foreground p-2.5 rounded-xl border border-input focus:outline-none focus:ring-2 focus:ring-primary h-10"
+              >
+                <optgroup label="Junior High School (Grades 7–10)">
+                  <option value="Grade 7">Grade 7 (Junior High School)</option>
+                  <option value="Grade 8">Grade 8 (Junior High School)</option>
+                  <option value="Grade 9">Grade 9 (Junior High School)</option>
+                  <option value="Grade 10">Grade 10 (Junior High School)</option>
+                </optgroup>
+                <optgroup label="Senior High School (Grades 11–12)">
+                  <option value="Grade 11">Grade 11 (Senior High School)</option>
+                  <option value="Grade 12">Grade 12 (Senior High School)</option>
+                </optgroup>
+              </select>
+            </div>
+
+            {(selectedGrade === "Grade 11" || selectedGrade === "Grade 12") && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">Track / Strand</label>
+                <select
+                  value={selectedTrack}
+                  onChange={(e) => setSelectedTrack(e.target.value)}
+                  className="w-full bg-background text-xs text-foreground p-2.5 rounded-xl border border-input focus:outline-none focus:ring-2 focus:ring-primary h-10"
+                >
+                  <option value="STEM Strand">STEM (Science, Tech, Engineering, Math)</option>
+                  <option value="ABM Strand">ABM (Accountancy, Business, Management)</option>
+                  <option value="HUMSS Strand">HUMSS (Humanities &amp; Social Sciences)</option>
+                  <option value="GAS Strand">General Academic Strand (GAS)</option>
+                  <option value="TVL Track">Technical-Vocational-Livelihood (TVL Track)</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-foreground">AI Tutor Persona</label>
             <select
-              value={selectedGrade}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSelectedGrade(val);
-                if (val === "Grade 11" || val === "Grade 12") {
-                  if (selectedTrack === "JHS Core") setSelectedTrack("STEM Strand");
-                } else {
-                  setSelectedTrack("JHS Core");
-                }
-              }}
+              value={tutorPersona}
+              onChange={(e) =>
+                setTutorPersona(
+                  e.target.value as "socratic" | "detailed" | "exam-prep"
+                )
+              }
               className="w-full bg-background text-xs text-foreground p-2.5 rounded-xl border border-input focus:outline-none focus:ring-2 focus:ring-primary h-10"
             >
-              <optgroup label="Junior High School (Grades 7–10)">
-                <option value="Grade 7">Grade 7 (Junior High School)</option>
-                <option value="Grade 8">Grade 8 (Junior High School)</option>
-                <option value="Grade 9">Grade 9 (Junior High School)</option>
-                <option value="Grade 10">Grade 10 (Junior High School)</option>
-              </optgroup>
-              <optgroup label="Senior High School (Grades 11–12)">
-                <option value="Grade 11">Grade 11 (Senior High School)</option>
-                <option value="Grade 12">Grade 12 (Senior High School)</option>
-              </optgroup>
+              <option value="socratic">Socratic (Guides you with hints and questions)</option>
+              <option value="detailed">Comprehensive (Full step-by-step breakdown)</option>
+              <option value="exam-prep">Exam Reviewer (Focuses on periodic test tips)</option>
             </select>
           </div>
 
-          {(selectedGrade === "Grade 11" || selectedGrade === "Grade 12") && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">Track / Strand</label>
-              <select
-                value={selectedTrack}
-                onChange={(e) => setSelectedTrack(e.target.value)}
-                className="w-full bg-background text-xs text-foreground p-2.5 rounded-xl border border-input focus:outline-none focus:ring-2 focus:ring-primary h-10"
-              >
-                <option value="STEM Strand">STEM (Science, Tech, Engineering, Math)</option>
-                <option value="ABM Strand">ABM (Accountancy, Business, Management)</option>
-                <option value="HUMSS Strand">HUMSS (Humanities &amp; Social Sciences)</option>
-                <option value="GAS Strand">General Academic Strand (GAS)</option>
-                <option value="TVL Track">Technical-Vocational-Livelihood (TVL Track)</option>
-              </select>
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-foreground">AI Tutor Persona</label>
-          <select
-            value={tutorPersona}
-            onChange={(e) =>
-              setTutorPersona(
-                e.target.value as "socratic" | "detailed" | "exam-prep"
-              )
-            }
-            className="w-full bg-background text-xs text-foreground p-2.5 rounded-xl border border-input focus:outline-none focus:ring-2 focus:ring-primary h-10"
-          >
-            <option value="socratic">Socratic (Guides you with hints and questions)</option>
-            <option value="detailed">Comprehensive (Full step-by-step breakdown)</option>
-            <option value="exam-prep">Exam Reviewer (Focuses on periodic test tips)</option>
-          </select>
-        </div>
-
-        <div className="pt-4 flex items-center justify-between">
-          <Button
-            type="submit"
-            disabled={profileMutation.isPending}
-            className="rounded-xl text-xs font-bold gap-1.5 shadow-sm"
-          >
-            <Save className="w-4 h-4" />
-            <span>{profileMutation.isPending ? "Saving..." : "Save Preferences"}</span>
-          </Button>
-        </div>
-      </div>
-    </form>
+          <div className="pt-4 flex items-center justify-between">
+            <Button
+              type="submit"
+              disabled={profileMutation.isPending}
+              className="rounded-xl text-xs font-bold gap-1.5 shadow-sm"
+            >
+              <Save className="w-4 h-4" />
+              <span>{profileMutation.isPending ? "Saving..." : "Save Preferences"}</span>
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 }
 
