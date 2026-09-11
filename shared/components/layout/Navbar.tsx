@@ -6,11 +6,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Crown,
-  Sparkles,
-  Layers,
-  BookOpen,
-  Bot,
-  Info,
   Menu,
   X,
 } from "lucide-react";
@@ -24,22 +19,23 @@ export function Navbar() {
   const { openUpgradeModal } = useUpgradeModalStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Hide Navbar on authentication, dashboard, and admin pages
+  // Hide Navbar on authentication, dashboard, curriculum, and admin pages
   if (
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/curriculum") ||
     pathname.startsWith("/admin")
   ) {
     return null;
   }
 
   const links = [
-    { href: "/how-it-works", label: "How It Works", icon: Sparkles },
-    { href: "/#categories", label: "Curriculum Strands", icon: Layers },
-    { href: "/#subjects", label: "Subjects Catalog", icon: BookOpen },
-    { href: "/#demo", label: "AI Demo", icon: Bot },
-    { href: "/#about", label: "About", icon: Info },
+    { href: "/how-it-works", label: "How It Works" },
+    { href: "/#categories", label: "Curriculum Strands" },
+    { href: "/#subjects", label: "Subjects Catalog" },
+    { href: "/#demo", label: "AI Demo" },
+    { href: "/#about", label: "About" },
   ];
 
   return (
@@ -75,7 +71,6 @@ export function Navbar() {
         {/* Center: Navigation Links */}
         <nav className="hidden lg:flex items-center justify-center gap-1 absolute left-1/2 -translate-x-1/2">
           {links.map((link) => {
-            const Icon = link.icon;
             const isActive =
               link.href === "/"
                 ? pathname === "/"
@@ -85,13 +80,12 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs font-medium transition-colors whitespace-nowrap",
+                  "rounded-xl px-3 py-1.5 text-xs font-medium transition-colors whitespace-nowrap",
                   isActive
                     ? "bg-secondary text-foreground font-semibold"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <Icon className="size-3.5 text-primary" />
                 {link.label}
               </Link>
             );
@@ -145,17 +139,15 @@ export function Navbar() {
               href="/"
               onClick={() => setMobileMenuOpen(false)}
               className={cn(
-                "flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
+                "rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
                 pathname === "/"
                   ? "bg-secondary text-foreground font-semibold"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              <Sparkles className="size-4 text-primary" />
               <span>Home</span>
             </Link>
             {links.map((link) => {
-              const Icon = link.icon;
               const isActive =
                 link.href === "/"
                   ? pathname === "/"
@@ -166,13 +158,12 @@ export function Navbar() {
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
+                    "rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
                     isActive
                       ? "bg-secondary text-foreground font-semibold"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <Icon className="size-4 text-primary" />
                   <span>{link.label}</span>
                 </Link>
               );

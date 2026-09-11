@@ -3,28 +3,25 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   BookOpen,
-  Award,
   Bot,
   Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
   X,
-  Crown,
 } from "lucide-react";
 import { useDashboardStore, DashboardTab } from "../hooks/useDashboardStore";
-import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 import { useUser } from "@/features/auth/hooks/useUser";
-import { Button } from "@/shared/components/ui/button";
-import { Badge } from "@/shared/components/ui/badge";
+import { authClient } from "@/features/auth/lib/auth-client";
 import { toast } from "sonner";
 
 export default function DashboardSidebar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useUser();
   const {
     activeTab,
@@ -34,23 +31,25 @@ export default function DashboardSidebar() {
     mobileSidebarOpen,
     setMobileSidebarOpen,
   } = useDashboardStore();
-  const { openUpgradeModal } = useUpgradeModalStore();
 
   const studentNavItems: {
     id: DashboardTab;
     label: string;
     icon: React.ComponentType<{ className?: string }>;
-    badge?: string;
   }[] = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
     { id: "subjects", label: "Enrolled Subjects", icon: BookOpen },
-    { id: "quizzes", label: "DepEd Quizzes", icon: Award },
-    { id: "ai-tutor", label: "Gemini AI Tutor", icon: Bot, badge: "Socratic" },
+    { id: "ai-tutor", label: "Gemini AI Tutor", icon: Bot },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
   const handleLogout = async () => {
     try {
+      try {
+        await authClient.signOut();
+      } catch (clientErr) {
+        console.warn("Client signOut warning:", clientErr);
+      }
       await fetch("/api/auth/logout", { method: "POST" });
       toast.success("Logged out successfully");
       router.push("/login");
@@ -73,9 +72,9 @@ export default function DashboardSidebar() {
     .toUpperCase() || "ST";
 
   const sidebarContent = (
-    <div className="relative flex flex-col h-full bg-card">
+    <div className="relative flex flex-col h-full bg-card overflow-hidden">
       {/* Sidebar Header: Logo and Brand (Increased Size) */}
-      <div className="p-4 border-b border-border flex items-center justify-between gap-3">
+      <div className="p-4 border-b border-border flex items-center justify-between gap-3 shrink-0">
         <Link
           href="/"
           className="flex items-center gap-3 min-w-0 transition-opacity hover:opacity-90"
@@ -126,8 +125,8 @@ export default function DashboardSidebar() {
         )}
       </button>
 
-      {/* Nav items list */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1.5">
+      {/* Nav items list & upgrade banner (scrollable on compact screens) */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 min-h-0">
         <div className="space-y-1">
           {studentNavItems.map((item) => {
             const Icon = item.icon;
@@ -139,6 +138,9 @@ export default function DashboardSidebar() {
                 onClick={() => {
                   setActiveTab(item.id);
                   setMobileSidebarOpen(false);
+                  if (pathname !== "/dashboard") {
+                    router.push("/dashboard");
+                  }
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   isActive
@@ -151,18 +153,6 @@ export default function DashboardSidebar() {
                 {!sidebarCollapsed && (
                   <div className="flex-1 flex items-center justify-between text-left min-w-0">
                     <span className="truncate">{item.label}</span>
-                    {item.badge && (
-                      <Badge
-                        variant={isActive ? "secondary" : "outline"}
-                        className={`text-[9px] px-1.5 py-0 font-bold ml-1.5 ${
-                          isActive
-                            ? "bg-primary-foreground/20 text-primary-foreground border-transparent"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {item.badge}
-                      </Badge>
-                    )}
                   </div>
                 )}
               </button>
@@ -171,38 +161,23 @@ export default function DashboardSidebar() {
         </div>
       </div>
 
-      {/* Upgrade Banner in Sidebar */}
-      {!sidebarCollapsed && (
-        <div className="p-3.5 mx-3 mb-3 rounded-2xl bg-gradient-to-br from-primary/15 via-primary/10 to-teal-500/10 border border-primary/20 space-y-2">
-          <div className="flex items-center gap-2 text-primary font-bold text-xs">
-            <Crown className="w-4 h-4 text-primary" />
-            <span>HighSchool Premium</span>
-          </div>
-          <p className="text-[11px] text-muted-foreground leading-snug">
-            Unlock all 130+ DepEd subjects &amp; unlimited AI Socratic assistance.
-          </p>
-          <Button
-            size="sm"
-            onClick={() =>
-              openUpgradeModal({
-                featureName: "All High School Subjects",
-                reason: "Upgrade to Premium to unlock full curriculum and quarterly transmutation sheets.",
-              })
-            }
-            className="w-full text-xs font-bold rounded-xl h-7"
-          >
-            Upgrade Now
-          </Button>
-        </div>
-      )}
-
-      {/* Student Profile & Logout Footer */}
-      <div className="p-3 border-t border-border bg-card/80 backdrop-blur-xs">
+      {/* Student Profile & Logout Footer (Always pinned at the bottom) */}
+      <div className="p-3 border-t border-border bg-card/80 backdrop-blur-xs shrink-0">
         <div className={`flex items-center gap-3 ${sidebarCollapsed ? "flex-col justify-center" : "justify-between"}`}>
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="size-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold text-xs border border-primary/30 shrink-0">
-              {userInitials}
-            </div>
+            {user?.image ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={user.image}
+                alt={displayName}
+                className="size-9 rounded-xl object-cover border border-primary/30 shrink-0"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="size-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold text-xs border border-primary/30 shrink-0">
+                {userInitials}
+              </div>
+            )}
             {!sidebarCollapsed && (
               <div className="flex-1 min-w-0">
                 <span className="text-xs font-bold text-foreground block truncate">
@@ -233,9 +208,9 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
+      {/* Desktop Persistent Sidebar (Fixed Viewport Height) */}
       <aside
-        className={`relative hidden lg:block bg-card border-r border-border transition-all duration-200 z-30 shrink-0 ${
+        className={`sticky top-0 h-screen hidden lg:flex flex-col bg-card border-r border-border transition-all duration-200 z-30 shrink-0 overflow-hidden ${
           sidebarCollapsed ? "w-20" : "w-64"
         }`}
       >
@@ -253,7 +228,7 @@ export default function DashboardSidebar() {
           />
 
           {/* Drawer content */}
-          <div className="relative w-72 max-w-[85vw] bg-card border-r border-border shadow-2xl h-full z-10 animate-in slide-in-from-left duration-200">
+          <div className="relative w-72 max-w-[85vw] bg-card border-r border-border shadow-2xl h-full z-10 animate-in slide-in-from-left duration-200 flex flex-col overflow-hidden">
             {sidebarContent}
           </div>
         </div>

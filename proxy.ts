@@ -67,12 +67,16 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. Redirect to dashboard if trying to access auth pages while already logged in
-  if (pathname === "/login" || pathname === "/register") {
+  // 3. Redirect to dashboard if trying to access landing or auth pages while already logged in
+  if (pathname === "/" || pathname === "/login" || pathname === "/register") {
     if (hasToken) {
       if (customToken) {
         try {
-          await jwtVerify(customToken, key, { algorithms: ["HS256"] });
+          const { payload } = await jwtVerify(customToken, key, { algorithms: ["HS256"] });
+          const role = (payload as unknown as { role?: string }).role;
+          if (role === "ADMIN") {
+            return NextResponse.redirect(new URL("/admin", request.url));
+          }
           return NextResponse.redirect(new URL("/dashboard", request.url));
         } catch {
           // Token is invalid, check if better auth token is present
@@ -89,6 +93,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/admin/:path*",
     "/curriculum/:path*",
     "/dashboard/:path*",

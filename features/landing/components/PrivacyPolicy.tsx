@@ -11,7 +11,6 @@ import {
   Globe,
   Clock,
   ArrowRight,
-  DownloadCloud,
 } from "lucide-react";
 
 export function PrivacyPolicy() {
@@ -21,8 +20,7 @@ export function PrivacyPolicy() {
     { id: "collection", title: "1. Information We Collect", icon: Database },
     { id: "usage", title: "2. How We Use Your Data", icon: UserCheck },
     { id: "ai-privacy", title: "3. AI Processing & Privacy Safeguards", icon: Lock },
-    { id: "storage", title: "4. Local Storage & Offline Cache", icon: DownloadCloud },
-    { id: "rights", title: "5. Your Data Rights & RA 10173", icon: Eye },
+    { id: "rights", title: "4. Your Data Rights & RA 10173", icon: Eye },
   ];
 
   return (
@@ -51,7 +49,7 @@ export function PrivacyPolicy() {
             <div className="hidden sm:block text-muted-foreground/40">•</div>
             <div className="flex items-center gap-2">
               <Globe className="w-3.5 h-3.5" />
-              <span>App: HighSchool Tutor (DepEd K-12 MATATAG PWA)</span>
+              <span>App: HighSchool Tutor (DepEd K-12 MATATAG Platform)</span>
             </div>
           </div>
         </div>
@@ -125,7 +123,6 @@ export function PrivacyPolicy() {
                     <li><strong>Account Information:</strong> Full name, school email address, grade level (Grades 7 to 12), and Senior High strand (STEM, ABM, HUMSS, GAS, TVL).</li>
                     <li><strong>Usage &amp; Study Progress:</strong> Completed lesson modules, DepEd DO 015 s. 2026 quiz transmutation records, practice quiz scores, and saved explanation bookmarks.</li>
                     <li><strong>Socratic AI Interaction Logs:</strong> Prompt inquiries, clarification requests, and language preference choices (English, Filipino, Taglish, Cebuano, Ilocano) during tutoring sessions.</li>
-                    <li><strong>Technical &amp; Device Storage:</strong> Browser local storage and IndexedDB caches required for offline Progressive Web App (PWA) functionality.</li>
                   </ul>
                 </div>
               </article>
@@ -148,7 +145,6 @@ export function PrivacyPolicy() {
                     <li><strong>Personalized DepEd Learning:</strong> Tailoring lesson recommendations and Socratic AI explanations to your exact grade level and subject curriculum.</li>
                     <li><strong>DepEd MATATAG Transmutation:</strong> Calculating accurate transmuted grades and performance metrics in accordance with DepEd Order No. 015, s. 2026 guidelines.</li>
                     <li><strong>Platform Reliability &amp; Quality Control:</strong> Reviewing anonymized quiz feedback to ensure all lesson keys, formulas, and MATATAG curriculum topics remain 100% accurate.</li>
-                    <li><strong>Offline Optimization:</strong> Caching lesson materials locally so high school learners in areas with intermittent connectivity can study uninterrupted.</li>
                   </ul>
                 </div>
               </article>
@@ -175,28 +171,7 @@ export function PrivacyPolicy() {
                 </div>
               </article>
 
-              {/* 4. Storage */}
-              <article
-                id="storage"
-                className="bg-card rounded-3xl p-7 sm:p-9 border border-border shadow-md shadow-black/5 scroll-mt-28"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0">
-                    <DownloadCloud className="w-5 h-5" />
-                  </div>
-                  <h2 className="text-xl sm:text-2xl font-black text-foreground font-heading tracking-tight">
-                    4. Local Storage &amp; Offline Cache
-                  </h2>
-                </div>
-                <div className="space-y-3 text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  <ul className="list-disc list-inside space-y-1.5 pl-2">
-                    <li><strong>Browser Storage:</strong> HighSchool Tutor leverages browser IndexedDB and Cache Storage to allow offline review of downloaded DepEd lesson modules and quiz keys.</li>
-                    <li><strong>User Control:</strong> You can clear your offline cache at any time via your browser settings or from your student profile settings within HighSchool Tutor.</li>
-                  </ul>
-                </div>
-              </article>
-
-              {/* 5. Rights */}
+              {/* 4. Rights */}
               <article
                 id="rights"
                 className="bg-card rounded-3xl p-7 sm:p-9 border border-border shadow-md shadow-black/5 scroll-mt-28"
@@ -206,7 +181,7 @@ export function PrivacyPolicy() {
                     <Eye className="w-5 h-5" />
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-foreground font-heading tracking-tight">
-                    5. Your Data Rights &amp; RA 10173
+                    4. Your Data Rights &amp; RA 10173
                   </h2>
                 </div>
                 <div className="space-y-3 text-xs sm:text-sm text-muted-foreground leading-relaxed">

@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/features/auth/lib/session";
 import { SUBJECT_BY_SLUG } from "../utils/curriculum-data";
 import {
   generateLessonsForSubject,
@@ -200,9 +201,11 @@ export async function recordQuizAttemptAction(rawInput: unknown): Promise<{
 }> {
   try {
     const input = recordAttemptInputSchema.parse(rawInput);
+    const sessionUser = await getCurrentUser();
 
     const attempt = await prisma.quizAttempt.create({
       data: {
+        userId: sessionUser?.id ?? null,
         subjectSlug: input.subjectSlug,
         subjectCode: input.subjectCode,
         lessonNumber: input.lessonNumber,
@@ -223,45 +226,77 @@ export async function recordQuizAttemptAction(rawInput: unknown): Promise<{
   }
 }
 
+export interface LessonProgressScore {
+  bestScore: number;
+  rawScore: number;
+  totalQuestions: number;
+  transmutedGrade: number;
+  status: LessonProgressStatus;
+  attemptsCount: number;
+}
+
 export async function getSubjectProgressAction(subjectSlug: string): Promise<{
-  lessonScores: Record<number, { bestScore: number; status: LessonProgressStatus; attemptsCount: number }>;
+  lessonScores: Record<number, LessonProgressScore>;
+  totalAttempted: number;
   totalMastered: number;
   totalLessons: number;
 }> {
   try {
+    const sessionUser = await getCurrentUser();
     const attempts = await prisma.quizAttempt.findMany({
-      where: { subjectSlug },
+      where: {
+        subjectSlug,
+        ...(sessionUser?.id ? { userId: sessionUser.id } : {}),
+      },
       orderBy: { createdAt: "desc" },
     });
 
-    const lessonScores: Record<
-      number,
-      { bestScore: number; status: LessonProgressStatus; attemptsCount: number }
-    > = {};
+    const lessonScores: Record<number, LessonProgressScore> = {};
 
     for (const a of attempts) {
-      const percentage = (a.score / a.total) * 100;
+      const percentage = a.total > 0 ? (a.score / a.total) * 100 : 0;
+      // DepEd DO 015 s. 2026 Transmutation:
+      let transmuted = 60;
+      if (percentage >= 100) {
+        transmuted = 100;
+      } else if (percentage >= 60) {
+        transmuted = Math.round(75 + ((percentage - 60) * 25) / 40);
+      } else {
+        transmuted = Math.round(60 + (percentage / 60) * 14);
+      }
+
+      // In DepEd DO 015, passing grade is >= 75% transmuted
+      const isMastered = transmuted >= 75;
+
       if (!lessonScores[a.lessonNumber]) {
         lessonScores[a.lessonNumber] = {
           bestScore: percentage,
-          status: percentage >= 75 ? "Mastered" : "Needs Review",
+          rawScore: a.score,
+          totalQuestions: a.total,
+          transmutedGrade: transmuted,
+          status: isMastered ? "Mastered" : "Needs Review",
           attemptsCount: 1,
         };
       } else {
         lessonScores[a.lessonNumber].attemptsCount += 1;
         if (percentage > lessonScores[a.lessonNumber].bestScore) {
           lessonScores[a.lessonNumber].bestScore = percentage;
-          lessonScores[a.lessonNumber].status = percentage >= 75 ? "Mastered" : "Needs Review";
+          lessonScores[a.lessonNumber].rawScore = a.score;
+          lessonScores[a.lessonNumber].totalQuestions = a.total;
+          lessonScores[a.lessonNumber].transmutedGrade = transmuted;
+          lessonScores[a.lessonNumber].status = isMastered ? "Mastered" : "Needs Review";
         }
       }
     }
 
+    const totalAttempted = Object.keys(lessonScores).length;
     const totalMastered = Object.values(lessonScores).filter(
       (l) => l.status === "Mastered"
     ).length;
 
     return {
       lessonScores,
+      totalAttempted,
       totalMastered,
       totalLessons: Object.keys(lessonScores).length,
     };
@@ -269,8 +304,89 @@ export async function getSubjectProgressAction(subjectSlug: string): Promise<{
     console.error("getSubjectProgressAction error:", error);
     return {
       lessonScores: {},
+      totalAttempted: 0,
       totalMastered: 0,
       totalLessons: 0,
     };
+  }
+}
+
+export interface UserQuizAttemptItem {
+  id: string;
+  lessonNumber: number;
+  title: string;
+  subject: string;
+  subjectSlug: string;
+  rawScore: string;
+  score: number;
+  total: number;
+  transmutedGrade: number;
+  status: string;
+  date: string;
+  mode: string;
+}
+
+export async function getUserQuizAttemptsAction(limit = 10): Promise<{
+  success: boolean;
+  attempts: UserQuizAttemptItem[];
+}> {
+  try {
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser?.id) {
+      return { success: true, attempts: [] };
+    }
+
+    const records = await prisma.quizAttempt.findMany({
+      where: { userId: sessionUser.id },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+
+    const attempts: UserQuizAttemptItem[] = records.map((rec) => {
+      const percent = rec.total > 0 ? (rec.score / rec.total) * 100 : 0;
+      // DepEd DO 015 s. 2026 transmutation formula:
+      // 60% raw score transmutes to 75 (passing).
+      let transmuted = 60;
+      if (percent >= 100) {
+        transmuted = 100;
+      } else if (percent >= 60) {
+        transmuted = Math.round(75 + ((percent - 60) * 25) / 40);
+      } else {
+        transmuted = Math.round(60 + (percent / 60) * 14);
+      }
+
+      let descriptor = "Did Not Meet Expectations (<75%)";
+      if (transmuted >= 90) descriptor = "PASSED (Outstanding)";
+      else if (transmuted >= 85) descriptor = "PASSED (Very Satisfactory)";
+      else if (transmuted >= 80) descriptor = "PASSED (Satisfactory)";
+      else if (transmuted >= 75) descriptor = "PASSED (Fairly Satisfactory)";
+
+      const dateFormatted = new Intl.DateTimeFormat("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+      }).format(new Date(rec.createdAt));
+
+      return {
+        id: rec.id,
+        lessonNumber: rec.lessonNumber,
+        title: `Lesson ${rec.lessonNumber}: ${rec.lessonTitle}`,
+        subject: rec.subjectCode || rec.subjectSlug,
+        subjectSlug: rec.subjectSlug,
+        rawScore: `${rec.score} / ${rec.total}`,
+        score: rec.score,
+        total: rec.total,
+        transmutedGrade: transmuted,
+        status: descriptor,
+        date: dateFormatted,
+        mode: rec.mode,
+      };
+    });
+
+    return { success: true, attempts };
+  } catch (err) {
+    console.error("getUserQuizAttemptsAction error:", err);
+    return { success: false, attempts: [] };
   }
 }

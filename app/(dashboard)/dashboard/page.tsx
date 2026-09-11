@@ -1,5 +1,4 @@
 import { Metadata } from "next";
-import DashboardShell from "@/features/dashboard/components/DashboardShell";
 import StudentDashboardView from "@/features/dashboard/components/StudentDashboardView";
 
 export const metadata: Metadata = {
@@ -8,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardPage() {
-  return (
-    <DashboardShell>
-      <StudentDashboardView />
-    </DashboardShell>
-  );
+  return <StudentDashboardView />;
 }

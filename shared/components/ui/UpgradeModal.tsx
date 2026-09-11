@@ -17,20 +17,30 @@ import { Badge } from "@/shared/components/ui/badge";
 export function UpgradeModal() {
   const { isOpen, featureName, reason, closeUpgradeModal } =
     useUpgradeModalStore();
-  const [selectedPlan, setSelectedPlan] = React.useState<"monthly" | "annual">(
-    "annual"
-  );
+  const [planType, setPlanType] = React.useState<"single_grade" | "all_grades">("all_grades");
+  const [selectedGrade, setSelectedGrade] = React.useState<string>("Grade 10");
   const [isProcessing, setIsProcessing] = React.useState(false);
+
+  const gradeOptions = [
+    "Grade 7",
+    "Grade 8",
+    "Grade 9",
+    "Grade 10",
+    "Grade 11",
+    "Grade 12",
+  ];
 
   const handleSubscribe = () => {
     setIsProcessing(true);
     setTimeout(() => {
       setIsProcessing(false);
       closeUpgradeModal();
-      toast.success("Subscription Requested!", {
-        description: `Redirecting to Philippine GCash / Maya payment gateway for ${
-          selectedPlan === "annual" ? "Annual Plan (₱1,499)" : "Monthly Plan (₱199)"
-        }...`,
+      const planTitle =
+        planType === "all_grades"
+          ? "Complete High School Bundle (Grades 7–12) at ₱1,499"
+          : `${selectedGrade} Access Pass at ₱499`;
+      toast.success("Payment Gateway Initialized!", {
+        description: `Redirecting to Philippine GCash / Maya payment checkout for ${planTitle}...`,
       });
     }, 700);
   };
@@ -43,62 +53,86 @@ export function UpgradeModal() {
             <Crown className="size-6 text-primary" />
           </div>
           <DialogTitle className="text-2xl font-bold font-heading text-foreground">
-            Upgrade to Premium Tier
+            Choose Your Study Plan
           </DialogTitle>
           <DialogDescription className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto">
             {reason ||
               `Unlock full access to ${
                 featureName || "all DepEd high school lessons"
-              } and unlimited Google Gemini AI Socratic tutoring.`}
+              } with DepEd MATATAG curriculum and unlimited Gemini AI Socratic tutoring.`}
           </DialogDescription>
         </DialogHeader>
 
         {/* Plan Selector */}
-        <div className="grid grid-cols-2 gap-3 my-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-4">
+          {/* Single Grade Level */}
           <div
-            onClick={() => setSelectedPlan("monthly")}
+            onClick={() => setPlanType("single_grade")}
             className={`relative flex flex-col justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-              selectedPlan === "monthly"
+              planType === "single_grade"
                 ? "border-primary bg-primary/5 shadow-xs"
                 : "border-border/60 bg-background hover:border-border"
             }`}
           >
             <div className="space-y-1">
               <span className="text-xs font-semibold text-muted-foreground uppercase">
-                Monthly Pass
+                Single Grade Pass
               </span>
               <div className="text-2xl font-bold text-foreground font-heading">
-                ₱199<span className="text-xs font-normal text-muted-foreground">/mo</span>
+                ₱499<span className="text-xs font-normal text-muted-foreground">/school yr</span>
               </div>
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Full 1-year access for 1 selected grade level.
+              </p>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-2">
-              Billed monthly. Cancel anytime.
-            </p>
+
+            {planType === "single_grade" && (
+              <div className="mt-3 pt-3 border-t border-border/60 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
+                  Select Grade Level:
+                </label>
+                <select
+                  value={selectedGrade}
+                  onChange={(e) => setSelectedGrade(e.target.value)}
+                  className="w-full text-xs font-semibold bg-background border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  {gradeOptions.map((g) => (
+                    <option key={g} value={g}>
+                      {g} Core & Tracks
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
+          {/* All Grades 7-12 Bundle */}
           <div
-            onClick={() => setSelectedPlan("annual")}
+            onClick={() => setPlanType("all_grades")}
             className={`relative flex flex-col justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-              selectedPlan === "annual"
+              planType === "all_grades"
                 ? "border-primary bg-primary/5 shadow-xs"
                 : "border-border/60 bg-background hover:border-border"
             }`}
           >
             <Badge className="absolute -top-2.5 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5">
-              SAVE 37%
+              BEST VALUE • SAVE 50%
             </Badge>
             <div className="space-y-1">
               <span className="text-xs font-semibold text-primary uppercase flex items-center gap-1">
                 <Sparkles className="size-3" />
-                Annual Pass
+                All Levels (7–12)
               </span>
               <div className="text-2xl font-bold text-foreground font-heading">
-                ₱1,499<span className="text-xs font-normal text-muted-foreground">/yr</span>
+                ₱1,499<span className="text-xs font-normal text-muted-foreground">/full access</span>
               </div>
+              <p className="text-[11px] text-muted-foreground pt-1">
+                Complete access to all Junior & Senior High School subjects (Grades 7 to 12).
+              </p>
             </div>
-            <p className="text-[11px] text-muted-foreground mt-2">
-              Best value for full school year.
-            </p>
+            <div className="mt-3 pt-2 text-[10px] font-semibold text-primary/90 flex items-center gap-1">
+              <span>Includes JHS Core + STEM, ABM, HUMSS</span>
+            </div>
           </div>
         </div>
 
@@ -141,8 +175,11 @@ export function UpgradeModal() {
               <>
                 <Zap className="size-4 fill-current" />
                 <span>
-                  Subscribe via GCash / Maya (
-                  {selectedPlan === "annual" ? "₱1,499/yr" : "₱199/mo"})
+                  Checkout via GCash / Maya (
+                  {planType === "all_grades"
+                    ? "₱1,499 • All 7–12"
+                    : `₱499 • ${selectedGrade}`}
+                  )
                 </span>
               </>
             )}

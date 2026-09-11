@@ -8,3 +8,4 @@ export { CtaBanner } from "./CtaBanner";
 export { HowItWorks } from "./HowItWorks";
 export { PrivacyPolicy } from "./PrivacyPolicy";
 export { TermsOfService } from "./TermsOfService";
+export { TrackDetail, TRACKS_DATA } from "./TrackDetail";

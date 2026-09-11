@@ -13,12 +13,16 @@ import {
   Trophy,
   Lock,
   Crown,
+  Clock,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { Subject, Lesson, LessonProgressStatus } from "../types/curriculum.types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { Subject, Lesson } from "../types/curriculum.types";
 import { getLessonsAction, getSubjectProgressAction } from "../actions/curriculum.actions";
 import { canAccessLesson } from "../utils/tier-guardrails";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardHeader,
@@ -45,56 +49,47 @@ interface LessonListProps {
 }
 
 export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
-  const [lessons, setLessons] = React.useState<Lesson[]>([]);
-  const [progress, setProgress] = React.useState<{
-    lessonScores: Record<
-      number,
-      { bestScore: number; status: LessonProgressStatus; attemptsCount: number }
-    >;
-    totalMastered: number;
-    totalLessons: number;
-  }>({ lessonScores: {}, totalMastered: 0, totalLessons: 0 });
-  const [loading, setLoading] = React.useState(true);
+  const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = React.useState(false);
   const [selectedLessonForMode, setSelectedLessonForMode] = React.useState<Lesson | null>(null);
+  const [selectedCount, setSelectedCount] = React.useState<number>(10);
 
   const { openUpgradeModal } = useUpgradeModalStore();
 
-  React.useEffect(() => {
-    let isMounted = true;
-    const fetchInitialData = async () => {
-      const [lessonsRes, progressRes] = await Promise.all([
-        getLessonsAction(subject.slug),
-        getSubjectProgressAction(subject.slug),
-      ]);
+  const { data: lessons = [], isLoading: loadingLessons } = useQuery({
+    queryKey: ["lessons", subject.slug],
+    queryFn: async () => {
+      const res = await getLessonsAction(subject.slug);
+      return res.success ? res.lessons : [];
+    },
+    staleTime: 1000 * 60 * 5,
+  });
 
-      if (isMounted) {
-        if (lessonsRes.success) {
-          setLessons(lessonsRes.lessons);
-        }
-        setProgress(progressRes);
-        setLoading(false);
-      }
-    };
+  const { data: progressData, isLoading: loadingProgress, refetch: refetchProgress } = useQuery({
+    queryKey: ["subject-progress", subject.slug],
+    queryFn: async () => {
+      return await getSubjectProgressAction(subject.slug);
+    },
+    staleTime: 1000 * 60 * 2,
+    refetchOnWindowFocus: false,
+  });
 
-    fetchInitialData();
+  const progress = progressData || {
+    lessonScores: {},
+    totalAttempted: 0,
+    totalMastered: 0,
+    totalLessons: 0,
+  };
 
-    return () => {
-      isMounted = false;
-    };
-  }, [subject.slug]);
+  const loading = loadingLessons || loadingProgress;
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    const [lessonsRes, progressRes] = await Promise.all([
-      getLessonsAction(subject.slug),
-      getSubjectProgressAction(subject.slug),
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["lessons", subject.slug] }),
+      queryClient.invalidateQueries({ queryKey: ["subject-progress", subject.slug] }),
     ]);
-
-    if (lessonsRes.success) {
-      setLessons(lessonsRes.lessons);
-    }
-    setProgress(progressRes);
+    await refetchProgress();
     setRefreshing(false);
     toast.success("Progress Synchronized", {
       description: "Latest scores and lesson outlines have been updated.",
@@ -109,10 +104,19 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
     });
   };
 
-  const masteryPercent =
-    lessons.length > 0
-      ? Math.round((progress.totalMastered / lessons.length) * 100)
-      : 0;
+  const totalLessonsCount = lessons.length > 0 ? lessons.length : 12;
+  const attemptedCount = progress.totalAttempted || 0;
+  const masteredCount = progress.totalMastered || 0;
+
+  // Real-time progress percentages
+  const progressPercent = Math.min(
+    100,
+    Math.round((attemptedCount / totalLessonsCount) * 100)
+  );
+  const masteryPercent = Math.min(
+    100,
+    Math.round((masteredCount / totalLessonsCount) * 100)
+  );
 
   return (
     <div className="space-y-8 py-6">
@@ -208,17 +212,33 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Trophy className="size-4 text-amber-500" />
                 <span>Subject Mastery Progress</span>
+                {attemptedCount > 0 && (
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary font-bold"
+                  >
+                    {masteredCount} Mastered •{" "}
+                    {attemptedCount - masteredCount > 0
+                      ? `${attemptedCount - masteredCount} Needs Review`
+                      : "All Passed"}
+                  </Badge>
+                )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {progress.totalMastered} of {lessons.length} lessons mastered
-                (Passing Grade ≥ 75%)
+                {attemptedCount} of {totalLessonsCount} lessons completed •{" "}
+                {masteredCount} mastered (DepEd DO 015 Passing Grade ≥ 75%)
               </p>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-64">
-              <Progress value={masteryPercent} className="h-2.5 flex-1" />
-              <span className="font-mono text-sm font-bold text-primary">
-                {masteryPercent}%
-              </span>
+              <Progress value={progressPercent} className="h-2.5 flex-1" />
+              <div className="flex flex-col items-end shrink-0">
+                <span className="font-mono text-sm font-bold text-primary">
+                  {progressPercent}%
+                </span>
+                <span className="text-[10px] text-muted-foreground font-medium">
+                  {masteryPercent}% mastered
+                </span>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -265,12 +285,19 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
               return (
                 <Card
                   key={lesson.number}
-                  className={`transition-all rounded-2xl border border-border/60 ${
+                  onClick={(e) => {
+                    if (isAccessible) {
+                      setSelectedLessonForMode(lesson);
+                    } else {
+                      handleLockedLessonClick(e, lesson);
+                    }
+                  }}
+                  className={`group cursor-pointer transition-all duration-200 rounded-2xl border border-border/60 hover:shadow-md ${
                     !isAccessible
                       ? "opacity-80 bg-muted/30 hover:border-amber-500/40"
                       : isMastered
-                      ? "border-success/40 bg-success/5"
-                      : "hover:border-primary/40 bg-card"
+                      ? "border-success/40 bg-success/5 hover:border-success/60"
+                      : "hover:border-primary/50 bg-card"
                   }`}
                 >
                   <CardHeader className="pb-3">
@@ -285,7 +312,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                         >
                           {lesson.number}
                         </span>
-                        <CardTitle className="text-base font-bold text-foreground">
+                        <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
                           {lesson.title}
                         </CardTitle>
                       </div>
@@ -302,12 +329,12 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                         ) : isMastered ? (
                           <Badge variant="default" className="gap-1 text-xs bg-success text-success-foreground hover:bg-success">
                             <CheckCircle2 className="size-3" />
-                            <span>Mastered ({Math.round(stat.bestScore)}%)</span>
+                            <span>Mastered ({stat.transmutedGrade}%)</span>
                           </Badge>
                         ) : isNeedsReview ? (
                           <Badge variant="secondary" className="gap-1 text-xs bg-warning/20 text-warning-foreground">
                             <AlertCircle className="size-3" />
-                            <span>Needs Review ({Math.round(stat.bestScore)}%)</span>
+                            <span>Needs Review ({stat.transmutedGrade}%)</span>
                           </Badge>
                         ) : (
                           <Badge
@@ -338,17 +365,17 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
 
                     <div className="flex items-center gap-2 shrink-0">
                       {isAccessible ? (
-                        <Button
-                          onClick={() => setSelectedLessonForMode(lesson)}
-                          size="sm"
-                          className="gap-1.5 text-xs rounded-xl font-bold shadow-xs"
-                        >
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform">
                           <Play className="size-3.5 fill-current" />
-                          <span>Start Lesson</span>
-                        </Button>
+                          <span>Practice Lesson</span>
+                          <ArrowRight className="size-3.5" />
+                        </div>
                       ) : (
                         <Button
-                          onClick={(e) => handleLockedLessonClick(e, lesson)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLockedLessonClick(e, lesson);
+                          }}
                           variant="secondary"
                           size="sm"
                           className="gap-1.5 text-xs rounded-xl text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
@@ -366,7 +393,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
         )}
       </div>
 
-      {/* Mode Selection Modal */}
+      {/* Mode & Quiz Setup Selection Modal */}
       {selectedLessonForMode && (
         <Dialog
           open={!!selectedLessonForMode}
@@ -382,65 +409,120 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                 {selectedLessonForMode.title}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground">
-                Select your preferred learning mode to start practicing this DepEd competency.
+                Configure quiz items and select your preferred learning mode for this DepEd competency.
               </DialogDescription>
             </DialogHeader>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-              {/* Study Mode Card */}
-              <div className="p-5 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all flex flex-col justify-between space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
-                      <Sparkles className="size-5" />
-                    </div>
-                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
-                      Untimed &amp; Guided
-                    </Badge>
-                  </div>
-                  <h3 className="font-bold text-sm text-foreground">Study Mode</h3>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Interactive learning with instant answers, Socratic hints, and step-by-step Gemini AI explanations.
-                  </p>
-                </div>
-
-                <Button asChild size="sm" variant="outline" className="w-full rounded-xl text-xs font-bold gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
-                  <Link
-                    href={`/curriculum/${subject.slug}/quiz/${selectedLessonForMode.number}?mode=study`}
-                    onClick={() => setSelectedLessonForMode(null)}
-                  >
-                    <Sparkles className="size-3.5" />
-                    <span>Launch Study Mode</span>
-                  </Link>
-                </Button>
+            {/* Question Count Selection */}
+            <div className="space-y-2.5 pt-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-foreground">
+                  1. Number of Questions
+                </label>
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1 font-medium">
+                  <Clock className="size-3 text-primary" />
+                  Est. {Math.max(1, Math.round(selectedCount * 1.5))} mins
+                </span>
               </div>
 
-              {/* Exam Mode Card */}
-              <div className="p-5 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all flex flex-col justify-between space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex size-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                      <Trophy className="size-5" />
+              <div className="grid grid-cols-5 gap-2">
+                {[5, 10, 15, 20].map((count) => {
+                  const isSelected = selectedCount === count;
+                  return (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => setSelectedCount(count)}
+                      className={cn(
+                        "py-2 px-1 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center",
+                        isSelected
+                          ? "border-primary bg-primary/10 text-primary font-bold shadow-xs scale-102 ring-1 ring-primary"
+                          : "border-border/60 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40"
+                      )}
+                    >
+                      <span className="text-sm font-extrabold font-mono">{count}</span>
+                      <span className="text-[9px] uppercase tracking-wider font-semibold">Qs</span>
+                    </button>
+                  );
+                })}
+                {/* All 24 Questions */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedCount(24)}
+                  className={cn(
+                    "py-2 px-1 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center",
+                    selectedCount === 24
+                      ? "border-primary bg-primary/10 text-primary font-bold shadow-xs scale-102 ring-1 ring-primary"
+                      : "border-border/60 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40"
+                  )}
+                >
+                  <span className="text-sm font-extrabold font-mono">All</span>
+                  <span className="text-[9px] uppercase tracking-wider font-semibold">24 Qs</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Mode Selection Cards */}
+            <div className="space-y-2 pt-2">
+              <label className="text-xs font-bold text-foreground">
+                2. Select Mode &amp; Start
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Study Mode Card */}
+                <div className="p-4 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all flex flex-col justify-between space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+                        <Sparkles className="size-4" />
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary">
+                        Untimed &amp; Guided
+                      </Badge>
                     </div>
-                    <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                      DO 015 Graded
-                    </Badge>
+                    <h3 className="font-bold text-sm text-foreground">Study Mode</h3>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Instant feedback, Socratic hints, and step-by-step Gemini AI explanations.
+                    </p>
                   </div>
-                  <h3 className="font-bold text-sm text-foreground">Exam Mode</h3>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Timed assessment with DepEd DO 015 s. 2026 grade transmutation, recorded scores, and descriptor.
-                  </p>
+
+                  <Button asChild size="sm" variant="outline" className="w-full rounded-xl text-xs font-bold gap-1.5 border-primary/30 text-primary hover:bg-primary/10">
+                    <Link
+                      href={`/curriculum/${subject.slug}/quiz/${selectedLessonForMode.number}?mode=study&count=${selectedCount}`}
+                      onClick={() => setSelectedLessonForMode(null)}
+                    >
+                      <Sparkles className="size-3.5" />
+                      <span>Start Study ({selectedCount} Qs)</span>
+                    </Link>
+                  </Button>
                 </div>
 
-                <Button asChild size="sm" className="w-full rounded-xl text-xs font-bold gap-1.5 shadow-xs">
-                  <Link
-                    href={`/curriculum/${subject.slug}/quiz/${selectedLessonForMode.number}?mode=exam`}
-                    onClick={() => setSelectedLessonForMode(null)}
-                  >
-                    <Play className="size-3.5 fill-current" />
-                    <span>Launch Exam Mode</span>
-                  </Link>
-                </Button>
+                {/* Exam Mode Card */}
+                <div className="p-4 rounded-2xl border border-border bg-card hover:border-primary/50 transition-all flex flex-col justify-between space-y-3">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                        <Trophy className="size-4" />
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                        DO 015 Graded
+                      </Badge>
+                    </div>
+                    <h3 className="font-bold text-sm text-foreground">Exam Mode</h3>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Formal simulation with score recording &amp; DO 015 s. 2026 grade transmutation.
+                    </p>
+                  </div>
+
+                  <Button asChild size="sm" className="w-full rounded-xl text-xs font-bold gap-1.5 shadow-xs">
+                    <Link
+                      href={`/curriculum/${subject.slug}/quiz/${selectedLessonForMode.number}?mode=exam&count=${selectedCount}`}
+                      onClick={() => setSelectedLessonForMode(null)}
+                    >
+                      <Play className="size-3.5 fill-current" />
+                      <span>Start Exam ({selectedCount} Qs)</span>
+                    </Link>
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
