@@ -298,3 +298,53 @@ model ReminderNotice {
   @@unique([userId, kind, periodKey, channel])
   @@map("reminder_notices")
 }
+
+// -----------------------------------------------------------------------------
+// Administration, Broadcasts & System Settings
+// -----------------------------------------------------------------------------
+
+enum AnnouncementType {
+  INFO
+  WARNING
+  PROMO
+  MAINTENANCE
+}
+
+enum AudienceType {
+  ALL
+  PREMIUM
+  TRIAL
+}
+
+model AdminConfig {
+  id                   String   @id @default(cuid())
+  monthlyPricePhp      Int      @default(199)
+  annualPricePhp       Int      @default(1499)
+  maxTrialSubjects     Int      @default(3)
+  maxFreeLessons       Int      @default(3)
+  gcashReceiverNumber  String   @default("0917-888-4321")
+  gcashAccountName     String   @default("HIGHSCHOOL TUTOR PH")
+  mayaReceiverNumber   String   @default("0918-999-8765")
+  mayaAccountName      String   @default("HIGHSCHOOL TUTOR PH")
+  enableAiTutorTrial   Boolean  @default(true)
+  promoDiscountPercent Int      @default(20)
+  updatedAt            DateTime @updatedAt
+
+  @@map("admin_config")
+}
+
+model Announcement {
+  id             String           @id @default(cuid())
+  title          String
+  body           String           @db.Text
+  type           AnnouncementType @default(INFO)
+  targetAudience AudienceType     @default(ALL)
+  isActive       Boolean          @default(false)
+  publishedAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([isActive, targetAudience])
+  @@map("announcements")
+}
+
