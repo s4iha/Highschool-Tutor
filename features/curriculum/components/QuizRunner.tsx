@@ -16,11 +16,13 @@ import {
   RotateCcw,
   BookOpen,
   HelpCircle,
+  SlidersHorizontal,
 } from "lucide-react";
 import type { Subject, QuizQuestion } from "../types/curriculum.types";
 import { getQuizAction, recordQuizAttemptAction, translateAction } from "../actions/curriculum.actions";
 import { AITutorDrawer } from "./AITutorDrawer";
 import { TranslationControls } from "./TranslationControls";
+import { sampleQuizQuestions } from "../utils/quiz-sampler";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -38,9 +40,13 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const initialMode = (searchParams.get("mode") as "study" | "exam") || "study";
+  const countParam = searchParams.get("count");
+  const initialCount = countParam ? Math.max(1, parseInt(countParam, 10)) : 10;
 
   const [mode, setMode] = React.useState<"study" | "exam">(initialMode);
+  const [allQuestions, setAllQuestions] = React.useState<QuizQuestion[]>([]);
   const [questions, setQuestions] = React.useState<QuizQuestion[]>([]);
+  const [selectedCount] = React.useState<number>(initialCount);
   const [lessonTitle, setLessonTitle] = React.useState<string>(`Lesson ${lessonNumber}`);
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [userAnswers, setUserAnswers] = React.useState<Record<number, "A" | "B" | "C" | "D">>({});
@@ -64,8 +70,10 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
       const res = await getQuizAction(subject.slug, lessonNumber, false);
       if (isMounted) {
         if (res.success && res.questions.length > 0) {
-          setQuestions(res.questions);
+          setAllQuestions(res.questions);
           setLessonTitle(res.lessonTitle);
+          const sampled = sampleQuizQuestions(res.questions, initialCount);
+          setQuestions(sampled);
         }
         setLoading(false);
       }
@@ -76,7 +84,7 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
     return () => {
       isMounted = false;
     };
-  }, [subject.slug, lessonNumber]);
+  }, [subject.slug, lessonNumber, initialCount]);
 
   const loadQuiz = async (refresh: boolean = false) => {
     setLoading(true);
@@ -87,10 +95,21 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
 
     const res = await getQuizAction(subject.slug, lessonNumber, refresh);
     if (res.success && res.questions.length > 0) {
-      setQuestions(res.questions);
+      setAllQuestions(res.questions);
       setLessonTitle(res.lessonTitle);
+      const sampled = sampleQuizQuestions(res.questions, selectedCount);
+      setQuestions(sampled);
     }
     setLoading(false);
+  };
+
+  const handleRetakeSame = () => {
+    const sampled = sampleQuizQuestions(allQuestions, selectedCount);
+    setQuestions(sampled);
+    setUserAnswers({});
+    setCurrentIndex(0);
+    setIsSubmitted(false);
+    setTranslatedContent({});
   };
 
   const currentQ = questions[currentIndex];
@@ -181,7 +200,7 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
     );
   }
 
-  if (questions.length === 0) {
+  if (allQuestions.length === 0) {
     return (
       <div className="mx-auto max-w-lg py-16 text-center space-y-4">
         <h2 className="text-xl font-bold text-foreground">No questions generated</h2>
@@ -241,9 +260,17 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
           </div>
 
           <CardFooter className="flex flex-col gap-3 p-6 sm:flex-row sm:justify-center bg-muted/20 border-t border-border/40">
-            <Button variant="outline" onClick={() => loadQuiz(false)} className="w-full sm:w-auto gap-2">
+            <Button variant="outline" onClick={handleRetakeSame} className="w-full sm:w-auto gap-2">
               <RotateCcw className="size-4" />
-              <span>Retake Quiz</span>
+              <span>Retake Quiz ({questions.length} Qs)</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push(`/curriculum/${subject.slug}`)}
+              className="w-full sm:w-auto gap-2"
+            >
+              <SlidersHorizontal className="size-4" />
+              <span>Change Options</span>
             </Button>
             <Button
               onClick={async () => {
