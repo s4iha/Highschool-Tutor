@@ -1,15 +1,11 @@
 import type { Metadata } from "next";
-import { AdminDashboard } from "@/features/admin";
+import { AdminDashboardPage } from "@/features/admin";
 
 export const metadata: Metadata = {
-  title: "Admin Portal • HighSchool Tutor",
-  description: "Administrative control plane for HighSchool Tutor subscriptions, student tracking, and SaaS pricing.",
+  title: "Admin Dashboard • HighSchool Tutor",
+  description: "Executive administrative dashboard and KPI analytics for HighSchool Tutor.",
 };
 
 export default function AdminPage() {
-  return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
-      <AdminDashboard />
-    </div>
-  );
+  return <AdminDashboardPage />;
 }

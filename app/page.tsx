@@ -13,6 +13,9 @@ import {
 export default async function HomePage() {
   const user = await getCurrentUser();
   if (user) {
+    if (user.role === "ADMIN") {
+      redirect("/admin");
+    }
     redirect("/dashboard");
   }
 

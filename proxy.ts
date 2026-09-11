@@ -72,7 +72,11 @@ export async function proxy(request: NextRequest) {
     if (hasToken) {
       if (customToken) {
         try {
-          await jwtVerify(customToken, key, { algorithms: ["HS256"] });
+          const { payload } = await jwtVerify(customToken, key, { algorithms: ["HS256"] });
+          const role = (payload as unknown as { role?: string }).role;
+          if (role === "ADMIN") {
+            return NextResponse.redirect(new URL("/admin", request.url));
+          }
           return NextResponse.redirect(new URL("/dashboard", request.url));
         } catch {
           // Token is invalid, check if better auth token is present

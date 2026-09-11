@@ -17,7 +17,7 @@ interface AuthPageProps {
 function AuthPageContent({ type }: AuthPageProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrlParam = searchParams.get("callbackUrl");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,10 +57,16 @@ function AuthPageContent({ type }: AuthPageProps) {
           description: `Signed in as ${email}`,
         }
       );
-      if (!data.user?.hasOnboarded) {
+      const role = data.user?.role;
+      let destination = callbackUrlParam;
+      if (!destination || (destination === "/dashboard" && role === "ADMIN")) {
+        destination = role === "ADMIN" ? "/admin" : "/dashboard";
+      }
+
+      if (!data.user?.hasOnboarded && role !== "ADMIN") {
         openOnboardingModal();
       }
-      router.push(callbackUrl);
+      router.push(destination);
       router.refresh();
     },
     onError: (err: unknown) => {
@@ -81,7 +87,7 @@ function AuthPageContent({ type }: AuthPageProps) {
       setIsGoogleLoading(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: callbackUrl,
+        callbackURL: callbackUrlParam || "/dashboard",
       });
     } catch (err: unknown) {
       setIsGoogleLoading(false);
