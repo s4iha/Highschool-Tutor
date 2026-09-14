@@ -56,9 +56,12 @@ export default function DashboardSidebar() {
     }
   };
 
-  const displayName = user?.profile?.fullName || user?.name || "Student";
-  const displayGrade = user?.profile?.gradeLevel
-    ? `${user.profile.gradeLevel} • ${user.profile.track || "DepEd K-12"}`
+  const displayName =
+    user?.profile?.fullName?.trim() ||
+    user?.name?.trim() ||
+    "Student";
+  const displayGrade = user?.profile?.gradeLevel?.trim()
+    ? `${user.profile.gradeLevel.trim()} • ${user.profile.track?.trim() || "DepEd K-12"}`
     : "DepEd MATATAG Student";
 
   const userInitials = displayName

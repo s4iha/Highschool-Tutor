@@ -33,7 +33,7 @@ export function useUser() {
   const user = query.data?.user ?? null;
 
   React.useEffect(() => {
-    if (user && user.profile && !user.profile.hasOnboarded) {
+    if (user && user.role !== "ADMIN" && (!user.profile || !user.profile.hasOnboarded)) {
       openOnboardingModal();
     }
   }, [user, openOnboardingModal]);

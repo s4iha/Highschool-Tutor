@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useOnboardingModalStore } from "@/shared/hooks/useOnboardingModalStore";
+import { useUser, UserData } from "@/features/auth/hooks/useUser";
 import {
   Dialog,
   DialogContent,
@@ -14,11 +15,22 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { GraduationCap } from "lucide-react";
 
-export function OnboardingModal() {
-  const { isOpen, closeOnboardingModal } = useOnboardingModalStore();
-  const [fullName, setFullName] = useState("");
-  const [gradeLevel, setGradeLevel] = useState("Grade 11");
-  const [track, setTrack] = useState("STEM Strand");
+interface OnboardingFormProps {
+  user: UserData | null;
+  onClose: () => void;
+}
+
+function OnboardingForm({ user, onClose }: OnboardingFormProps) {
+  const queryClient = useQueryClient();
+  const [fullName, setFullName] = useState(
+    user?.profile?.fullName?.trim() || user?.name?.trim() || ""
+  );
+  const [gradeLevel, setGradeLevel] = useState(
+    user?.profile?.gradeLevel?.trim() || "Grade 11"
+  );
+  const [track, setTrack] = useState(
+    user?.profile?.track?.trim() || "STEM Strand"
+  );
 
   const mutation = useMutation({
     mutationFn: async (data: { fullName: string; gradeLevel: string; track: string }) => {
@@ -34,10 +46,11 @@ export function OnboardingModal() {
       return res.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
       toast.success("Profile Setup Complete!", {
         description: "Welcome to your HighSchool Tutor learning journey.",
       });
-      closeOnboardingModal();
+      onClose();
     },
     onError: (err: unknown) => {
       const msg = err instanceof Error ? err.message : "Something went wrong.";
@@ -67,8 +80,80 @@ export function OnboardingModal() {
       return;
     }
     const finalTrack = isSeniorHigh ? track : "JHS Core";
-    mutation.mutate({ fullName, gradeLevel, track: finalTrack });
+    mutation.mutate({ fullName: fullName.trim(), gradeLevel, track: finalTrack });
   };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold text-foreground">
+          Full Name
+        </label>
+        <input
+          type="text"
+          required
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="e.g. Juan Dela Cruz"
+          className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold text-foreground">
+          Grade Level
+        </label>
+        <select
+          value={gradeLevel}
+          onChange={(e) => handleGradeChange(e.target.value)}
+          className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
+        >
+          <optgroup label="Junior High School (Grades 7–10)">
+            <option value="Grade 7">Grade 7 (Junior High School)</option>
+            <option value="Grade 8">Grade 8 (Junior High School)</option>
+            <option value="Grade 9">Grade 9 (Junior High School)</option>
+            <option value="Grade 10">Grade 10 (Junior High School)</option>
+          </optgroup>
+          <optgroup label="Senior High School (Grades 11–12)">
+            <option value="Grade 11">Grade 11 (Senior High School)</option>
+            <option value="Grade 12">Grade 12 (Senior High School)</option>
+          </optgroup>
+        </select>
+      </div>
+
+      {isSeniorHigh && (
+        <div className="space-y-1.5 animate-in fade-in-50 duration-200">
+          <label className="text-xs font-semibold text-foreground">
+            Senior High Track / Strand
+          </label>
+          <select
+            value={track}
+            onChange={(e) => setTrack(e.target.value)}
+            className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
+          >
+            <option value="STEM Strand">STEM Strand (Science, Tech, Engineering, Math)</option>
+            <option value="ABM Strand">ABM Strand (Accountancy, Business, Management)</option>
+            <option value="HUMSS Strand">HUMSS Strand (Humanities &amp; Social Sciences)</option>
+            <option value="GAS Strand">General Academic Strand (GAS)</option>
+            <option value="TVL Track">Technical-Vocational-Livelihood (TVL Track)</option>
+          </select>
+        </div>
+      )}
+
+      <Button
+        type="submit"
+        disabled={mutation.isPending}
+        className="w-full mt-2 h-11 rounded-xl text-sm font-semibold"
+      >
+        {mutation.isPending ? "Saving Profile..." : "Get Started"}
+      </Button>
+    </form>
+  );
+}
+
+export function OnboardingModal() {
+  const { isOpen, closeOnboardingModal } = useOnboardingModalStore();
+  const { user } = useUser();
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
@@ -89,70 +174,13 @@ export function OnboardingModal() {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Full Name
-            </label>
-            <input
-              type="text"
-              required
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="e.g. Juan Dela Cruz"
-              className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-foreground">
-              Grade Level
-            </label>
-            <select
-              value={gradeLevel}
-              onChange={(e) => handleGradeChange(e.target.value)}
-              className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
-            >
-              <optgroup label="Junior High School (Grades 7–10)">
-                <option value="Grade 7">Grade 7 (Junior High School)</option>
-                <option value="Grade 8">Grade 8 (Junior High School)</option>
-                <option value="Grade 9">Grade 9 (Junior High School)</option>
-                <option value="Grade 10">Grade 10 (Junior High School)</option>
-              </optgroup>
-              <optgroup label="Senior High School (Grades 11–12)">
-                <option value="Grade 11">Grade 11 (Senior High School)</option>
-                <option value="Grade 12">Grade 12 (Senior High School)</option>
-              </optgroup>
-            </select>
-          </div>
-
-          {isSeniorHigh && (
-            <div className="space-y-1.5 animate-in fade-in-50 duration-200">
-              <label className="text-xs font-semibold text-foreground">
-                Senior High Track / Strand
-              </label>
-              <select
-                value={track}
-                onChange={(e) => setTrack(e.target.value)}
-                className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
-              >
-                <option value="STEM Strand">STEM Strand (Science, Tech, Engineering, Math)</option>
-                <option value="ABM Strand">ABM Strand (Accountancy, Business, Management)</option>
-                <option value="HUMSS Strand">HUMSS Strand (Humanities &amp; Social Sciences)</option>
-                <option value="GAS Strand">General Academic Strand (GAS)</option>
-                <option value="TVL Track">Technical-Vocational-Livelihood (TVL Track)</option>
-              </select>
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            disabled={mutation.isPending}
-            className="w-full mt-2 h-11 rounded-xl text-sm font-semibold"
-          >
-            {mutation.isPending ? "Saving Profile..." : "Get Started"}
-          </Button>
-        </form>
+        {isOpen && (
+          <OnboardingForm
+            key={user?.id || "guest"}
+            user={user}
+            onClose={closeOnboardingModal}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );
