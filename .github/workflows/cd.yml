@@ -89,4 +89,4 @@ jobs:
               echo "$GHCR_PAT" | docker --config "$DOCKER_CONFIG_DIR" login ghcr.io -u "$GHCR_USERNAME" --password-stdin
             fi
             cd /opt/highschool-tutor
-            DOCKER_IMAGE="${DEPLOY_IMAGE:-ghcr.io/username/highschool-tutor:latest}" docker --config "$DOCKER_CONFIG_DIR" compose -f docker-compose.prod.yml --env-file .env up -d --pull always
+            DOCKER_IMAGE="${DEPLOY_IMAGE:-ghcr.io/s4iha/highschool-tutor:latest}" docker --config "$DOCKER_CONFIG_DIR" compose -f docker-compose.prod.yml --env-file .env up -d --pull always
