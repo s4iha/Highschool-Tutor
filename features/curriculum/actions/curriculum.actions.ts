@@ -8,12 +8,22 @@ import {
   generateQuizForLesson,
   generateTutorReply,
   translateText,
+  batchTranslateQuizQuestion,
 } from "../api/gemini-service";
 import {
   askTutorInputSchema,
   translateInputSchema,
+  batchTranslateQuizInputSchema,
   recordAttemptInputSchema,
 } from "../schemas/curriculum.schema";
+import {
+  checkAndConsumeAiCredit,
+  sanitizeStudentInput,
+} from "../utils/ai-credits";
+import {
+  canAccessSubject,
+  FREE_TIER_MAX_TRIAL_SUBJECTS,
+} from "../utils/tier-guardrails";
 import type {
   Lesson,
   QuizQuestion,
@@ -68,6 +78,75 @@ export async function getLessonsAction(subjectSlug: string): Promise<{
   }
 }
 
+export async function ensureSubjectEnrolledAction(subjectSlug: string): Promise<{
+  success: boolean;
+  enrolled: boolean;
+  error?: string;
+}> {
+  try {
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser) {
+      return { success: true, enrolled: false };
+    }
+
+    const existing = await prisma.trialSubject.findUnique({
+      where: {
+        userId_subjectSlug: {
+          userId: sessionUser.id,
+          subjectSlug,
+        },
+      },
+    });
+
+    if (existing) {
+      return { success: true, enrolled: true };
+    }
+
+    const activeSub = await prisma.subscription.findFirst({
+      where: {
+        userId: sessionUser.id,
+        status: "ACTIVE",
+      },
+    });
+    const isSubscribed = !!activeSub;
+
+    const enrolled = await prisma.trialSubject.findMany({
+      where: { userId: sessionUser.id },
+      select: { subjectSlug: true },
+    });
+    const enrolledSlugs = enrolled.map((e) => e.subjectSlug);
+
+    const adminConfig = await prisma.adminConfig.findFirst();
+    const maxTrialSubjects = adminConfig?.maxTrialSubjects ?? FREE_TIER_MAX_TRIAL_SUBJECTS;
+
+    if (!canAccessSubject(enrolledSlugs, subjectSlug, isSubscribed, maxTrialSubjects)) {
+      return {
+        success: false,
+        enrolled: false,
+        error: `Free tier limit reached (${maxTrialSubjects} trial subjects). Upgrade to HighSchool Tutor Pass to unlock all subjects.`,
+      };
+    }
+
+    const subject = SUBJECT_BY_SLUG.get(subjectSlug);
+    await prisma.trialSubject.create({
+      data: {
+        userId: sessionUser.id,
+        subjectSlug,
+        subjectLabel: subject?.name || subjectSlug,
+      },
+    });
+
+    return { success: true, enrolled: true };
+  } catch (error) {
+    console.error("ensureSubjectEnrolledAction error:", error);
+    return {
+      success: false,
+      enrolled: false,
+      error: error instanceof Error ? error.message : "Failed to enroll subject",
+    };
+  }
+}
+
 export async function getQuizAction(
   subjectSlug: string,
   lessonNumber: number,
@@ -82,6 +161,20 @@ export async function getQuizAction(
     const subject = SUBJECT_BY_SLUG.get(subjectSlug);
     if (!subject) {
       return { success: false, questions: [], lessonTitle: "", error: "Subject not found" };
+    }
+
+    // 0. Auto-enroll student or verify trial subject access limit
+    const sessionUser = await getCurrentUser();
+    if (sessionUser?.id) {
+      const enrollCheck = await ensureSubjectEnrolledAction(subjectSlug);
+      if (!enrollCheck.success) {
+        return {
+          success: false,
+          questions: [],
+          lessonTitle: "",
+          error: enrollCheck.error || "Trial subject limit reached",
+        };
+      }
     }
 
     // 1. Check cached lesson title
@@ -109,7 +202,17 @@ export async function getQuizAction(
       }
     }
 
-    // 3. Generate via Gemini AI
+    // 3. Generate via Gemini AI (subject to daily AI credit limit)
+    const creditCheck = await checkAndConsumeAiCredit(sessionUser?.id, "quiz_generation");
+    if (!creditCheck.allowed) {
+      return {
+        success: false,
+        questions: [],
+        lessonTitle: "",
+        error: creditCheck.error,
+      };
+    }
+
     const questions = await generateQuizForLesson(subject, lessonNumber, lessonTitle);
 
     // 4. Save to PostgreSQL cache
@@ -151,8 +254,20 @@ export async function askTutorAction(rawInput: unknown): Promise<{
 }> {
   try {
     const input = askTutorInputSchema.parse(rawInput);
+    const sessionUser = await getCurrentUser();
+
+    // Check daily AI credits
+    const creditCheck = await checkAndConsumeAiCredit(sessionUser?.id, "ai_tutor");
+    if (!creditCheck.allowed) {
+      return {
+        success: false,
+        error: creditCheck.error,
+      };
+    }
+
     const subject = SUBJECT_BY_SLUG.get(input.subjectSlug);
     const subjectName = subject?.name || input.subjectSlug;
+    const sanitizedMessage = sanitizeStudentInput(input.message, 500);
 
     const reply = await generateTutorReply({
       subjectName,
@@ -163,7 +278,7 @@ export async function askTutorAction(rawInput: unknown): Promise<{
       explanation: input.explanation,
       language: input.language,
       history: input.history,
-      message: input.message,
+      message: sanitizedMessage,
     });
 
     return { success: true, reply };
@@ -172,6 +287,77 @@ export async function askTutorAction(rawInput: unknown): Promise<{
     return {
       success: false,
       error: error instanceof Error ? error.message : "Tutor reply failed",
+    };
+  }
+}
+
+export async function batchTranslateAction(rawInput: unknown): Promise<{
+  success: boolean;
+  data?: {
+    question: string;
+    options: { A: string; B: string; C: string; D: string };
+    explanation: string;
+  };
+  error?: string;
+}> {
+  try {
+    const input = batchTranslateQuizInputSchema.parse(rawInput);
+    if (!input.language || input.language.toLowerCase() === "english") {
+      return {
+        success: true,
+        data: {
+          question: input.question,
+          options: input.options,
+          explanation: input.explanation,
+        },
+      };
+    }
+
+    const sessionUser = await getCurrentUser();
+    const isFreeDialect =
+      input.language.toLowerCase() === "english" ||
+      input.language.toLowerCase() === "taglish";
+
+    if (!isFreeDialect) {
+      const activeSub = sessionUser?.id
+        ? await prisma.subscription.findFirst({
+            where: {
+              userId: sessionUser.id,
+              status: "ACTIVE",
+              expiresAt: { gte: new Date() },
+            },
+          })
+        : null;
+
+      if (!activeSub) {
+        return {
+          success: false,
+          error:
+            "DIALECT_PREMIUM_REQUIRED: Regional mother-tongue dialects (Cebuano, Ilocano, Hiligaynon, etc.) require an active HighSchool Tutor pass. Free tier includes English and Taglish.",
+        };
+      }
+    }
+
+    const creditCheck = await checkAndConsumeAiCredit(sessionUser?.id, "translation");
+    if (!creditCheck.allowed) {
+      return { success: false, error: creditCheck.error };
+    }
+
+    const translated = await batchTranslateQuizQuestion(
+      {
+        question: input.question,
+        options: input.options,
+        explanation: input.explanation,
+      },
+      input.language
+    );
+
+    return { success: true, data: translated };
+  } catch (error) {
+    console.error("batchTranslateAction error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Translation failed",
     };
   }
 }
@@ -215,6 +401,11 @@ export async function recordQuizAttemptAction(rawInput: unknown): Promise<{
         mode: input.mode,
       },
     });
+
+    // Auto-enroll trial subject on completed attempt if authenticated
+    if (sessionUser?.id) {
+      await ensureSubjectEnrolledAction(input.subjectSlug);
+    }
 
     return { success: true, attemptId: attempt.id };
   } catch (error) {

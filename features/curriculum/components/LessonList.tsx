@@ -36,6 +36,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
+import { GradeTermPicker } from "./GradeTermPicker";
 import {
   Dialog,
   DialogContent,
@@ -131,9 +132,9 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
           asChild
           className="w-fit -ml-2 text-muted-foreground hover:text-foreground"
         >
-          <Link href="/" className="flex items-center gap-1.5">
+          <Link href="/curriculum" className="flex items-center gap-1.5">
             <ArrowLeft className="size-4" />
-            <span>Back to Subjects</span>
+            <span>Back to Curriculum Catalog</span>
           </Link>
         </Button>
 
@@ -206,6 +207,9 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
           </div>
         </div>
       </div>
+
+      {/* Grade & Term Picker for JHS Subjects */}
+      <GradeTermPicker subject={subject} />
 
       {/* Progress Card */}
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 via-primary/5 to-background rounded-2xl">
@@ -494,7 +498,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                       onClick={() => setSelectedLessonForMode(null)}
                     >
                       <Sparkles className="size-3.5" />
-                      <span>Start Study ({selectedCount} Qs)</span>
+                      <span>Start Study Mode</span>
                     </Link>
                   </Button>
                 </div>
@@ -522,7 +526,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                       onClick={() => setSelectedLessonForMode(null)}
                     >
                       <Play className="size-3.5 fill-current" />
-                      <span>Start Exam ({selectedCount} Qs)</span>
+                      <span>Start Exam Mode</span>
                     </Link>
                   </Button>
                 </div>
