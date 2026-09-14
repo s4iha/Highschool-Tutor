@@ -88,7 +88,9 @@ export async function GET() {
               gradeLevel: profile.gradeLevel,
               track: profile.track,
               school: profile.school,
+              termPreference: profile.termPreference || "",
               hasOnboarded: profile.hasOnboarded,
+              hasCompletedTour: profile.hasCompletedTour ?? false,
             }
           : null,
       },
