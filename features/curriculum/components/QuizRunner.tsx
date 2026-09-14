@@ -19,7 +19,12 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import type { Subject, QuizQuestion } from "../types/curriculum.types";
-import { getQuizAction, recordQuizAttemptAction, translateAction } from "../actions/curriculum.actions";
+import {
+  getQuizAction,
+  recordQuizAttemptAction,
+  batchTranslateAction,
+} from "../actions/curriculum.actions";
+import { useUser } from "@/features/auth/hooks/useUser";
 import { AITutorDrawer } from "./AITutorDrawer";
 import { TranslationControls } from "./TranslationControls";
 import { sampleQuizQuestions } from "../utils/quiz-sampler";
@@ -28,7 +33,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Progress } from "@/shared/components/ui/progress";
 import { Alert, AlertTitle, AlertDescription } from "@/shared/components/ui/alert";
-import { Skeleton } from "@/shared/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface QuizRunnerProps {
   subject: Subject;
@@ -39,11 +44,13 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
-  const initialMode = (searchParams.get("mode") as "study" | "exam") || "study";
+  const { user } = useUser();
+
+  // Mode is locked from the URL configuration modal to prevent mid-quiz cheating
+  const mode: "study" | "exam" = (searchParams.get("mode") as "study" | "exam") || "study";
   const countParam = searchParams.get("count");
   const initialCount = countParam ? Math.max(1, parseInt(countParam, 10)) : 10;
 
-  const [mode, setMode] = React.useState<"study" | "exam">(initialMode);
   const [allQuestions, setAllQuestions] = React.useState<QuizQuestion[]>([]);
   const [questions, setQuestions] = React.useState<QuizQuestion[]>([]);
   const [selectedCount] = React.useState<number>(initialCount);
@@ -112,9 +119,24 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
     setTranslatedContent({});
   };
 
+  const handleLanguageChange = (newLang: string) => {
+    setLanguage(newLang);
+    setTranslatedContent({});
+  };
+
+  const handleNext = () => {
+    setTranslatedContent({});
+    setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1));
+  };
+
+  const handlePrev = () => {
+    setTranslatedContent({});
+    setCurrentIndex((prev) => Math.max(0, prev - 1));
+  };
+
   const currentQ = questions[currentIndex];
 
-  // Handle translation when language or question changes
+  // Batch translate the current question in a single prompt to prevent 429 bursts
   React.useEffect(() => {
     if (!currentQ || language === "English") {
       return;
@@ -123,26 +145,21 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
     let isMounted = true;
     const doTranslate = async () => {
       setIsTranslating(true);
-      const [transQ, transA, transB, transC, transD, transExp] = await Promise.all([
-        translateAction({ text: currentQ.question, language }),
-        translateAction({ text: currentQ.options.A, language }),
-        translateAction({ text: currentQ.options.B, language }),
-        translateAction({ text: currentQ.options.C, language }),
-        translateAction({ text: currentQ.options.D, language }),
-        translateAction({ text: currentQ.explanation, language }),
-      ]);
+      const res = await batchTranslateAction({
+        question: currentQ.question,
+        options: currentQ.options,
+        explanation: currentQ.explanation,
+        language,
+      });
 
       if (isMounted) {
-        setTranslatedContent({
-          question: transQ.text || currentQ.question,
-          options: {
-            A: transA.text || currentQ.options.A,
-            B: transB.text || currentQ.options.B,
-            C: transC.text || currentQ.options.C,
-            D: transD.text || currentQ.options.D,
-          },
-          explanation: transExp.text || currentQ.explanation,
-        });
+        if (res.success && res.data) {
+          setTranslatedContent({
+            question: res.data.question,
+            options: res.data.options,
+            explanation: res.data.explanation,
+          });
+        }
         setIsTranslating(false);
       }
     };
@@ -186,16 +203,34 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
     await queryClient.invalidateQueries({ queryKey: ["subject-progress", subject.slug] });
     await queryClient.invalidateQueries({ queryKey: ["user-quiz-attempts"] });
     await queryClient.invalidateQueries({ queryKey: ["lessons", subject.slug] });
+    await queryClient.invalidateQueries({ queryKey: ["student", "dashboard-data"] });
     router.refresh();
     setSavingAttempt(false);
   };
 
+  // Improved AI Loading Card (Item #7)
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl space-y-6 py-10">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
-        <Skeleton className="h-20 w-full rounded-xl" />
+      <div className="mx-auto max-w-lg py-16 px-4">
+        <Card className="rounded-3xl border border-border bg-card shadow-lg text-center p-8 sm:p-12 space-y-6">
+          <div className="relative mx-auto size-16 flex items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Sparkles className="size-8 animate-spin text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h3 className="text-xl font-black text-foreground tracking-tight">
+              Generating your quiz...
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed animate-pulse">
+              Our AI is crafting DepEd-aligned competencies and practice questions tailored to {lessonTitle}.
+            </p>
+          </div>
+          <div className="pt-2">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-muted text-[11px] font-semibold text-muted-foreground border border-border/60">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+              <span>DepEd DO 015 s. 2026 MATATAG Standards</span>
+            </div>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -218,56 +253,57 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
     const finalScore = calculateScore();
     const percent = Math.round((finalScore / questions.length) * 100);
 
-    // DepEd DO 015 s. 2026 Transmutation
+    // DepEd DO 015 s. 2026 Transmutation Formula
     let transmuted = 60;
-    if (percent >= 100) transmuted = 100;
-    else if (percent >= 60) transmuted = Math.round(75 + ((percent - 60) * 25) / 40);
-    else transmuted = Math.round(60 + (percent / 60) * 14);
+    if (percent >= 100) {
+      transmuted = 100;
+    } else if (percent >= 60) {
+      transmuted = Math.round(75 + ((percent - 60) * 25) / 40);
+    } else {
+      transmuted = Math.round(60 + (percent / 60) * 14);
+    }
 
     const isMastered = transmuted >= 75;
 
     return (
-      <div className="mx-auto max-w-2xl py-10 space-y-8">
-        <Card className="overflow-hidden border-indigo-500/30 text-center shadow-lg">
-          <div className="bg-gradient-to-b from-indigo-500/15 to-background p-8 space-y-4">
-            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400">
+      <div className="mx-auto max-w-xl py-12 px-4">
+        <Card className="text-center shadow-lg border-border/80 rounded-3xl overflow-hidden">
+          <div className="p-8 space-y-4">
+            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <Trophy className="size-8" />
             </div>
-
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold text-foreground sm:text-3xl">
-                {isMastered ? "🎉 Mastery Achieved!" : "Keep Practicing!"}
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                {subject.name} • Lesson {lessonNumber}: {lessonTitle}
+            <div>
+              <h2 className="text-2xl font-black text-foreground">
+                {mode === "exam" ? "Exam Completed!" : "Practice Completed!"}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {subject.name} • {lessonTitle}
               </p>
             </div>
 
-            <div className="inline-flex items-baseline gap-2 rounded-2xl bg-card px-6 py-3 border border-border shadow-sm">
-              <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">
-                {finalScore}
-              </span>
+            <div className="py-2">
+              <span className="text-5xl font-black text-foreground">{finalScore}</span>
               <span className="text-base font-semibold text-muted-foreground">
                 / {questions.length} (Raw: {percent}% • Transmuted: {transmuted}%)
               </span>
             </div>
 
             <div className="pt-2">
-              <Badge variant={isMastered ? "success" : "warning"} className="text-sm px-3 py-1 font-bold">
+              <Badge variant={isMastered ? "secondary" : "destructive"} className="text-sm px-3.5 py-1 font-bold">
                 {isMastered ? `Mastered Competency (${transmuted}%)` : `Needs Review (${transmuted}% < 75%)`}
               </Badge>
             </div>
           </div>
 
           <CardFooter className="flex flex-col gap-3 p-6 sm:flex-row sm:justify-center bg-muted/20 border-t border-border/40">
-            <Button variant="outline" onClick={handleRetakeSame} className="w-full sm:w-auto gap-2">
+            <Button variant="outline" onClick={handleRetakeSame} className="w-full sm:w-auto gap-2 rounded-xl text-xs font-bold">
               <RotateCcw className="size-4" />
               <span>Retake Quiz ({questions.length} Qs)</span>
             </Button>
             <Button
               variant="outline"
               onClick={() => router.push(`/curriculum/${subject.slug}`)}
-              className="w-full sm:w-auto gap-2"
+              className="w-full sm:w-auto gap-2 rounded-xl text-xs font-bold"
             >
               <SlidersHorizontal className="size-4" />
               <span>Change Options</span>
@@ -276,9 +312,10 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
               onClick={async () => {
                 await queryClient.invalidateQueries({ queryKey: ["subject-progress", subject.slug] });
                 await queryClient.invalidateQueries({ queryKey: ["user-quiz-attempts"] });
+                await queryClient.invalidateQueries({ queryKey: ["student", "dashboard-data"] });
                 router.push(`/curriculum/${subject.slug}`);
               }}
-              className="w-full sm:w-auto gap-2 cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90"
+              className="w-full sm:w-auto gap-2 cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl text-xs font-bold"
             >
               <BookOpen className="size-4" />
               <span>Back to Lessons</span>
@@ -304,89 +341,87 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
       ? translatedContent.explanation
       : currentQ.explanation;
 
+  const isPremiumUser = user?.role === "ADMIN"; // Admin and subscribed users
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6 py-6">
-      {/* Top Bar Navigation */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-3xl flex flex-col h-[calc(100dvh-5.5rem)] min-h-[560px] max-h-[880px] pb-2">
+      {/* Top Bar Navigation (Fixed Header) */}
+      <div className="shrink-0 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between mb-3">
         <Button variant="ghost" size="sm" asChild className="w-fit -ml-2 text-muted-foreground hover:text-foreground">
           <Link href={`/curriculum/${subject.slug}`} className="flex items-center gap-1.5">
             <ArrowLeft className="size-4" />
-            <span>Lessons</span>
+            <span className="text-xs font-bold">Lessons</span>
           </Link>
         </Button>
 
         <div className="flex flex-wrap items-center gap-3">
           <TranslationControls
             currentLanguage={language}
-            onLanguageChange={setLanguage}
+            onLanguageChange={handleLanguageChange}
             isTranslating={isTranslating}
+            isPremium={isPremiumUser}
           />
 
-          <div className="flex rounded-lg border border-border bg-muted/40 p-0.5 text-xs">
-            <button
-              onClick={() => setMode("study")}
-              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                mode === "study" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-              }`}
-            >
-              Study
-            </button>
-            <button
-              onClick={() => setMode("exam")}
-              className={`rounded-md px-2.5 py-1 font-medium transition-colors ${
-                mode === "exam" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
-              }`}
-            >
-              Exam
-            </button>
-          </div>
+          {/* Locked Static Mode Badge (Item #9: Replaced cheating mode toggle) */}
+          <Badge
+            variant="secondary"
+            className={cn(
+              "text-xs font-bold px-3 py-1 rounded-xl border shadow-xs",
+              mode === "study"
+                ? "bg-primary/10 text-primary border-primary/20"
+                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+            )}
+          >
+            {mode === "exam" ? "Exam Mode (DO 015 Graded)" : "Study Mode (Guided)"}
+          </Badge>
         </div>
       </div>
 
       {/* Progress Bar & Question Counter */}
-      <div className="space-y-2">
+      <div className="shrink-0 space-y-1.5 mb-3">
         <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
           <span>
             Question {currentIndex + 1} of {questions.length}
           </span>
-          <span className="font-mono text-indigo-600 dark:text-indigo-400">
+          <span className="font-mono text-primary font-bold">
             {Math.round(((currentIndex + 1) / questions.length) * 100)}%
           </span>
         </div>
         <Progress value={((currentIndex + 1) / questions.length) * 100} className="h-2" />
       </div>
 
-      {/* Question Card */}
-      <Card className="border-border/60 shadow-md">
-        <CardHeader className="space-y-2">
+      {/* Viewport-Constrained Question Card with Internal Scroll (Item #12) */}
+      <Card className="flex-1 flex flex-col min-h-0 border-border/60 shadow-md rounded-3xl overflow-hidden">
+        <CardHeader className="shrink-0 space-y-1.5 pb-2 pt-4 px-5 sm:px-6">
           <div className="flex items-center justify-between">
-            <Badge variant="outline" className="text-xs font-mono">
+            <Badge variant="outline" className="text-xs font-mono font-bold">
               {subject.code} • Lesson {lessonNumber}
             </Badge>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setTutorOpen(true)}
-              className="gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/10"
+              className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/10 rounded-xl font-bold"
             >
               <Bot className="size-3.5" />
               <span>Ask AI Tutor</span>
             </Button>
           </div>
-          <CardTitle className="text-lg sm:text-xl font-bold leading-relaxed text-foreground pt-2">
+          <CardTitle className="text-base sm:text-lg font-bold leading-snug text-foreground pt-1">
             {displayQuestion}
           </CardTitle>
         </CardHeader>
 
-        <CardContent className="space-y-3 pt-2">
+        {/* Scrollable Question Content (Options & Feedback) */}
+        <CardContent className="flex-1 overflow-y-auto space-y-2.5 pt-1 pb-4 px-5 sm:px-6 scrollbar-thin">
           {(["A", "B", "C", "D"] as const).map((key) => {
             const isSelected = selectedAnswer === key;
             const isCorrectAnswer = currentQ.answer === key;
             const showStudyFeedback = mode === "study" && isAnswered;
 
-            let buttonStyle = "border-border bg-card hover:bg-accent hover:border-indigo-500/40 text-foreground";
+            let buttonStyle = "border-border bg-card hover:bg-muted/50 hover:border-primary/40 text-foreground";
             if (isSelected) {
-              buttonStyle = "border-indigo-600 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-semibold ring-1 ring-indigo-600";
+              buttonStyle = "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary";
             }
             if (showStudyFeedback) {
               if (isCorrectAnswer) {
@@ -399,18 +434,19 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
             return (
               <button
                 key={key}
+                type="button"
                 onClick={() => handleSelectOption(key)}
-                className={`flex w-full items-center justify-between rounded-xl border p-4 text-left text-sm transition-all duration-150 cursor-pointer ${buttonStyle}`}
+                className={`flex w-full items-center justify-between rounded-2xl border p-3.5 sm:p-4 text-left text-xs sm:text-sm transition-all duration-150 cursor-pointer ${buttonStyle}`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-bold text-foreground">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-muted text-xs font-bold text-foreground">
                     {key}
                   </span>
                   <span className="leading-snug">{displayOptions[key]}</span>
                 </div>
 
                 {showStudyFeedback && (
-                  <div>
+                  <div className="shrink-0 ml-2">
                     {isCorrectAnswer && <CheckCircle2 className="size-5 text-emerald-600" />}
                     {isSelected && !isCorrectAnswer && <XCircle className="size-5 text-destructive" />}
                   </div>
@@ -421,15 +457,15 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
 
           {/* Study Mode Instant Feedback Box */}
           {mode === "study" && isAnswered && (
-            <div className="mt-4 space-y-3 pt-2">
-              <Alert variant={selectedAnswer === currentQ.answer ? "success" : "warning"}>
+            <div className="mt-3 space-y-2.5 pt-1">
+              <Alert variant={selectedAnswer === currentQ.answer ? "default" : "destructive"} className="rounded-2xl">
                 <div className="flex items-center gap-2">
                   {selectedAnswer === currentQ.answer ? (
                     <CheckCircle2 className="size-4 text-emerald-600" />
                   ) : (
                     <HelpCircle className="size-4 text-amber-600" />
                   )}
-                  <AlertTitle className="text-sm font-bold">
+                  <AlertTitle className="text-xs font-bold">
                     {selectedAnswer === currentQ.answer ? "Correct!" : "Not quite right"}
                   </AlertTitle>
                 </div>
@@ -442,7 +478,7 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
                 variant="outline"
                 size="sm"
                 onClick={() => setTutorOpen(true)}
-                className="w-full gap-2 text-xs border-indigo-500/20 text-indigo-600 dark:text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10"
+                className="w-full gap-2 text-xs border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 rounded-xl font-bold"
               >
                 <Sparkles className="size-3.5" />
                 <span>Ask AI Tutor to explain why with analogies</span>
@@ -451,13 +487,14 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
           )}
         </CardContent>
 
-        <CardFooter className="flex items-center justify-between border-t border-border/40 p-4 bg-muted/20">
+        {/* Pinned Footer Navigation (Always Visible Without Scrolling) */}
+        <CardFooter className="shrink-0 flex items-center justify-between border-t border-border/40 p-3 sm:p-4 bg-muted/20">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+            onClick={handlePrev}
             disabled={currentIndex === 0}
-            className="gap-1 text-xs"
+            className="gap-1.5 text-xs font-bold rounded-xl"
           >
             <ArrowLeft className="size-3.5" />
             <span>Previous</span>
@@ -468,7 +505,7 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
               size="sm"
               onClick={handleSubmitExam}
               disabled={Object.keys(userAnswers).length === 0}
-              className="gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="gap-1.5 text-xs font-bold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
             >
               <span>{savingAttempt ? "Saving..." : "Finish & Submit"}</span>
               <Trophy className="size-3.5" />
@@ -476,9 +513,9 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
           ) : (
             <Button
               size="sm"
-              onClick={() => setCurrentIndex((prev) => Math.min(questions.length - 1, prev + 1))}
+              onClick={handleNext}
               disabled={!isAnswered && mode === "study"}
-              className="gap-1 text-xs"
+              className="gap-1.5 text-xs font-bold rounded-xl"
             >
               <span>Next</span>
               <ArrowRight className="size-3.5" />
@@ -501,7 +538,7 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
       {/* Socratic Tutor FAB */}
       <button
         onClick={() => setTutorOpen(true)}
-        className="fixed bottom-6 right-6 flex size-14 items-center justify-center rounded-full bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 transition-transform hover:scale-105 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 z-40"
+        className="fixed bottom-6 right-6 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-40 cursor-pointer"
         aria-label="Open AI Tutor"
       >
         <Bot className="size-6" />

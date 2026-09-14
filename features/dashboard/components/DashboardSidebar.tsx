@@ -133,6 +133,7 @@ export default function DashboardSidebar() {
                     router.push("/dashboard");
                   }
                 }}
+                data-tour={`sidebar-${item.id}`}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-xs font-bold"

@@ -22,10 +22,14 @@ import {
   Check,
   LayoutGrid,
   List,
+  ClipboardList,
+  Sparkles,
 } from "lucide-react";
 import { useDashboardStore, DashboardTab } from "../hooks/useDashboardStore";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 import { useUser } from "@/features/auth/hooks/useUser";
+import { useDashboardData } from "../hooks/useDashboardData";
+import { useDashboardTour } from "../hooks/useDashboardTour";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -33,7 +37,10 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/lib/utils";
-import { getUserQuizAttemptsAction } from "@/features/curriculum/actions/curriculum.actions";
+import {
+  getUserQuizAttemptsAction,
+  askTutorAction,
+} from "@/features/curriculum/actions/curriculum.actions";
 
 interface StudentDashboardViewProps {
   activeTab?: DashboardTab;
@@ -44,75 +51,7 @@ const taglishGreeting =
 const englishGreeting =
   "Good day! I am your Gemini Socratic AI Tutor for DepEd K-12 MATATAG. Which high school subject or lesson would you like to explore today?";
 
-// Baseline High School Enrolled Subjects (Grade 11 STEM)
-const DEFAULT_ENROLLED_SUBJECTS = [
-  {
-    code: "G11-S1-GENMATH",
-    name: "General Mathematics",
-    grade: "Grade 11 • Semester 1",
-    slug: "g11-s1-genmath",
-    progress: 0,
-    currentLesson: "Not started",
-    quizzesDone: "0 of 12",
-    averageScore: 0,
-    status: "Not Started",
-  },
-  {
-    code: "G11-S1-PRECALC",
-    name: "Pre-Calculus",
-    grade: "Grade 11 STEM • Semester 1",
-    slug: "g11-s1-precalc",
-    progress: 0,
-    currentLesson: "Not started",
-    quizzesDone: "0 of 12",
-    averageScore: 0,
-    status: "Not Started",
-  },
-  {
-    code: "G11-S1-EARTHSCI",
-    name: "Earth and Life Science",
-    grade: "Grade 11 • Semester 1",
-    slug: "g11-s1-earthsci",
-    progress: 0,
-    currentLesson: "Not started",
-    quizzesDone: "0 of 12",
-    averageScore: 0,
-    status: "Not Started",
-  },
-  {
-    code: "G11-S1-ORALCOMM",
-    name: "Oral Communication in Context",
-    grade: "Grade 11 • Semester 1",
-    slug: "g11-s1-oralcomm",
-    progress: 0,
-    currentLesson: "Not started",
-    quizzesDone: "0 of 12",
-    averageScore: 0,
-    status: "Not Started",
-  },
-  {
-    code: "G11-S1-KOMFIL",
-    name: "Komunikasyon at Pananaliksik",
-    grade: "Grade 11 • Semester 1",
-    slug: "g11-s1-komfil",
-    progress: 0,
-    currentLesson: "Not started",
-    quizzesDone: "0 of 12",
-    averageScore: 0,
-    status: "Not Started",
-  },
-  {
-    code: "G11-S1-EAPP",
-    name: "English for Academic Purposes (EAPP)",
-    grade: "Grade 11 • Semester 1",
-    slug: "g11-s1-eapp",
-    progress: 0,
-    currentLesson: "Not started",
-    quizzesDone: "0 of 12",
-    averageScore: 0,
-    status: "Not Started",
-  },
-];
+
 
 export default function StudentDashboardView({
   activeTab: propActiveTab,
@@ -200,56 +139,44 @@ export default function StudentDashboardView({
 
 
 
-  // Dynamically enhance enrolled subjects with user's real attempts
+  const queryClient = useQueryClient();
+
+  // Load real-time aggregated dashboard data
+  const { data: dashboardData, refetch: refetchDashboard } = useDashboardData(!!user?.id);
+  const metrics = dashboardData?.metrics;
+  const activeLearning = dashboardData?.activeLearning;
+
   const dynamicEnrolledSubjects = React.useMemo(() => {
-    if (!userAttemptsData || userAttemptsData.length === 0) {
-      return DEFAULT_ENROLLED_SUBJECTS;
-    }
+    return (dashboardData?.enrolledSubjects || []).map((sub) => ({
+      code: sub.code,
+      name: sub.name,
+      grade: `${sub.grade} • ${sub.term}`,
+      slug: sub.slug,
+      progress: sub.progressPercent,
+      currentLesson:
+        sub.completedLessons > 0
+          ? `Lesson ${sub.completedLessons} completed`
+          : "Lesson 1: Not started",
+      quizzesDone: `${sub.completedLessons} of ${sub.totalLessons}`,
+      averageScore: sub.lastScorePercent ?? 0,
+      status:
+        (sub.lastScorePercent ?? 0) >= 75
+          ? "Mastered"
+          : sub.completedLessons > 0
+          ? "Needs Review"
+          : "Not Started",
+    }));
+  }, [dashboardData?.enrolledSubjects]);
 
-    const attemptsBySubject: Record<
-      string,
-      { count: number; bestScores: Record<number, number>; latestLesson?: string }
-    > = {};
+  // Hook for Driver.js Onboarding Tour
+  useDashboardTour({
+    user,
+    onTourComplete: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+  });
 
-    for (const a of userAttemptsData) {
-      if (!attemptsBySubject[a.subjectSlug]) {
-        attemptsBySubject[a.subjectSlug] = {
-          count: 0,
-          bestScores: {},
-          latestLesson: a.title,
-        };
-      }
-      attemptsBySubject[a.subjectSlug].count += 1;
-      const currentBest = attemptsBySubject[a.subjectSlug].bestScores[a.lessonNumber] || 0;
-      if (a.transmutedGrade > currentBest) {
-        attemptsBySubject[a.subjectSlug].bestScores[a.lessonNumber] = a.transmutedGrade;
-      }
-    }
-
-    return DEFAULT_ENROLLED_SUBJECTS.map((sub) => {
-      const userSubAttempts = attemptsBySubject[sub.slug];
-      if (!userSubAttempts || userSubAttempts.count === 0) {
-        return sub;
-      }
-      const uniqueLessonsAttempted = Object.keys(userSubAttempts.bestScores).length;
-      const realProgress = Math.min(100, Math.round((uniqueLessonsAttempted / 12) * 100));
-      const scoresArray = Object.values(userSubAttempts.bestScores);
-      const avgScore = Math.round(
-        scoresArray.reduce((acc, curr) => acc + curr, 0) / scoresArray.length
-      );
-
-      return {
-        ...sub,
-        progress: realProgress,
-        currentLesson: userSubAttempts.latestLesson || sub.currentLesson,
-        quizzesDone: `${uniqueLessonsAttempted} of 12`,
-        averageScore: avgScore,
-        status: avgScore >= 75 ? "Mastered" : "Needs Review",
-      };
-    });
-  }, [userAttemptsData]);
-
-  const handleSendAiMessage = (preset?: string) => {
+  const handleSendAiMessage = async (preset?: string) => {
     const query = preset || aiQuery;
     if (!query.trim()) return;
 
@@ -258,28 +185,57 @@ export default function StudentDashboardView({
     setAiQuery("");
     setIsAiResponding(true);
 
-    setTimeout(() => {
-      let responseText = "";
-      if (query.toLowerCase().includes("rational")) {
-        responseText = aiLanguage === "taglish"
-          ? "Para sa rational inequalities: (1) Ilipat lahat ng terms sa kaliwa para maging 0 ang kanan. (2) Hanapin ang common denominator at pagsamahin. (3) Hanapin ang critical values kung saan zero ang numerator o denominator. (4) Gumawa ng sign chart sa number line!"
-          : "For rational inequalities: (1) Move all terms to one side so zero is on the other. (2) Find the common denominator to combine into a single rational expression. (3) Identify critical points where numerator or denominator equals zero. (4) Construct a sign chart on the real number line.";
-      } else if (query.toLowerCase().includes("mitosis") || query.toLowerCase().includes("photosynthesis")) {
-        responseText = aiLanguage === "taglish"
-          ? "Ang Photosynthesis ay binubuo ng dalawang yugto: Light-Dependent Reactions (sa Thylakoid membranes) na gumagawa ng ATP at NADPH, at Light-Independent / Calvin Cycle (sa Stroma) na bumubuo ng Glucose!"
-          : "Photosynthesis consists of two main stages: Light-Dependent Reactions (in thylakoids) producing ATP and NADPH, and the Light-Independent / Calvin Cycle (in stroma) synthesizing glucose.";
-      } else {
-        responseText = aiLanguage === "taglish"
-          ? `Magandang tanong! Sa ating DepEd MATATAG curriculum para sa ${studentGrade}, mahalagang unawain ang pangunahing konsepto bago mag-memorize ng formula. Nais mo ba ng step-by-step example?`
-          : `Great question! In our DepEd MATATAG curriculum for ${studentGrade}, it is vital to master foundational principles before memorizing formulas. Would you like a step-by-step example?`;
-      }
+    try {
+      const res = await askTutorAction({
+        subjectSlug: activeLearning?.subjectSlug || "general-curriculum",
+        lessonTitle: activeLearning?.lessonTitle || "High School Competencies",
+        question: query,
+        options: { A: "", B: "", C: "", D: "" },
+        answer: "N/A",
+        explanation: "Provide Socratic guidance for Philippine high school learner.",
+        language: aiLanguage === "taglish" ? "Taglish" : "English",
+        message: query,
+        history: aiChatLogs.map((m) => ({
+          role: m.sender === "user" ? ("user" as const) : ("model" as const),
+          text: m.text,
+        })),
+      });
 
+      if (res.success && res.reply) {
+        setAiChatLogs((prev) => [
+          ...prev,
+          { sender: "ai", text: res.reply!, time: "Just now" },
+        ]);
+        refetchDashboard();
+      } else {
+        setAiChatLogs((prev) => [
+          ...prev,
+          {
+            sender: "ai",
+            text:
+              res.error ||
+              (aiLanguage === "taglish"
+                ? "Paumanhin, hindi maabot ang AI tutor sa ngayon. Pakisubukan muli maya-maya."
+                : "Sorry, unable to reach the AI tutor right now. Please try again shortly."),
+            time: "Just now",
+          },
+        ]);
+      }
+    } catch {
       setAiChatLogs((prev) => [
         ...prev,
-        { sender: "ai", text: responseText, time: "Just now" },
+        {
+          sender: "ai",
+          text:
+            aiLanguage === "taglish"
+              ? "Paumanhin, nagkaroon ng sagabal sa AI tutor. Pakisubukan muli maya-maya."
+              : "Sorry, an unexpected error occurred in AI tutor. Please try again shortly.",
+          time: "Just now",
+        },
       ]);
+    } finally {
       setIsAiResponding(false);
-    }, 800);
+    }
   };
 
   return (
@@ -304,27 +260,44 @@ export default function StudentDashboardView({
                 </p>
               </div>
 
-              <Button
-                asChild
-                className="bg-white hover:bg-slate-100 text-primary font-bold rounded-xl shadow-md text-xs px-5 py-5 gap-2"
-              >
-                <Link href="/curriculum/g11-s1-genmath">
-                  <span>Resume General Mathematics</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
+              {activeLearning ? (
+                <Button
+                  asChild
+                  className="bg-white hover:bg-slate-100 text-primary font-bold rounded-xl shadow-md text-xs px-5 py-5 gap-2"
+                >
+                  <Link href={`/curriculum/${activeLearning.subjectSlug}`}>
+                    <span>Resume {activeLearning.subjectName}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  asChild
+                  className="bg-white hover:bg-slate-100 text-primary font-bold rounded-xl shadow-md text-xs px-5 py-5 gap-2"
+                >
+                  <Link href="/curriculum">
+                    <BookOpen className="w-4 h-4" />
+                    <span>Explore Curriculum</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
 
           {/* Quick Metrics Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div data-tour="metrics-grid" className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-1">
               <div className="flex items-center justify-between text-muted-foreground">
                 <span className="text-xs font-bold">Enrolled Subjects</span>
                 <BookOpen className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-2xl font-black text-foreground">6</span>
-              <p className="text-[11px] text-muted-foreground">DepEd Core &amp; STEM</p>
+              <span className="text-2xl font-black text-foreground">
+                {metrics?.enrolledCount ?? 0}
+              </span>
+              <p className="text-[11px] text-muted-foreground">
+                {(metrics?.enrolledCount ?? 0) > 0 ? "DepEd Trial Subjects" : "No subjects added yet"}
+              </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-1">
@@ -332,8 +305,14 @@ export default function StudentDashboardView({
                 <span className="text-xs font-bold">Practice Tests Taken</span>
                 <Award className="w-4 h-4 text-emerald-500" />
               </div>
-              <span className="text-2xl font-black text-foreground">34 / 48</span>
-              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">70.8% Completed</p>
+              <span className="text-2xl font-black text-foreground">
+                {metrics?.completedQuizzesCount ?? 0} / {metrics?.totalQuizzesCount ?? 12}
+              </span>
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                {metrics?.totalQuizzesCount
+                  ? `${Math.round(((metrics.completedQuizzesCount || 0) / metrics.totalQuizzesCount) * 100)}% Completed`
+                  : "0% Completed"}
+              </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-1">
@@ -341,107 +320,166 @@ export default function StudentDashboardView({
                 <span className="text-xs font-bold">DO 015 Transmuted Avg</span>
                 <TrendingUp className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-2xl font-black text-primary">94.2%</span>
-              <p className="text-[11px] text-muted-foreground">Outstanding (DepEd)</p>
+              <span className="text-2xl font-black text-primary">
+                {metrics?.transmutedAverage !== null && metrics?.transmutedAverage !== undefined
+                  ? `${metrics.transmutedAverage}%`
+                  : "—"}
+              </span>
+              <p className="text-[11px] text-muted-foreground">
+                {metrics?.transmutedRemarks ?? "No evaluations yet"}
+              </p>
             </div>
 
             <div className="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-1">
               <div className="flex items-center justify-between text-muted-foreground">
-                <span className="text-xs font-bold">AI Tutor Inquiries</span>
-                <Bot className="w-4 h-4 text-teal-500" />
+                <span className="text-xs font-bold">Daily Free AI Credits</span>
+                <Sparkles className="w-4 h-4 text-teal-500" />
               </div>
-              <span className="text-2xl font-black text-foreground">18</span>
-              <p className="text-[11px] text-muted-foreground">Taglish &amp; English</p>
+              <span className="text-2xl font-black text-foreground">
+                {metrics?.totalAiCreditsRemaining ?? 20} / {metrics?.totalAiCreditsMax ?? 20}
+              </span>
+              <p className="text-[11px] text-muted-foreground">
+                {(metrics?.totalAiCreditsRemaining ?? 20) > 0 ? "Credits Available" : "Exhausted Today"}
+              </p>
             </div>
           </div>
 
           {/* Active Learning In-Progress Card */}
-          <div className="p-6 rounded-3xl bg-card border border-border shadow-md space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div>
+          {activeLearning ? (
+            <div data-tour="active-learning" className="p-6 rounded-3xl bg-card border border-border shadow-md space-y-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
+                    Current In-Progress Subject
+                  </span>
+                  <h3 className="text-lg font-bold text-foreground">
+                    {activeLearning.subjectName} ({activeLearning.subjectGrade} • {activeLearning.subjectTerm})
+                  </h3>
+                </div>
+                <Badge variant="secondary" className="bg-primary/10 text-primary font-bold">
+                  {activeLearning.progressPercent}% Completed
+                </Badge>
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full bg-muted h-2.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-500"
+                  style={{ width: `${activeLearning.progressPercent}%` }}
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                    <Layers className="w-4 h-4 text-primary" />
+                    <span>{activeLearning.lessonTitle}</span>
+                  </div>
+                  <span>•</span>
+                  <span>Quiz {activeLearning.lessonNumber} Available</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button asChild size="sm" className="rounded-xl text-xs font-bold">
+                    <Link href={`/curriculum/${activeLearning.subjectSlug}`}>
+                      Continue Lesson Studio
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div data-tour="active-learning" className="p-6 rounded-3xl bg-card border border-border shadow-md space-y-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="space-y-1">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-primary">
-                  Current In-Progress Subject
+                  Start Your Learning Journey
                 </span>
                 <h3 className="text-lg font-bold text-foreground">
-                  General Mathematics (Grade 11 • Semester 1)
+                  No Active Subject Yet
                 </h3>
+                <p className="text-xs text-muted-foreground">
+                  Pick any DepEd MATATAG subject from our curriculum catalog to begin lessons and practice tests.
+                </p>
               </div>
-              <Badge variant="secondary" className="bg-primary/10 text-primary font-bold">
-                75% Completed
-              </Badge>
+              <Button asChild className="rounded-xl text-xs font-bold gap-2 shrink-0">
+                <Link href="/curriculum">
+                  <BookOpen className="w-4 h-4" />
+                  <span>Browse Subjects</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </Button>
             </div>
-
-            {/* Progress bar */}
-            <div className="w-full bg-muted h-2.5 rounded-full overflow-hidden">
-              <div className="bg-primary h-full rounded-full w-[75%]" />
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-2">
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                  <Layers className="w-4 h-4 text-primary" />
-                  <span>Lesson 5: Rational Equations &amp; Inequalities</span>
-                </div>
-                <span>•</span>
-                <span>Quiz 5 Available</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button asChild size="sm" className="rounded-xl text-xs font-bold">
-                  <Link href="/curriculum/g11-s1-genmath">
-                    Continue Lesson Studio
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Dual Column: Recent Quizzes + Quick AI Socratic Assistant */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left: Recent Quizzes */}
-            <div className="lg:col-span-7 p-6 rounded-3xl bg-card border border-border shadow-xs space-y-4">
+            <div data-tour="recent-tests" className="lg:col-span-7 p-6 rounded-3xl bg-card border border-border shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-bold text-foreground">
                   Recent Practice Test Transmutations
                 </h4>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("subjects")}
-                  className="text-xs font-bold text-primary hover:underline"
-                >
-                  View All &rarr;
-                </button>
+                {userAttemptsData && userAttemptsData.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("subjects")}
+                    className="text-xs font-bold text-primary hover:underline"
+                  >
+                    View All &rarr;
+                  </button>
+                )}
               </div>
 
-              <div className="space-y-3">
-                {(userAttemptsData || []).slice(0, 3).map((quiz, i) => (
-                  <div
-                    key={i}
-                    className="p-4 rounded-2xl bg-muted/40 border border-border flex items-center justify-between gap-3 hover:bg-muted/70 transition-colors"
-                  >
-                    <div className="space-y-1 min-w-0">
-                      <h5 className="text-xs font-bold text-foreground truncate">
-                        {quiz.title}
-                      </h5>
-                      <p className="text-[11px] text-muted-foreground">
-                        {quiz.subject} • {quiz.date}
-                      </p>
+              {userAttemptsData && userAttemptsData.length > 0 ? (
+                <div className="space-y-3">
+                  {userAttemptsData.slice(0, 3).map((quiz, i) => (
+                    <div
+                      key={i}
+                      className="p-4 rounded-2xl bg-muted/40 border border-border flex items-center justify-between gap-3 hover:bg-muted/70 transition-colors"
+                    >
+                      <div className="space-y-1 min-w-0">
+                        <h5 className="text-xs font-bold text-foreground truncate">
+                          {quiz.title}
+                        </h5>
+                        <p className="text-[11px] text-muted-foreground">
+                          {quiz.subject} • {quiz.date}
+                        </p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-sm font-black text-primary block">
+                          {quiz.transmutedGrade}%
+                        </span>
+                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                          {quiz.rawScore}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-sm font-black text-primary block">
-                        {quiz.transmutedGrade}%
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                        {quiz.rawScore}
-                      </span>
-                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 px-4 text-center rounded-2xl bg-muted/20 border border-dashed border-border/80">
+                  <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center text-muted-foreground/60 mb-3">
+                    <ClipboardList className="w-6 h-6" />
                   </div>
-                ))}
-              </div>
+                  <h5 className="text-sm font-bold text-foreground">No practice tests yet</h5>
+                  <p className="text-xs text-muted-foreground max-w-xs mt-1">
+                    Complete a quiz to see your official DepEd DO 015 s. 2026 grade transmutations here.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveTab("subjects")}
+                    className="mt-4 rounded-xl text-xs font-bold gap-1.5 shadow-xs"
+                  >
+                    <span>Take Your First Quiz</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Right: Quick AI Assistant Mini Box */}
-            <div className="lg:col-span-5 p-6 rounded-3xl bg-card border border-border shadow-xs space-y-4 flex flex-col justify-between">
+            <div data-tour="ai-tutor-box" className="lg:col-span-5 p-6 rounded-3xl bg-card border border-border shadow-xs space-y-4 flex flex-col justify-between">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-primary font-bold text-xs">
@@ -501,7 +539,7 @@ export default function StudentDashboardView({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-xl font-black text-foreground">
-                Enrolled High School Subjects (Grade 11 STEM)
+                Enrolled High School Subjects ({studentGrade} • {studentTrack})
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Full 12-lesson study studios with 24 standardized practice tests per subject.
@@ -548,7 +586,7 @@ export default function StudentDashboardView({
                 onClick={() =>
                   openUpgradeModal({
                     featureName: "All High School Subjects",
-                    reason: "Upgrade to unlock all 130+ DepEd subjects across Junior & Senior High.",
+                    reason: "Upgrade to unlock all DepEd subjects across Junior & Senior High.",
                   })
                 }
                 className="rounded-xl text-xs font-bold gap-1.5"
@@ -559,8 +597,24 @@ export default function StudentDashboardView({
             </div>
           </div>
 
-          {/* Render List View vs Card Grid */}
-          {effectiveViewMode === "list" ? (
+          {/* Render Empty State vs List View vs Card Grid */}
+          {dynamicEnrolledSubjects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-3xl bg-card border border-border shadow-xs space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-1">
+                <BookOpen className="w-7 h-7" />
+              </div>
+              <h4 className="text-lg font-bold text-foreground">No Enrolled Subjects Yet</h4>
+              <p className="text-xs text-muted-foreground max-w-md">
+                As a free learner, you can explore lessons across DepEd MATATAG subjects. Browse our complete curriculum catalog and jump directly into your first study module!
+              </p>
+              <Button asChild className="rounded-xl text-xs font-bold gap-2 mt-2">
+                <Link href="/curriculum">
+                  <span>Explore Curriculum Catalog</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </Button>
+            </div>
+          ) : effectiveViewMode === "list" ? (
             <div className="overflow-x-auto rounded-3xl border border-border bg-card shadow-xs">
               <table className="w-full text-left text-xs">
                 <thead className="bg-muted/70 text-muted-foreground font-bold uppercase tracking-wider text-[11px] border-b border-border">

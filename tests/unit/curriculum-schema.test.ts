@@ -3,6 +3,7 @@ import {
   quizQuestionSchema,
   lessonSchema,
   recordAttemptInputSchema,
+  batchTranslateQuizInputSchema,
 } from "@/features/curriculum/schemas/curriculum.schema";
 
 describe("Curriculum Zod Schemas Validation", () => {
@@ -76,5 +77,56 @@ describe("Curriculum Zod Schemas Validation", () => {
 
     const result = lessonSchema.safeParse(validLesson);
     expect(result.success).toBe(true);
+  });
+
+  describe("batchTranslateQuizInputSchema", () => {
+    it("should validate a complete quiz translation input payload", () => {
+      const payload = {
+        question: "What is the inverse function of f(x) = 2x + 1?",
+        options: {
+          A: "(x - 1) / 2",
+          B: "(x + 1) / 2",
+          C: "2x - 1",
+          D: "1 / (2x + 1)",
+        },
+        explanation: "To find the inverse, swap x and y and solve for y.",
+        language: "Taglish",
+      };
+
+      const result = batchTranslateQuizInputSchema.safeParse(payload);
+      expect(result.success).toBe(true);
+    });
+
+    it("should reject payload with missing options", () => {
+      const payload = {
+        question: "What is the inverse function?",
+        options: {
+          A: "Option A",
+          B: "Option B",
+        },
+        explanation: "Explanation",
+        language: "Taglish",
+      };
+
+      const result = batchTranslateQuizInputSchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject payload with unsupported language", () => {
+      const payload = {
+        question: "What is the inverse function?",
+        options: {
+          A: "A",
+          B: "B",
+          C: "C",
+          D: "D",
+        },
+        explanation: "Explanation",
+        language: "Klingon",
+      };
+
+      const result = batchTranslateQuizInputSchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
   });
 });

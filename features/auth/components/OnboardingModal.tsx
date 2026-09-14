@@ -31,9 +31,12 @@ function OnboardingForm({ user, onClose }: OnboardingFormProps) {
   const [track, setTrack] = useState(
     user?.profile?.track?.trim() || "STEM Strand"
   );
+  const [termPreference, setTermPreference] = useState(
+    user?.profile?.termPreference?.trim() || "Trimester 1"
+  );
 
   const mutation = useMutation({
-    mutationFn: async (data: { fullName: string; gradeLevel: string; track: string }) => {
+    mutationFn: async (data: { fullName: string; gradeLevel: string; track: string; termPreference: string }) => {
       const res = await fetch("/api/user/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,8 +71,14 @@ function OnboardingForm({ user, onClose }: OnboardingFormProps) {
       if (track === "JHS Core") {
         setTrack("STEM Strand");
       }
+      if (!termPreference.startsWith("Semester")) {
+        setTermPreference("Semester 1");
+      }
     } else {
       setTrack("JHS Core");
+      if (!termPreference.startsWith("Trimester")) {
+        setTermPreference("Trimester 1");
+      }
     }
   };
 
@@ -80,7 +89,7 @@ function OnboardingForm({ user, onClose }: OnboardingFormProps) {
       return;
     }
     const finalTrack = isSeniorHigh ? track : "JHS Core";
-    mutation.mutate({ fullName: fullName.trim(), gradeLevel, track: finalTrack });
+    mutation.mutate({ fullName: fullName.trim(), gradeLevel, track: finalTrack, termPreference });
   };
 
   return (
@@ -118,6 +127,30 @@ function OnboardingForm({ user, onClose }: OnboardingFormProps) {
             <option value="Grade 11">Grade 11 (Senior High School)</option>
             <option value="Grade 12">Grade 12 (Senior High School)</option>
           </optgroup>
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold text-foreground">
+          {isSeniorHigh ? "Current Semester" : "Current Trimester / Grading Period"}
+        </label>
+        <select
+          value={termPreference}
+          onChange={(e) => setTermPreference(e.target.value)}
+          className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary transition-colors"
+        >
+          {isSeniorHigh ? (
+            <>
+              <option value="Semester 1">Semester 1 (First Half of School Year)</option>
+              <option value="Semester 2">Semester 2 (Second Half of School Year)</option>
+            </>
+          ) : (
+            <>
+              <option value="Trimester 1">Trimester 1 (First Grading Period)</option>
+              <option value="Trimester 2">Trimester 2 (Second Grading Period)</option>
+              <option value="Trimester 3">Trimester 3 (Third Grading Period)</option>
+            </>
+          )}
         </select>
       </div>
 

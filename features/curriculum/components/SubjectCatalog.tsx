@@ -10,9 +10,15 @@ import {
   School,
   Layers,
   ChevronRight,
+  Filter,
+  CheckCircle2,
 } from "lucide-react";
-import { SUBJECTS } from "../utils/curriculum-data";
-import type { Subject } from "../types/curriculum.types";
+import {
+  getDistinctJhsSubjects,
+  getDistinctShsSubjects,
+  buildJhsSlug,
+} from "../utils/curriculum-data";
+import { useUser } from "@/features/auth/hooks/useUser";
 import {
   Card,
   CardHeader,
@@ -25,110 +31,314 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { cn } from "@/lib/utils";
 
 export function SubjectCatalog() {
+  const { user } = useUser();
   const [search, setSearch] = React.useState("");
   const [levelFilter, setLevelFilter] = React.useState<
     "all" | "Junior High School" | "Senior High School"
   >("all");
-  const [gradeFilter, setGradeFilter] = React.useState<string>("all");
+  const [termFilter, setTermFilter] = React.useState<"all" | "term1" | "term2" | "term3">("all");
 
-  const availableGrades = React.useMemo(() => {
-    if (levelFilter === "Junior High School")
-      return ["Grade 7", "Grade 8", "Grade 9", "Grade 10"];
-    if (levelFilter === "Senior High School")
-      return ["Grade 11", "Grade 12"];
-    return [
-      "Grade 7",
-      "Grade 8",
-      "Grade 9",
-      "Grade 10",
-      "Grade 11",
-      "Grade 12",
-    ];
-  }, [levelFilter]);
+  const studentGrade = user?.profile?.gradeLevel?.trim() || "Grade 7";
+  const studentTerm = user?.profile?.termPreference?.trim() || "Trimester 1";
 
-  const filteredSubjects = React.useMemo(() => {
-    return SUBJECTS.filter((subject) => {
+  const isStudentSHS = studentGrade.startsWith("Grade 11") || studentGrade.startsWith("Grade 12");
+  const isStudentJHS =
+    studentGrade.startsWith("Grade 7") ||
+    studentGrade.startsWith("Grade 8") ||
+    studentGrade.startsWith("Grade 9") ||
+    studentGrade.startsWith("Grade 10");
+
+  // Determine active term string for JHS slugs based on filter or student profile
+  const resolvedJhsTerm = React.useMemo(() => {
+    if (termFilter === "term1") return "Trimester 1";
+    if (termFilter === "term2") return "Trimester 2";
+    if (termFilter === "term3") return "Trimester 3";
+    return studentTerm.startsWith("Trimester") ? studentTerm : "Trimester 1";
+  }, [termFilter, studentTerm]);
+
+  // Generate 8 unique JHS subjects with dynamic default slugs
+  const allJhsSubjects = React.useMemo(() => {
+    const raw = getDistinctJhsSubjects(
+      isStudentJHS ? studentGrade : "Grade 7",
+      resolvedJhsTerm
+    );
+    return raw.map((s) => ({
+      ...s,
+      defaultSlug: buildJhsSlug(s.abbr || "MATH", isStudentJHS ? studentGrade : "Grade 7", resolvedJhsTerm),
+    }));
+  }, [isStudentJHS, studentGrade, resolvedJhsTerm]);
+
+  // Generate 34 unique SHS subjects
+  const allShsSubjects = React.useMemo(() => {
+    return getDistinctShsSubjects();
+  }, []);
+
+  const totalCatalogCount = allJhsSubjects.length + allShsSubjects.length;
+
+  // Filter JHS subjects
+  const filteredJhsSubjects = React.useMemo(() => {
+    if (levelFilter === "Senior High School") return [];
+
+    return allJhsSubjects.filter((subject) => {
       const matchesSearch =
         subject.name.toLowerCase().includes(search.toLowerCase()) ||
         subject.code.toLowerCase().includes(search.toLowerCase());
-      const matchesLevel =
-        levelFilter === "all" || subject.level === levelFilter;
-      const matchesGrade =
-        gradeFilter === "all" || subject.grade === gradeFilter;
-
-      return matchesSearch && matchesLevel && matchesGrade;
+      return matchesSearch;
     });
-  }, [search, levelFilter, gradeFilter]);
+  }, [allJhsSubjects, levelFilter, search]);
 
-  // Group subjects by category / level & grade
-  const groupedSections = React.useMemo(() => {
-    const sections: {
-      id: string;
-      title: string;
-      level: "Junior High School" | "Senior High School";
-      description: string;
-      icon: React.ElementType;
-      grades: {
-        grade: string;
-        subjects: Subject[];
-      }[];
-    }[] = [];
+  // Filter SHS subjects
+  const filteredShsSubjects = React.useMemo(() => {
+    if (levelFilter === "Junior High School") return [];
+    if (termFilter === "term3") return []; // SHS only has Semester 1 and Semester 2
 
-    const jhsSubjects = filteredSubjects.filter(
-      (s) => s.level === "Junior High School"
+    return allShsSubjects.filter((subject) => {
+      const matchesSearch =
+        subject.name.toLowerCase().includes(search.toLowerCase()) ||
+        subject.code.toLowerCase().includes(search.toLowerCase());
+
+      const matchesTerm =
+        termFilter === "all" ||
+        (termFilter === "term1" && subject.term === "Semester 1") ||
+        (termFilter === "term2" && subject.term === "Semester 2");
+
+      return matchesSearch && matchesTerm;
+    });
+  }, [allShsSubjects, levelFilter, termFilter, search]);
+
+  // Sub-group SHS subjects by Grade and Semester
+  const shsGradeGroups = React.useMemo(() => {
+    const grades = ["Grade 11", "Grade 12"];
+    return grades
+      .map((g) => ({
+        grade: g,
+        subjects: filteredShsSubjects.filter((s) => s.grade === g),
+      }))
+      .filter((g) => g.subjects.length > 0);
+  }, [filteredShsSubjects]);
+
+  const hasAnyResults = filteredJhsSubjects.length > 0 || filteredShsSubjects.length > 0;
+
+  // Render JHS Section Component
+  const renderJhsSection = () => {
+    if (filteredJhsSubjects.length === 0) return null;
+
+    return (
+      <section key="jhs-section" className="space-y-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-border/60 pb-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <School className="size-4" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-heading">
+                Junior High School Core Curriculum (Grades 7–10)
+              </h2>
+              <Badge variant="secondary" className="text-xs font-mono">
+                {filteredJhsSubjects.length} Core Subjects
+              </Badge>
+              {isStudentJHS && (
+                <Badge
+                  variant="outline"
+                  className="text-xs border-primary/40 text-primary bg-primary/5 font-semibold gap-1"
+                >
+                  <CheckCircle2 className="size-3 text-primary" />
+                  Your Grade ({studentGrade})
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-3xl">
+              Philippine DepEd K-12 MATATAG Core Curriculum across Math, Science, English, Filipino, AP, ESP, MAPEH, and TLE. Select any subject to customize Grade 7–10 competencies and Trimesters 1–3.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredJhsSubjects.map((subject) => (
+            <Card
+              key={subject.id}
+              className={cn(
+                "group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-card transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-md hover:shadow-primary/5",
+                isStudentJHS ? "border-primary/30" : "border-border/60"
+              )}
+            >
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-primary/60 opacity-0 transition-opacity group-hover:opacity-100" />
+
+              <CardHeader className="space-y-2.5 pb-2">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
+                    {subject.code}
+                  </span>
+                  <Badge variant="secondary" className="text-[10px] rounded-md px-2 py-0.5">
+                    {resolvedJhsTerm}
+                  </Badge>
+                </div>
+                <CardTitle className="text-base font-bold group-hover:text-primary transition-colors line-clamp-2 min-h-[3rem]">
+                  {subject.name}
+                </CardTitle>
+                <CardDescription className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span>{isStudentJHS ? studentGrade : "Grades 7–10"}</span>
+                  <span>•</span>
+                  <span>DepEd MATATAG</span>
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="pb-3">
+                <div className="rounded-xl bg-muted/50 p-2 text-xs text-muted-foreground flex items-center justify-between">
+                  <span className="flex items-center gap-1">
+                    <Layers className="size-3 text-primary" />
+                    Coverage
+                  </span>
+                  <span className="font-medium text-foreground">
+                    Grades 7–10 • Trimesters 1–3
+                  </span>
+                </div>
+              </CardContent>
+
+              <CardFooter className="pt-0">
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="w-full gap-2 rounded-xl group/btn hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-xs font-medium"
+                  size="sm"
+                >
+                  <Link href={`/curriculum/${subject.defaultSlug}`}>
+                    <span>Explore Subject</span>
+                    <ChevronRight className="size-3.5 transition-transform group-hover/btn:translate-x-1" />
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </section>
     );
-    const shsSubjects = filteredSubjects.filter(
-      (s) => s.level === "Senior High School"
+  };
+
+  // Render SHS Section Component
+  const renderShsSection = () => {
+    if (filteredShsSubjects.length === 0) return null;
+
+    return (
+      <section key="shs-section" className="space-y-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-border/60 pb-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <GraduationCap className="size-4" />
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-heading">
+                Senior High School — STEM Track (Grades 11–12)
+              </h2>
+              <Badge variant="secondary" className="text-xs font-mono">
+                {filteredShsSubjects.length} Specialized Subjects
+              </Badge>
+              {isStudentSHS && (
+                <Badge
+                  variant="outline"
+                  className="text-xs border-primary/40 text-primary bg-primary/5 font-semibold gap-1"
+                >
+                  <CheckCircle2 className="size-3 text-primary" />
+                  Your Grade ({studentGrade})
+                </Badge>
+              )}
+            </div>
+            <p className="text-xs sm:text-sm text-muted-foreground max-w-3xl">
+              Advanced Science, Technology, Engineering & Mathematics specialized competencies, Calculus, Physics, Chemistry, and Biology.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-8">
+          {shsGradeGroups.map((gradeGroup) => {
+            const isUserGradeGroup = studentGrade === gradeGroup.grade;
+            return (
+              <div key={gradeGroup.grade} className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-1 bg-primary rounded-full" />
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+                    {gradeGroup.grade} Curriculum ({gradeGroup.subjects.length})
+                  </h3>
+                  {isUserGradeGroup && (
+                    <Badge variant="secondary" className="text-[10px] text-primary">
+                      Active Grade
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {gradeGroup.subjects.map((subject) => (
+                    <Card
+                      key={subject.id}
+                      className={cn(
+                        "group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-card transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-md hover:shadow-primary/5",
+                        isUserGradeGroup ? "border-primary/30" : "border-border/60"
+                      )}
+                    >
+                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-primary/60 opacity-0 transition-opacity group-hover:opacity-100" />
+
+                      <CardHeader className="space-y-2.5 pb-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
+                            {subject.code}
+                          </span>
+                          <Badge variant="default" className="text-[10px] rounded-md px-2 py-0.5">
+                            {subject.term}
+                          </Badge>
+                        </div>
+                        <CardTitle className="text-base font-bold group-hover:text-primary transition-colors line-clamp-2 min-h-[3rem]">
+                          {subject.name}
+                        </CardTitle>
+                        <CardDescription className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <span>{subject.grade}</span>
+                          <span>•</span>
+                          <span>DepEd MATATAG</span>
+                        </CardDescription>
+                      </CardHeader>
+
+                      <CardContent className="pb-3">
+                        <div className="rounded-xl bg-muted/50 p-2 text-xs text-muted-foreground flex items-center justify-between">
+                          <span className="flex items-center gap-1">
+                            <Layers className="size-3 text-primary" />
+                            Modules
+                          </span>
+                          <span className="font-medium text-foreground">
+                            8–12 Lessons + AI Quiz
+                          </span>
+                        </div>
+                      </CardContent>
+
+                      <CardFooter className="pt-0">
+                        <Button
+                          asChild
+                          variant="secondary"
+                          className="w-full gap-2 rounded-xl group/btn hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-xs font-medium"
+                          size="sm"
+                        >
+                          <Link href={`/curriculum/${subject.defaultSlug}`}>
+                            <span>Explore Subject</span>
+                            <ChevronRight className="size-3.5 transition-transform group-hover/btn:translate-x-1" />
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
     );
+  };
 
-    if (
-      (levelFilter === "all" || levelFilter === "Junior High School") &&
-      jhsSubjects.length > 0
-    ) {
-      const jhsGrades = ["Grade 7", "Grade 8", "Grade 9", "Grade 10"]
-        .map((g) => ({
-          grade: g,
-          subjects: jhsSubjects.filter((s) => s.grade === g),
-        }))
-        .filter((g) => g.subjects.length > 0);
-
-      sections.push({
-        id: "jhs",
-        title: "Junior High School (Grades 7–10)",
-        level: "Junior High School",
-        description:
-          "Philippine DepEd K-12 MATATAG Core Curriculum across Math, Science, English, Filipino, AP, MAPEH, and TLE.",
-        icon: School,
-        grades: jhsGrades,
-      });
-    }
-
-    if (
-      (levelFilter === "all" || levelFilter === "Senior High School") &&
-      shsSubjects.length > 0
-    ) {
-      const shsGrades = ["Grade 11", "Grade 12"]
-        .map((g) => ({
-          grade: g,
-          subjects: shsSubjects.filter((s) => s.grade === g),
-        }))
-        .filter((g) => g.subjects.length > 0);
-
-      sections.push({
-        id: "shs",
-        title: "Senior High School — STEM Track (Grades 11–12)",
-        level: "Senior High School",
-        description:
-          "Advanced Science, Technology, Engineering & Mathematics specialized competencies, Calculus, Physics, and Chemistry.",
-        icon: GraduationCap,
-        grades: shsGrades,
-      });
-    }
-
-    return sections;
-  }, [filteredSubjects, levelFilter]);
+  // Section Ordering: prioritize user's active grade tier
+  const sectionElements = isStudentSHS
+    ? [renderShsSection(), renderJhsSection()]
+    : [renderJhsSection(), renderShsSection()];
 
   return (
     <div className="space-y-10 py-6">
@@ -144,7 +354,7 @@ export function SubjectCatalog() {
             <span className="text-primary">AI Socratic Guidance</span>
           </h1>
           <p className="text-sm text-muted-foreground sm:text-base max-w-2xl leading-relaxed">
-            Structured DepEd competencies, interactive lesson modules, multi-dialect explanations (English, Tagalog, Cebuano, Ilocano), and real-time step-by-step drills powered by Google Gemini.
+            Personalized for your grade level ({studentGrade}). Explore core Junior High disciplines or specialized Senior High tracks with interactive modules and multi-dialect tutoring.
           </p>
         </div>
       </div>
@@ -156,35 +366,73 @@ export function SubjectCatalog() {
             value={levelFilter}
             onValueChange={(val) => {
               setLevelFilter(val as typeof levelFilter);
-              setGradeFilter("all");
             }}
           >
             <TabsList className="bg-muted/80">
               <TabsTrigger value="all">
-                All Levels ({SUBJECTS.length})
+                All Subjects ({totalCatalogCount})
               </TabsTrigger>
               <TabsTrigger value="Junior High School">
-                Junior High (G7–10)
+                Junior High (8 Core)
               </TabsTrigger>
               <TabsTrigger value="Senior High School">
-                Senior High STEM (G11–12)
+                Senior High STEM (34)
               </TabsTrigger>
             </TabsList>
           </Tabs>
 
-          <select
-            value={gradeFilter}
-            onChange={(e) => setGradeFilter(e.target.value)}
-            aria-label="Filter by Grade Level"
-            className="h-9 rounded-xl border border-input bg-card px-3 text-xs font-medium text-foreground shadow-xs focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
-          >
-            <option value="all">All Grades</option>
-            {availableGrades.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
+          {/* Term / Grading Period Filter Chips */}
+          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/50 text-xs">
+            <Filter className="size-3.5 text-muted-foreground ml-1 mr-0.5" />
+            <button
+              type="button"
+              onClick={() => setTermFilter("all")}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
+                termFilter === "all"
+                  ? "bg-card text-foreground shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              All Periods
+            </button>
+            <button
+              type="button"
+              onClick={() => setTermFilter("term1")}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
+                termFilter === "term1"
+                  ? "bg-card text-foreground shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Trimester 1 / Sem 1
+            </button>
+            <button
+              type="button"
+              onClick={() => setTermFilter("term2")}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
+                termFilter === "term2"
+                  ? "bg-card text-foreground shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Trimester 2 / Sem 2
+            </button>
+            <button
+              type="button"
+              onClick={() => setTermFilter("term3")}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
+                termFilter === "term3"
+                  ? "bg-card text-foreground shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Trimester 3 (JHS)
+            </button>
+          </div>
         </div>
 
         <div className="relative w-full md:w-80">
@@ -198,15 +446,15 @@ export function SubjectCatalog() {
         </div>
       </div>
 
-      {/* Categorized Subject Sections */}
-      {groupedSections.length === 0 ? (
+      {/* Subject Sections */}
+      {!hasAnyResults ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 p-12 text-center bg-card/40">
           <BookOpen className="size-10 text-muted-foreground/60" />
           <h3 className="mt-4 text-base font-semibold text-foreground">
             No subjects found
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Try adjusting your search query or grade level filter.
+            Try adjusting your search query or term filter.
           </p>
           <Button
             variant="outline"
@@ -215,7 +463,7 @@ export function SubjectCatalog() {
             onClick={() => {
               setSearch("");
               setLevelFilter("all");
-              setGradeFilter("all");
+              setTermFilter("all");
             }}
           >
             Reset Filters
@@ -223,113 +471,7 @@ export function SubjectCatalog() {
         </div>
       ) : (
         <div className="space-y-12">
-          {groupedSections.map((section) => {
-            const SectionIcon = section.icon;
-            const totalSectionSubjects = section.grades.reduce(
-              (acc, g) => acc + g.subjects.length,
-              0
-            );
-
-            return (
-              <section key={section.id} className="space-y-6">
-                {/* Category Header */}
-                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between border-b border-border/60 pb-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20">
-                        <SectionIcon className="size-4" />
-                      </div>
-                      <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-heading">
-                        {section.title}
-                      </h2>
-                      <Badge variant="secondary" className="text-xs font-mono">
-                        {totalSectionSubjects} {totalSectionSubjects === 1 ? "Subject" : "Subjects"}
-                      </Badge>
-                    </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground max-w-3xl">
-                      {section.description}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Sub-groups by Grade Level */}
-                <div className="space-y-8">
-                  {section.grades.map((gradeGroup) => (
-                    <div key={gradeGroup.grade} className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-1 bg-primary rounded-full" />
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-                          {gradeGroup.grade} Curriculum ({gradeGroup.subjects.length})
-                        </h3>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {gradeGroup.subjects.map((subject) => {
-                          const isSHS = subject.level === "Senior High School";
-                          return (
-                            <Card
-                              key={subject.slug}
-                              className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border/60 bg-card transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-md hover:shadow-primary/5"
-                            >
-                              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-primary/60 opacity-0 transition-opacity group-hover:opacity-100" />
-
-                              <CardHeader className="space-y-2.5 pb-2">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
-                                    {subject.code}
-                                  </span>
-                                  <Badge
-                                    variant={isSHS ? "default" : "secondary"}
-                                    className="text-[10px] rounded-md px-2 py-0.5"
-                                  >
-                                    {subject.term}
-                                  </Badge>
-                                </div>
-                                <CardTitle className="text-base font-bold group-hover:text-primary transition-colors line-clamp-2 min-h-[3rem]">
-                                  {subject.name}
-                                </CardTitle>
-                                <CardDescription className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                  <span>{subject.grade}</span>
-                                  <span>•</span>
-                                  <span>DepEd MATATAG</span>
-                                </CardDescription>
-                              </CardHeader>
-
-                              <CardContent className="pb-3">
-                                <div className="rounded-xl bg-muted/50 p-2 text-xs text-muted-foreground flex items-center justify-between">
-                                  <span className="flex items-center gap-1">
-                                    <Layers className="size-3 text-primary" />
-                                    Modules
-                                  </span>
-                                  <span className="font-medium text-foreground">
-                                    8–12 Lessons + AI Quiz
-                                  </span>
-                                </div>
-                              </CardContent>
-
-                              <CardFooter className="pt-0">
-                                <Button
-                                  asChild
-                                  variant="secondary"
-                                  className="w-full gap-2 rounded-xl group/btn hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-xs font-medium"
-                                  size="sm"
-                                >
-                                  <Link href={`/curriculum/${subject.slug}`}>
-                                    <span>Explore Subject</span>
-                                    <ChevronRight className="size-3.5 transition-transform group-hover/btn:translate-x-1" />
-                                  </Link>
-                                </Button>
-                              </CardFooter>
-                            </Card>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+          {sectionElements}
         </div>
       )}
     </div>

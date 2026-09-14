@@ -13,7 +13,9 @@ export interface UserData {
     gradeLevel: string;
     track: string;
     school: string;
+    termPreference?: string | null;
     hasOnboarded: boolean;
+    hasCompletedTour?: boolean;
   } | null;
 }
 

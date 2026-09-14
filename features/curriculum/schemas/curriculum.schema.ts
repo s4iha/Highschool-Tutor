@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DIALECTS } from "../utils/curriculum-data";
 
 export const subjectSchema = z.object({
   code: z.string().min(3),
@@ -45,6 +46,18 @@ export const askTutorInputSchema = z.object({
 export const translateInputSchema = z.object({
   text: z.string().min(1).max(6000),
   language: z.string(),
+});
+
+export const batchTranslateQuizInputSchema = z.object({
+  question: z.string().min(1),
+  options: z.object({
+    A: z.string().min(1),
+    B: z.string().min(1),
+    C: z.string().min(1),
+    D: z.string().min(1),
+  }),
+  explanation: z.string().min(1),
+  language: z.enum(DIALECTS),
 });
 
 export const recordAttemptInputSchema = z.object({

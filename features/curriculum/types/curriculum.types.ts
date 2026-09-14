@@ -7,6 +7,18 @@ export type Subject = {
   level: "Junior High School" | "Senior High School";
 };
 
+export type DistinctSubject = {
+  id: string;
+  code: string;
+  name: string;
+  level: "Junior High School" | "Senior High School";
+  grade: string;
+  term: string;
+  defaultSlug: string;
+  isJhsCore?: boolean;
+  abbr?: string;
+};
+
 export type Lesson = {
   number: number;
   title: string;

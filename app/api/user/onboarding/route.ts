@@ -7,6 +7,7 @@ const onboardingSchema = z.object({
   fullName: z.string().min(1),
   gradeLevel: z.string().min(1),
   track: z.string().min(1),
+  termPreference: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { fullName, gradeLevel, track } = validated.data;
+    const { fullName, gradeLevel, track, termPreference } = validated.data;
 
     const profile = await prisma.profile.upsert({
       where: { id: sessionUser.id },
@@ -35,6 +36,7 @@ export async function POST(req: Request) {
         fullName,
         gradeLevel,
         track,
+        termPreference: termPreference || "",
         hasOnboarded: true,
       },
       create: {
@@ -43,6 +45,7 @@ export async function POST(req: Request) {
         email: sessionUser.email,
         gradeLevel,
         track,
+        termPreference: termPreference || "",
         hasOnboarded: true,
       },
     });
