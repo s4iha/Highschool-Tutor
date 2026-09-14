@@ -6,19 +6,19 @@
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| **Framework** | Next.js 16 (App Router) + React 19 + TypeScript |
-| **Styling** | Tailwind CSS v4 + Shadcn UI (Radix Primitives) |
-| **Database** | PostgreSQL 15 (Docker) + Prisma ORM 7.9 |
-| **Server State** | TanStack Query v5 + Next.js Server Actions |
-| **Client State** | Zustand v5 |
-| **AI Engine** | Google Gemini 2.5 REST API |
-| **Validation** | Zod v4 |
-| **Icons** | Lucide React |
-| **Notifications** | Sonner |
-| **Containerization** | Docker + Docker Compose |
-| **CI/CD** | GitHub Actions (GHCR + SSH Deploy) |
+| Layer                | Technology                                      |
+| -------------------- | ----------------------------------------------- |
+| **Framework**        | Next.js 16 (App Router) + React 19 + TypeScript |
+| **Styling**          | Tailwind CSS v4 + Shadcn UI (Radix Primitives)  |
+| **Database**         | PostgreSQL 15 (Docker) + Prisma ORM 7.9         |
+| **Server State**     | TanStack Query v5 + Next.js Server Actions      |
+| **Client State**     | Zustand v5                                      |
+| **AI Engine**        | Google Gemini 3.5-flash-lite REST API           |
+| **Validation**       | Zod v4                                          |
+| **Icons**            | Lucide React                                    |
+| **Notifications**    | Sonner                                          |
+| **Containerization** | Docker + Docker Compose                         |
+| **CI/CD**            | GitHub Actions (GHCR + SSH Deploy)              |
 
 ---
 
@@ -80,19 +80,24 @@ highschool-tutor/
 Follow these steps to set up and launch HighSchool Tutor in your local development environment:
 
 ### 1. Prerequisites
+
 - **Node.js:** `v20.x` or higher
 - **Docker Desktop:** Installed and running (for local PostgreSQL database container)
 - **NPM** (packaged with Node)
 - **Google Gemini API Key:** Obtain from [Google AI Studio](https://aistudio.google.com/apikey)
 
 ### 2. Clone Repository & Install Dependencies
+
 Navigate to the root project directory and install all npm dependencies:
+
 ```bash
 npm install
 ```
 
 ### 3. Environment Variables Configuration
+
 Create a `.env.local` file in the root directory (do not commit this file to version control):
+
 ```env
 # Server Configuration
 PORT=3000
@@ -117,14 +122,19 @@ ADMIN_EMAIL="admin@highschooltutor.ph"
 ```
 
 ### 4. Boot Local PostgreSQL Container
+
 Spin up the PostgreSQL database container using Docker Compose:
+
 ```bash
 docker compose up -d
 ```
+
 This initializes a PostgreSQL 15 container listening on port `5432`.
 
 ### 5. Run Database Migrations & Seed Data
+
 Generate the type-safe Prisma client, push database schemas, and seed initial curriculum records:
+
 ```bash
 # Generate Prisma Client
 npx prisma generate
@@ -137,10 +147,13 @@ npx tsx prisma/seed.ts
 ```
 
 ### 6. Launch Development Server
+
 Start the Next.js development server:
+
 ```bash
 npm run dev
 ```
+
 Open [http://localhost:3000](http://localhost:3000) in your web browser.
 
 ---
@@ -150,6 +163,7 @@ Open [http://localhost:3000](http://localhost:3000) in your web browser.
 HighSchool Tutor maintains quality assurance using Jest and Playwright testing suites alongside a structured sprint roadmap.
 
 ### Run Testing Commands
+
 ```bash
 # Run Unit Tests (Jest)
 npm run test:unit
@@ -165,6 +179,7 @@ npm test
 ```
 
 ### Sprint Roadmap
+
 - [x] **Sprint 0 — Project Setup & Architecture:** FDA folder structure, Prisma ORM, Tailwind v4 + Shadcn, Docker setup, CI/CD pipelines, and base shell layout.
 - [x] **Sprint 1 — Curriculum & AI Quiz Engine:** DepEd K-12 subject catalog, Gemini AI lesson generation, interactive Quiz Runner (Study/Exam modes), Socratic AI Tutor drawer, multi-dialect translation.
 - [ ] **Sprint 2 — Auth & Profile:** NextAuth v5 integration, Google SSO, teacher profile settings, and role management.
@@ -180,6 +195,7 @@ npm test
 HighSchool Tutor is engineered for flexible serverless cloud hosting or Docker container deployment:
 
 ### 1. Primary Cloud Deployment (Next.js on Vercel + Serverless PostgreSQL)
+
 Ideal for zero-maintenance serverless scalability:
 
 1. **Frontend & API Hosting (Vercel):**
@@ -200,6 +216,7 @@ Ideal for zero-maintenance serverless scalability:
      ```
 
 ### 2. Alternative Self-Hosted Deployment (Docker Container)
+
 For on-premises institutional servers or private container registries:
 
 1. **Build Container Image:**
@@ -223,6 +240,7 @@ For on-premises institutional servers or private container registries:
 ## 🔐 Security & Best Practices
 
 HighSchool Tutor integrates robust application security principles:
+
 - **Hashed Credentials & Tokens:** Passwords and session keys are secured using standard cryptographic hashing via NextAuth v5.
 - **Session Cookie Protection:** Authentication tokens reside in HTTP-Only, SameSite-protected cookies to eliminate XSS token theft.
 - **Input Validation & Parsing:** All incoming request payloads and AI response outputs are strictly validated using `Zod` schemas.

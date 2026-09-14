@@ -9,10 +9,13 @@
 ## 1. Executive Summary & Problem Statement
 
 ### 1.1 Background
+
 The implementation of the Philippine Department of Education's **MATATAG K-12 Curriculum** (DepEd Order No. 015, s. 2026) introduced streamlined, competency-based learning standards for Junior High School (Grades 7–10) and specialized Senior High School STEM tracks (Grades 11–12). However, high school students frequently lack on-demand personalized tutoring and step-by-step guidance tailored to their local mother tongue dialects and Philippine classroom syllabi.
 
 ### 1.2 The Solution
+
 **HighSchool Tutor** is a full-stack, AI-powered classroom and personalized learning SaaS. It provides:
+
 1. **130+ DepEd-Aligned Subjects** categorized across Junior High School and Senior High School STEM tracks.
 2. **Google Gemini Socratic AI Tutor** delivering on-demand step-by-step hints and multi-dialect translations (English, Filipino, Taglish, Cebuano, Ilocano, and more).
 3. **Interactive Study & Exam Mode Quizzes** with automatic attempt recording and passing grade (≥ 75%) mastery tracking.
@@ -23,17 +26,18 @@ The implementation of the Philippine Department of Education's **MATATAG K-12 Cu
 
 ## 2. User Personas & Roles
 
-| Persona / Role | Description | Primary Needs & Actions |
-|---|---|---|
-| **Free Tier Student** (`STUDENT`) | JHS/SHS student exploring DepEd subjects. | Access up to 3 trial subjects; practice lessons 1–3 in Study Mode with AI hints; view subject catalog. |
+| Persona / Role                                 | Description                                                 | Primary Needs & Actions                                                                                                     |
+| ---------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Free Tier Student** (`STUDENT`)              | JHS/SHS student exploring DepEd subjects.                   | Access up to 3 trial subjects; practice lessons 1–3 in Study Mode with AI hints; view subject catalog.                      |
 | **Premium Student** (`STUDENT` + `ACTIVE` Sub) | Subscribed high school student mastering entire curriculum. | Unlimited access to all 130+ subjects; access all 12 lessons per subject; unlimited AI tutoring hints and Exam mode drills. |
-| **School Head / Admin** (`ADMIN`) | Platform administrator or educator monitor. | Track enrolled students, active subscriptions, revenue metrics, and configure plan pricing / guardrails. |
+| **School Head / Admin** (`ADMIN`)              | Platform administrator or educator monitor.                 | Track enrolled students, active subscriptions, revenue metrics, and configure plan pricing / guardrails.                    |
 
 ---
 
 ## 3. Product Features & Scope
 
 ### 3.1 Curriculum & Subject Catalog
+
 - **Categorization**: Grouped into two primary sections:
   - **Junior High School (Grades 7–10)**: Core subjects (English, Filipino, Math, Science, AP, EsP, MAPEH, TLE).
   - **Senior High School STEM (Grades 11–12)**: Semester-based specialized subjects (General Math, Pre-Calculus, Basic Calculus, General Physics, General Chemistry, General Biology, etc.).
@@ -41,15 +45,18 @@ The implementation of the Philippine Department of Education's **MATATAG K-12 Cu
 - **Search**: Instant case-insensitive search by subject name or course code.
 
 ### 3.2 Socratic AI Tutor & Dialect Engine
-- Powered by **Google Gemini 2.5 Flash Lite**.
+
+- Powered by **Google Gemini 3.5 Flash Lite**.
 - Socratic mode guides the student toward finding the answer themselves without immediately revealing solutions.
 - **Dialect Translations**: Supports 10 Philippine dialects including English, Filipino (Tagalog), Taglish, Cebuano (Bisaya), Ilocano, Hiligaynon, Bicolano, Waray, Kapampangan, and Pangasinense.
 
 ### 3.3 Quiz Runner (Study Mode vs. Exam Mode)
+
 - **Study Mode**: Real-time feedback after each question, AI tutor explanations, and Socratic hint expansion.
 - **Exam Mode**: Timed, uninterrupted assessment measuring final score against DepEd MATATAG transmutation standards (passing score ≥ 75%).
 
 ### 3.4 Tier Guardrails & Billing
+
 - **Free Tier Constraints**:
   - Max 3 enrolled `TrialSubject` records.
   - Accessible lessons per subject: Lessons 1 to 3.
@@ -59,6 +66,7 @@ The implementation of the Philippine Department of Education's **MATATAG K-12 Cu
   - Annual Pass: ₱1,499/year (37% savings for full school year).
 
 ### 3.5 Administrative Portal (`/admin`)
+
 - **Overview Tab**: Live KPI stat cards (Total Students, Active Subscriptions, Revenue in PHP, Pending Verifications).
 - **Students & Subscriptions Tab**: Searchable, filterable student table with direct actions to activate or expire subscriptions.
 - **Pricing & Guardrails Settings Tab**: Live configuration of subscription prices, trial subject limits, and GCash/Maya receiver details.
@@ -66,6 +74,7 @@ The implementation of the Philippine Department of Education's **MATATAG K-12 Cu
 ---
 
 ## 4. Non-Functional Requirements
+
 - **Performance**: Sub-100ms API response time on cached curriculum queries; optimistic mutations with TanStack Query.
 - **Security**: PostgreSQL connection pooling, NextAuth v5 session protection, role-based admin routing (`AppRole.ADMIN`).
 - **Aesthetics & Theme**: Tailwind CSS v4, dark/light mode toggle with `next-themes`, rich OKLCH status tokens (`--success`, `--warning`, `--info`, `--destructive`).
