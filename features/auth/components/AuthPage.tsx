@@ -5,10 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
-import { Eye, EyeOff, Mail, Lock, GraduationCap } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useOnboardingModalStore } from "@/shared/hooks/useOnboardingModalStore";
 import { authClient } from "@/features/auth/lib/auth-client";
+import { ThemeToggle } from "@/shared/components/layout/ThemeToggle";
 
 interface AuthPageProps {
   type: "login" | "register";
@@ -99,20 +100,23 @@ function AuthPageContent({ type }: AuthPageProps) {
   };
 
   return (
-    <div className="h-screen max-h-screen w-full overflow-hidden bg-background flex items-center justify-center p-2 sm:p-4 md:p-6 select-none">
+    <div className="relative h-screen max-h-screen w-full overflow-hidden bg-background flex items-center justify-center p-2 sm:p-4 md:p-6 select-none">
+      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
+        <ThemeToggle />
+      </div>
       <div className="flex w-full max-w-5xl h-full max-h-[92vh] sm:max-h-[86vh] overflow-hidden rounded-3xl bg-card border border-border/40 shadow-2xl">
         {/* Left Form Section */}
         <div className="flex w-full flex-col justify-between p-5 sm:p-7 md:p-9 md:w-1/2 relative overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="relative size-9 overflow-hidden rounded-xl bg-primary/10 p-1 flex items-center justify-center border border-primary/20 shadow-xs group-hover:border-primary/40 transition-colors">
+              <div className="size-9 rounded-xl overflow-hidden shrink-0 shadow-xs flex items-center justify-center bg-card border border-border/60 group-hover:border-primary/40 transition-colors">
                 <Image
-                  src="/logo/highschool-tutor-bg-removed.png"
+                  src="/logo/highschool-tutor-logo-favicon-rounded.png"
                   alt="HighSchool Tutor Logo"
-                  width={32}
-                  height={32}
-                  className="object-contain"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-cover"
                   priority
                 />
               </div>
@@ -290,8 +294,6 @@ function AuthPageContent({ type }: AuthPageProps) {
           <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-2 border-t border-border/40">
             <span>© 2026 HighSchool Tutor</span>
             <div className="flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-success animate-pulse" />
-              <span>DepEd MATATAG Ready</span>
             </div>
           </div>
         </div>
@@ -299,22 +301,18 @@ function AuthPageContent({ type }: AuthPageProps) {
         {/* Right Image Section */}
         <div className="relative hidden w-1/2 md:block rounded-[1.5rem] overflow-hidden m-2.5 ml-0 shadow-inner bg-muted">
           <Image
-            src="/images/auth-bg.jpg"
+            src="/images/auth-asset.png"
             alt="HighSchool Tutor Learning Environment"
             fill
             className="object-cover transition-transform duration-700 hover:scale-105"
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent flex flex-col justify-end p-6 sm:p-8 text-foreground">
-            <span className="inline-flex items-center gap-1.5 self-start px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold backdrop-blur-md mb-2 border border-primary/30">
-              <GraduationCap className="size-3.5" />
-              Next-Gen Philippine EdTech
-            </span>
             <h3 className="text-lg sm:text-xl font-bold font-heading">
               Socratic AI Tutoring for DepEd High Schools
             </h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-              Tailored explanations, practice quizzes, and multi-dialect tutoring in English, Filipino, Taglish, and Cebuano.
+              Tailored explanations, practice quizzes, and multi-dialect tutoring in English and Taglish.
             </p>
           </div>
         </div>

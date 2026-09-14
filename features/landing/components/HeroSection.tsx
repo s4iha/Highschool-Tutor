@@ -77,7 +77,7 @@ export function HeroSection() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-primary" />
-                <span className="font-semibold text-foreground">Google Gemini 2.5 AI</span>
+                <span className="font-semibold text-foreground">Google Gemini 3.5-Flash-Lite AI</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-warning" />
