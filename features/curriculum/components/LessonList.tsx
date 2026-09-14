@@ -21,6 +21,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Subject, Lesson } from "../types/curriculum.types";
 import { getLessonsAction, getSubjectProgressAction } from "../actions/curriculum.actions";
 import { canAccessLesson } from "../utils/tier-guardrails";
+import { usePublicConfigQuery } from "@/features/settings";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 import { cn } from "@/lib/utils";
 import {
@@ -55,6 +56,8 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
   const [selectedCount, setSelectedCount] = React.useState<number>(10);
 
   const { openUpgradeModal } = useUpgradeModalStore();
+  const { data: config } = usePublicConfigQuery();
+  const maxFreeLessons = config?.maxFreeLessons ?? 3;
 
   const { data: lessons = [], isLoading: loadingLessons } = useQuery({
     queryKey: ["lessons", subject.slug],
@@ -159,7 +162,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                   className="text-xs border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 gap-1"
                 >
                   <Sparkles className="size-3" />
-                  Free Tier (3 Lessons Free)
+                  Free Tier ({maxFreeLessons} Lessons Free)
                 </Badge>
               )}
             </div>
@@ -253,7 +256,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
           </h2>
           {!isSubscribed && (
             <span className="text-xs text-muted-foreground">
-              Lessons 1–3 Unlocked • 4+ Require Premium
+              Lessons 1–{maxFreeLessons} Unlocked • {maxFreeLessons + 1}+ Require Premium
             </span>
           )}
         </div>
@@ -280,7 +283,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
               const stat = progress.lessonScores[lesson.number];
               const isMastered = stat?.status === "Mastered";
               const isNeedsReview = stat?.status === "Needs Review";
-              const isAccessible = canAccessLesson(lesson.number, isSubscribed);
+              const isAccessible = canAccessLesson(lesson.number, isSubscribed, maxFreeLessons);
 
               return (
                 <Card

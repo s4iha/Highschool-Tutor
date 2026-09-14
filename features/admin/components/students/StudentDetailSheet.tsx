@@ -23,6 +23,7 @@ import { Button } from "@/shared/components/ui/button";
 import {
   StudentItem,
   useUpdateSubscriptionMutation,
+  useAdminSettingsQuery,
 } from "../../hooks/useAdminPortal";
 
 interface StudentDetailSheetProps {
@@ -37,6 +38,9 @@ export function StudentDetailSheet({
   onOpenChange,
 }: StudentDetailSheetProps) {
   const updateSubscription = useUpdateSubscriptionMutation();
+  const { data: settings } = useAdminSettingsQuery();
+  const annualPrice = settings?.annualPricePhp ?? 1499;
+  const monthlyPrice = settings?.monthlyPricePhp ?? 199;
 
   if (!student) return null;
 
@@ -196,7 +200,7 @@ export function StudentDetailSheet({
                     className="rounded-xl text-xs w-full justify-center gap-1.5"
                   >
                     <CheckCircle2 className="size-4" />
-                    <span>Activate Annual Pass (₱1,499)</span>
+                    <span>Activate Annual Pass (₱{annualPrice.toLocaleString()})</span>
                   </Button>
                   <Button
                     variant="outline"
@@ -205,7 +209,7 @@ export function StudentDetailSheet({
                     className="rounded-xl text-xs w-full justify-center gap-1.5"
                   >
                     <Clock className="size-4" />
-                    <span>Activate Monthly Pass (₱199)</span>
+                    <span>Activate Monthly Pass (₱{monthlyPrice.toLocaleString()})</span>
                   </Button>
                 </>
               )}

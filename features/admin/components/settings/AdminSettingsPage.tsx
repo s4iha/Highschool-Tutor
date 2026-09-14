@@ -57,12 +57,6 @@ export function AdminSettingsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/40 pb-6">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 text-xs font-semibold border border-amber-500/20">
-              <DollarSign className="size-3.5" />
-              SaaS Monetization
-            </span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
             Pricing & Free Tier Guardrails
           </h1>
