@@ -38,6 +38,7 @@ model User {
   quizAttempts         QuizAttempt[]
   notificationSettings NotificationSettings?
   reminderNotices      ReminderNotice[]
+  aiCreditUsages       AiCreditUsage[]
 
   @@map("user")
 }
@@ -106,8 +107,10 @@ model Profile {
   school       String   @default("")
   gradeLevel   String   @default("")
   track        String   @default("")
-  hasOnboarded Boolean  @default(false)
-  referralCode String   @unique @default(cuid())
+  termPreference String? @default("")
+  hasOnboarded     Boolean  @default(false)
+  hasCompletedTour Boolean  @default(false)
+  referralCode     String   @unique @default(cuid())
   referrer     String   @default("")
   referredById String?
 
@@ -249,6 +252,19 @@ model QuizAttempt {
   @@index([userId, subjectSlug, lessonNumber])
   @@index([subjectSlug, lessonNumber])
   @@map("quiz_attempts")
+}
+
+model AiCreditUsage {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String   // "quiz_generation" | "ai_tutor" | "translation"
+  credits   Int      @default(1)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("ai_credit_usage")
 }
 
 // -----------------------------------------------------------------------------
