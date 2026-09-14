@@ -194,6 +194,35 @@ DO $$ BEGIN
   END IF;
 END $$;
 
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'account' AND column_name = 'accessTokenExpiresAt'
+  ) THEN
+    ALTER TABLE "account" ADD COLUMN "accessTokenExpiresAt" TIMESTAMP(3);
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'account' AND column_name = 'refreshTokenExpiresAt'
+  ) THEN
+    ALTER TABLE "account" ADD COLUMN "refreshTokenExpiresAt" TIMESTAMP(3);
+  END IF;
+END $$;
+
+-- Fix legacy NextAuth NOT NULL constraint on "type" column if present
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'account' AND column_name = 'type'
+  ) THEN
+    ALTER TABLE "account" ALTER COLUMN "type" DROP NOT NULL;
+    ALTER TABLE "account" ALTER COLUMN "type" SET DEFAULT 'oauth';
+  END IF;
+END $$;
+
 -- If account table didn't exist at all, create it
 CREATE TABLE IF NOT EXISTS "account" (
     "id" TEXT NOT NULL,

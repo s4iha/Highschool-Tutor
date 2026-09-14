@@ -145,10 +145,13 @@ export default function StudentDashboardView({
   });
 
   // Dynamic Student Profile Data from database
-  const studentName = user?.profile?.fullName || user?.name || "Student";
-  const studentGrade = user?.profile?.gradeLevel || "Grade 11";
-  const studentTrack = user?.profile?.track || "STEM Strand";
-  const studentSchool = user?.profile?.school || "DepEd High School";
+  const studentName =
+    user?.profile?.fullName?.trim() ||
+    user?.name?.trim() ||
+    "Student";
+  const studentGrade = user?.profile?.gradeLevel?.trim() || "Grade 11";
+  const studentTrack = user?.profile?.track?.trim() || "STEM Strand";
+  const studentSchool = user?.profile?.school?.trim() || "DepEd High School";
 
   // State for AI Tutor Interactive Box
   const [aiQuery, setAiQuery] = useState("");
@@ -797,7 +800,7 @@ interface StudentUserProps {
 function StudentSettingsTab({ user }: { user: StudentUserProps | null | undefined }) {
   const queryClient = useQueryClient();
   const [studentFullName, setStudentFullName] = useState(
-    user?.profile?.fullName || user?.name || ""
+    user?.profile?.fullName?.trim() || user?.name?.trim() || ""
   );
   const [schoolName, setSchoolName] = useState(user?.profile?.school || "");
   const [selectedGrade, setSelectedGrade] = useState(
