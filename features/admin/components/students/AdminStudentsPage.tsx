@@ -2,11 +2,9 @@
 
 import * as React from "react";
 import {
-  Users,
   Search,
   Filter,
   GraduationCap,
-  Check,
   ChevronLeft,
   ChevronRight,
   Eye,
@@ -87,14 +85,6 @@ export function AdminStudentsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/40 pb-6">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 text-xs font-semibold border border-blue-500/20">
-              <Users className="size-3.5" />
-              Student Directory
-            </span>
-            <span className="text-xs text-muted-foreground">•</span>
-            <span className="text-xs text-muted-foreground">Subscriptions & Guardrails</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
             Enrolled & Subscribed Students
           </h1>
@@ -276,12 +266,12 @@ export function AdminStudentsPage() {
                         {student.quizAttemptsCount}
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenDetail(student)}
-                            className="h-7 px-2 text-[11px] rounded-lg gap-1"
+                            className="h-7 px-2.5 text-[11px] rounded-lg gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground"
                             title="View student profile"
                           >
                             <Eye className="size-3.5" />
@@ -299,12 +289,13 @@ export function AdminStudentsPage() {
                                 })
                               }
                               disabled={updateSubscription.isPending}
-                              className="h-7 text-[11px] rounded-lg text-destructive hover:text-destructive"
+                              className="h-7 min-w-[72px] text-[11px] rounded-lg text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive justify-center cursor-pointer"
                             >
                               Expire
                             </Button>
                           ) : (
                             <Button
+                              variant="outline"
                               size="sm"
                               onClick={() =>
                                 updateSubscription.mutate({
@@ -314,9 +305,8 @@ export function AdminStudentsPage() {
                                 })
                               }
                               disabled={updateSubscription.isPending}
-                              className="h-7 text-[11px] rounded-lg gap-1"
+                              className="h-7 min-w-[72px] text-[11px] rounded-lg text-primary border-primary/30 hover:bg-primary/10 hover:text-primary justify-center cursor-pointer"
                             >
-                              <Check className="size-3" />
                               <span>Activate</span>
                             </Button>
                           )}

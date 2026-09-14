@@ -136,12 +136,16 @@ export async function PATCH(req: NextRequest) {
           },
         });
       } else {
+        const config = await prisma.adminConfig.findFirst({ orderBy: { updatedAt: "desc" } });
+        const annualPrice = config?.annualPricePhp ?? 1499;
+        const monthlyPrice = config?.monthlyPricePhp ?? 199;
+
         await prisma.subscription.create({
           data: {
             userId,
             plan: plan === "ANNUAL" ? "ANNUAL" : "MONTHLY",
             status,
-            amountPhp: plan === "ANNUAL" ? 1499 : 199,
+            amountPhp: plan === "ANNUAL" ? annualPrice : monthlyPrice,
             startedAt: status === "ACTIVE" ? new Date() : undefined,
           },
         });

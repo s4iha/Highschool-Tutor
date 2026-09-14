@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -10,9 +11,6 @@ import {
   Megaphone,
   Settings,
   GraduationCap,
-  ChevronLeft,
-  ChevronRight,
-  ShieldAlert,
   X,
 } from "lucide-react";
 import { useAdminSidebarStore } from "../hooks/useAdminSidebarStore";
@@ -58,7 +56,7 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
   const pathname = usePathname();
-  const { isCollapsed, toggleCollapse, setMobileOpen } = useAdminSidebarStore();
+  const { isCollapsed, setMobileOpen } = useAdminSidebarStore();
 
   const handleLinkClick = () => {
     if (isMobile) {
@@ -89,16 +87,20 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
           onClick={handleLinkClick}
           className="flex items-center gap-2.5 overflow-hidden"
         >
-          <div className="size-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-sm shrink-0">
-            <ShieldAlert className="size-5" />
+          <div className="size-9 rounded-xl overflow-hidden shrink-0 shadow-xs flex items-center justify-center bg-card border border-border/60">
+            <Image
+              src="/logo/highschool-tutor-logo-favicon-rounded.png"
+              alt="Highschool Tutor"
+              width={36}
+              height={36}
+              className="w-full h-full object-cover"
+              priority
+            />
           </div>
           {(isMobile || !isCollapsed) && (
             <div className="flex flex-col min-w-0">
               <span className="font-bold text-sm tracking-tight text-foreground font-heading truncate">
                 Admin Console
-              </span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                DepEd SaaS Plane
               </span>
             </div>
           )}
@@ -153,9 +155,8 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
         })}
       </div>
 
-      {/* Footer / Switcher & Collapse Toggle */}
-      <div className="p-3 border-t border-border/40 space-y-2 shrink-0 bg-muted/20">
-        {/* Switch to Student Portal */}
+      {/* Footer: Return to Student Portal */}
+      <div className="p-3 border-t border-border/40 shrink-0 bg-muted/20">
         <Link
           href="/dashboard"
           title="Return to Student Dashboard"
@@ -176,28 +177,6 @@ export function AdminSidebar({ isMobile = false }: AdminSidebarProps) {
             </div>
           )}
         </Link>
-
-        {/* Desktop Collapse Button */}
-        {!isMobile && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleCollapse}
-            className={cn(
-              "w-full h-8 text-xs text-muted-foreground hover:text-foreground rounded-lg justify-start gap-2",
-              isCollapsed ? "justify-center px-0" : "px-3"
-            )}
-          >
-            {isCollapsed ? (
-              <ChevronRight className="size-4" />
-            ) : (
-              <>
-                <ChevronLeft className="size-4" />
-                <span className="text-[11px]">Collapse Sidebar</span>
-              </>
-            )}
-          </Button>
-        )}
       </div>
     </aside>
   );

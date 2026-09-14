@@ -6,7 +6,6 @@ import {
   Users,
   CreditCard,
   Clock,
-  Shield,
   RefreshCw,
   Sparkles,
   DollarSign,
@@ -54,14 +53,6 @@ export function AdminDashboardPage() {
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/40 pb-6">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold border border-primary/20">
-              <Shield className="size-3.5" />
-              DepEd SaaS Plane
-            </span>
-            <span className="text-xs text-muted-foreground">•</span>
-            <span className="text-xs text-muted-foreground">HighSchool Tutor Command</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
             Executive Dashboard
           </h1>

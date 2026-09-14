@@ -5,7 +5,6 @@ import {
   Bot,
   CheckCircle2,
   XCircle,
-  Sparkles,
   RotateCcw,
   Check,
   Lightbulb,
@@ -116,7 +115,6 @@ export function AcademicWorkflowDemo() {
         <div className="flex items-center justify-center gap-3 mb-3">
           <div className="h-px w-8 bg-primary/40" />
           <div className="flex items-center gap-1.5 text-xs font-bold tracking-widest text-primary uppercase">
-            <Sparkles className="w-3.5 h-3.5" />
             <span>INTERACTIVE LEARNING PIPELINE</span>
           </div>
           <div className="h-px w-8 bg-primary/40" />

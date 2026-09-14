@@ -47,13 +47,13 @@ export function Navbar() {
             href="/"
             className="flex items-center gap-2.5 transition-opacity hover:opacity-90 group"
           >
-            <div className="relative size-9 overflow-hidden rounded-xl bg-primary/10 p-1 flex items-center justify-center border border-primary/20 shadow-xs group-hover:border-primary/40 transition-colors">
+            <div className="size-9 rounded-xl overflow-hidden shrink-0 shadow-xs flex items-center justify-center bg-card border border-border/60 group-hover:border-primary/40 transition-colors">
               <Image
-                src="/logo/highschool-tutor-bg-removed.png"
+                src="/logo/highschool-tutor-logo-favicon-rounded.png"
                 alt="HighSchool Tutor Logo"
                 width={36}
                 height={36}
-                className="object-contain"
+                className="w-full h-full object-cover"
                 priority
               />
             </div>
