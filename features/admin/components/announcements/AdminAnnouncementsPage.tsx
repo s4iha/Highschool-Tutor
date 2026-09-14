@@ -20,6 +20,7 @@ import {
   AnnouncementItem,
 } from "../../hooks/useAdminPortal";
 import { AnnouncementModal } from "./AnnouncementModal";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -32,6 +33,7 @@ export function AdminAnnouncementsPage() {
   // Modal state
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = React.useState<AnnouncementItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<{ id: string; title: string } | null>(null);
 
   const {
     data: announcements,
@@ -58,9 +60,7 @@ export function AdminAnnouncementsPage() {
   };
 
   const handleDelete = (id: string, title: string) => {
-    if (confirm(`Delete announcement "${title}"?`)) {
-      deleteMutation.mutate(id);
-    }
+    setDeleteTarget({ id, title });
   };
 
   const handleToggleActive = (item: AnnouncementItem) => {
@@ -111,14 +111,6 @@ export function AdminAnnouncementsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/40 pb-6">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600 text-xs font-semibold border border-purple-500/20">
-              <Megaphone className="size-3.5" />
-              Notifications & Broadcasts
-            </span>
-            <span className="text-xs text-muted-foreground">•</span>
-            <span className="text-xs text-muted-foreground">In-App Banners</span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
             Platform Announcements
           </h1>
@@ -315,6 +307,24 @@ export function AdminAnnouncementsPage() {
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         announcement={editingAnnouncement}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete Announcement"
+        description={`Are you sure you want to delete "${deleteTarget?.title}"? This announcement will be removed immediately.`}
+        confirmLabel="Delete"
+        variant="destructive"
+        isLoading={deleteMutation.isPending}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteMutation.mutate(deleteTarget.id, {
+              onSettled: () => setDeleteTarget(null),
+            });
+          }
+        }}
       />
     </div>
   );

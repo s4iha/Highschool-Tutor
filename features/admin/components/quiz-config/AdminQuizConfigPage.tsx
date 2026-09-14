@@ -26,6 +26,7 @@ import {
 import { QuizQuestionItem } from "../../schemas/adminSchemas";
 import { QuizQuestionForm } from "./QuizQuestionForm";
 import { SubjectCombobox } from "./SubjectCombobox";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Badge } from "@/shared/components/ui/badge";
@@ -309,6 +310,7 @@ export function AdminQuizConfigPage() {
 
   const updateQuiz = useUpdateQuizConfigMutation();
   const deleteQuiz = useDeleteQuizConfigMutation();
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = React.useState(false);
 
   const handleSave = (lessonTitle: string, questions: QuizQuestionItem[]) => {
     updateQuiz.mutate({
@@ -322,16 +324,7 @@ export function AdminQuizConfigPage() {
   };
 
   const handleReset = () => {
-    if (
-      confirm(
-        "Clear this cached quiz? The system will generate a fresh quiz upon the next student attempt."
-      )
-    ) {
-      deleteQuiz.mutate({
-        slug: selectedSubjectSlug,
-        lessonNumber: selectedLesson,
-      });
-    }
+    setIsResetConfirmOpen(true);
   };
 
   const handleSubjectChange = (slug: string) => {
@@ -345,16 +338,6 @@ export function AdminQuizConfigPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between border-b border-border/40 pb-6">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-xs font-semibold border border-emerald-500/20">
-              <FileQuestion className="size-3.5" />
-              Curriculum Bank
-            </span>
-            <span className="text-xs text-muted-foreground">•</span>
-            <span className="text-xs text-muted-foreground">
-              DepEd MATATAG DO 015 s. 2026
-            </span>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-heading">
             Quiz &amp; Lesson Question Configuration
           </h1>
@@ -537,6 +520,28 @@ export function AdminQuizConfigPage() {
           )}
         </div>
       </div>
+
+      {/* Reset Confirmation Dialog */}
+      <ConfirmDialog
+        open={isResetConfirmOpen}
+        onOpenChange={setIsResetConfirmOpen}
+        title="Clear Cached Quiz"
+        description="Are you sure you want to clear this cached quiz? The system will generate a fresh quiz upon the next student attempt."
+        confirmLabel="Clear Quiz"
+        variant="destructive"
+        isLoading={deleteQuiz.isPending}
+        onConfirm={() => {
+          deleteQuiz.mutate(
+            {
+              slug: selectedSubjectSlug,
+              lessonNumber: selectedLesson,
+            },
+            {
+              onSettled: () => setIsResetConfirmOpen(false),
+            }
+          );
+        }}
+      />
     </div>
   );
 }
