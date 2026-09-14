@@ -11,6 +11,8 @@ import {
   Compass,
   LayoutGrid,
   ArrowRight,
+  Layers,
+  Wrench,
 } from "lucide-react";
 
 export function CategorySection() {
@@ -70,6 +72,28 @@ export function CategorySection() {
       accent: "hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-teal-500/10",
       pill: "bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300",
     },
+    {
+      id: 6,
+      slug: "gas-strand",
+      name: "GAS Strand",
+      count: "22+ Subjects",
+      desc: "Applied Economics, Org & Management, DRRR, Trends & Academic Inquiries",
+      icon: Layers,
+      color: "bg-indigo-100/90 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border-indigo-200/80 dark:border-indigo-800",
+      accent: "hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-indigo-500/10",
+      pill: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300",
+    },
+    {
+      id: 7,
+      slug: "tvl-track",
+      name: "TVL Track",
+      count: "28+ Subjects",
+      desc: "Computer Systems (CSS NC II), Cookery, Electrical (EIM), Bread & Pastry",
+      icon: Wrench,
+      color: "bg-rose-100/90 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 border-rose-200/80 dark:border-rose-800",
+      accent: "hover:border-rose-300 dark:hover:border-rose-700 hover:shadow-rose-500/10",
+      pill: "bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300",
+    },
   ];
 
   return (
@@ -96,7 +120,7 @@ export function CategorySection() {
         </div>
 
         {/* Category Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 sm:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6">
           {categories.map((category) => {
             const IconComponent = category.icon;
             return (
