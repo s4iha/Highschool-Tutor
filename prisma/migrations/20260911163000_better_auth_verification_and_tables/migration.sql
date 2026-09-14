@@ -1,25 +1,25 @@
 -- =============================================================================
 -- Migration: Ensure Better Auth Models (Verification, User, Session, Account)
--- Fixes P2021: Table public.verification does not exist in production
+-- Fixes P2021 & P3009: Clean migration with strict column & index ordering
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
 -- 1. Table Renames (NextAuth plural -> Better Auth singular) if applicable
 -- -----------------------------------------------------------------------------
 DO $$ BEGIN
-  IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'users') AND NOT EXISTS (SELECT FROM pg_tables WHERE tablename = 'user') THEN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'users') AND NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'user') THEN
     ALTER TABLE "users" RENAME TO "user";
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'sessions') AND NOT EXISTS (SELECT FROM pg_tables WHERE tablename = 'session') THEN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'sessions') AND NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'session') THEN
     ALTER TABLE "sessions" RENAME TO "session";
   END IF;
 END $$;
 
 DO $$ BEGIN
-  IF EXISTS (SELECT FROM pg_tables WHERE tablename = 'accounts') AND NOT EXISTS (SELECT FROM pg_tables WHERE tablename = 'account') THEN
+  IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'accounts') AND NOT EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'account') THEN
     ALTER TABLE "accounts" RENAME TO "account";
   END IF;
 END $$;
@@ -29,7 +29,7 @@ END $$;
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS "user" (
     "id" TEXT NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" TEXT NOT NULL DEFAULT '',
     "email" TEXT NOT NULL,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "image" TEXT,
@@ -39,8 +39,6 @@ CREATE TABLE IF NOT EXISTS "user" (
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
 );
-
-CREATE UNIQUE INDEX IF NOT EXISTS "user_email_key" ON "user"("email");
 
 DO $$ BEGIN
   IF NOT EXISTS (
@@ -54,31 +52,19 @@ END $$;
 DO $$ BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns 
-    WHERE table_name = 'user' AND column_name = 'emailVerified' AND data_type = 'timestamp without time zone'
+    WHERE table_name = 'user' AND column_name = 'emailVerified' AND data_type LIKE '%timestamp%'
   ) THEN
     ALTER TABLE "user" ALTER COLUMN "emailVerified" TYPE BOOLEAN USING ("emailVerified" IS NOT NULL);
     ALTER TABLE "user" ALTER COLUMN "emailVerified" SET DEFAULT false;
   END IF;
 END $$;
 
+CREATE UNIQUE INDEX IF NOT EXISTS "user_email_key" ON "user"("email");
+
 -- -----------------------------------------------------------------------------
--- 3. Session Table: Ensure existence and Better Auth columns
+-- 3. Session Table: Column adjustments, creation, and indexes
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS "session" (
-    "id" TEXT NOT NULL,
-    "expiresAt" TIMESTAMP(3) NOT NULL,
-    "token" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "ipAddress" TEXT,
-    "userAgent" TEXT,
-    "userId" TEXT NOT NULL,
-
-    CONSTRAINT "session_pkey" PRIMARY KEY ("id")
-);
-
-CREATE UNIQUE INDEX IF NOT EXISTS "session_token_key" ON "session"("token");
-
+-- First rename columns if the table already existed as "sessions"
 DO $$ BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns 
@@ -115,6 +101,23 @@ DO $$ BEGIN
   END IF;
 END $$;
 
+-- If session table didn't exist at all, create it with all columns
+CREATE TABLE IF NOT EXISTS "session" (
+    "id" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "token" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "userId" TEXT NOT NULL,
+
+    CONSTRAINT "session_pkey" PRIMARY KEY ("id")
+);
+
+-- Index created strictly AFTER the column "token" is guaranteed to exist
+CREATE UNIQUE INDEX IF NOT EXISTS "session_token_key" ON "session"("token");
+
 -- Foreign key for session -> user
 DO $$ BEGIN
   IF NOT EXISTS (
@@ -126,27 +129,8 @@ DO $$ BEGIN
 END $$;
 
 -- -----------------------------------------------------------------------------
--- 4. Account Table: Ensure existence and Better Auth columns
+-- 4. Account Table: Column adjustments, creation, and foreign key
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS "account" (
-    "id" TEXT NOT NULL,
-    "accountId" TEXT NOT NULL,
-    "providerId" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
-    "accessToken" TEXT,
-    "refreshToken" TEXT,
-    "idToken" TEXT,
-    "accessTokenExpiresAt" TIMESTAMP(3),
-    "refreshTokenExpiresAt" TIMESTAMP(3),
-    "scope" TEXT,
-    "password" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "issuer" TEXT,
-
-    CONSTRAINT "account_pkey" PRIMARY KEY ("id")
-);
-
 DO $$ BEGIN
   IF EXISTS (
     SELECT 1 FROM information_schema.columns 
@@ -209,6 +193,26 @@ DO $$ BEGIN
     ALTER TABLE "account" ADD COLUMN "issuer" TEXT;
   END IF;
 END $$;
+
+-- If account table didn't exist at all, create it
+CREATE TABLE IF NOT EXISTS "account" (
+    "id" TEXT NOT NULL,
+    "accountId" TEXT NOT NULL,
+    "providerId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "accessToken" TEXT,
+    "refreshToken" TEXT,
+    "idToken" TEXT,
+    "accessTokenExpiresAt" TIMESTAMP(3),
+    "refreshTokenExpiresAt" TIMESTAMP(3),
+    "scope" TEXT,
+    "password" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "issuer" TEXT,
+
+    CONSTRAINT "account_pkey" PRIMARY KEY ("id")
+);
 
 -- Foreign key for account -> user
 DO $$ BEGIN
