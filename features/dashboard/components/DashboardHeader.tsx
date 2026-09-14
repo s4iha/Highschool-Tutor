@@ -3,10 +3,11 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Sun, Moon, Bell, ShieldAlert } from "lucide-react";
+import { Menu, Sun, Moon, ShieldAlert } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useDashboardStore } from "../hooks/useDashboardStore";
 import { useUser } from "@/features/auth/hooks/useUser";
+import { NotificationBell } from "@/shared/components/NotificationBell";
 
 const emptySubscribe = () => () => {};
 
@@ -19,10 +20,23 @@ export default function DashboardHeader() {
     () => true,
     () => false
   );
-  const { setMobileSidebarOpen, activeTab } = useDashboardStore();
+  const {
+    sidebarCollapsed,
+    toggleSidebar,
+    setMobileSidebarOpen,
+    activeTab,
+  } = useDashboardStore();
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
+
+  const handleSidebarToggle = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setMobileSidebarOpen(true);
+    } else {
+      toggleSidebar();
+    }
   };
 
   // Compute dynamic page title for breadcrumb
@@ -51,26 +65,22 @@ export default function DashboardHeader() {
 
   return (
     <header className="sticky top-0 z-40 bg-card/90 backdrop-blur-md border-b border-border px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex items-center justify-between gap-2 sm:gap-4 transition-colors shadow-xs min-w-0">
-      {/* Left: Mobile hamburger & breadcrumbs */}
+      {/* Left: Universal menu toggle & breadcrumbs */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         <button
           type="button"
-          onClick={() => setMobileSidebarOpen(true)}
-          className="lg:hidden p-1.5 sm:p-2 text-muted-foreground hover:bg-muted rounded-xl transition-colors shrink-0"
-          aria-label="Open navigation menu"
+          onClick={handleSidebarToggle}
+          className="p-1.5 sm:p-2 text-muted-foreground hover:bg-muted hover:text-foreground rounded-xl transition-colors shrink-0 cursor-pointer"
+          aria-label="Toggle navigation sidebar"
+          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           <Menu className="w-5 h-5" />
         </button>
 
         <div className="flex flex-col min-w-0">
-          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-bold text-muted-foreground min-w-0">
-            <span className="hidden sm:inline shrink-0">Student Portal</span>
-            <span className="hidden sm:inline shrink-0">/</span>
-            <span className="text-foreground font-extrabold truncate">{getBreadcrumbTitle()}</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-lg font-bold text-muted-foreground min-w-0">
+            <span className="text-foreground font-semibold truncate">{getBreadcrumbTitle()}</span>
           </div>
-          <span className="text-[10px] sm:text-xs text-muted-foreground hidden md:inline truncate">
-            HighSchool Tutor • DepEd K-12 MATATAG Autonomous AI Learning Workspace
-          </span>
         </div>
       </div>
 
@@ -90,16 +100,8 @@ export default function DashboardHeader() {
           )}
         </button>
 
-        {/* Notification Badge */}
-        <button
-          type="button"
-          onClick={() => alert("No new notifications")}
-          aria-label="Notifications"
-          className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-card text-foreground hover:text-primary flex items-center justify-center border border-border shadow-2xs transition-colors cursor-pointer"
-        >
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary" />
-        </button>
+        {/* Modern Notification Bell */}
+        <NotificationBell variant="student" />
 
         {/* Admin Switcher for ADMIN role */}
         {user?.role === "ADMIN" && (

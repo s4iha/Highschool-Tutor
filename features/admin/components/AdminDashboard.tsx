@@ -10,7 +10,6 @@ import {
   Search,
   RefreshCw,
   Save,
-  Check,
   GraduationCap,
   Sparkles,
   DollarSign,
@@ -387,38 +386,40 @@ export function AdminDashboard() {
                             {student.quizAttemptsCount}
                           </td>
                           <td className="py-3.5 px-4 text-right">
-                            {isActive ? (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() =>
-                                  updateSubscription.mutate({
-                                    userId: student.id,
-                                    status: "EXPIRED",
-                                  })
-                                }
-                                disabled={updateSubscription.isPending}
-                                className="h-7 text-[11px] rounded-lg text-destructive hover:text-destructive"
-                              >
-                                Expire Sub
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                onClick={() =>
-                                  updateSubscription.mutate({
-                                    userId: student.id,
-                                    status: "ACTIVE",
-                                    plan: "ANNUAL",
-                                  })
-                                }
-                                disabled={updateSubscription.isPending}
-                                className="h-7 text-[11px] rounded-lg gap-1"
-                              >
-                                <Check className="size-3" />
-                                <span>Activate (Annual)</span>
-                              </Button>
-                            )}
+                            <div className="flex items-center justify-end">
+                              {isActive ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    updateSubscription.mutate({
+                                      userId: student.id,
+                                      status: "EXPIRED",
+                                    })
+                                  }
+                                  disabled={updateSubscription.isPending}
+                                  className="h-7 min-w-[72px] text-[11px] rounded-lg text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive justify-center cursor-pointer"
+                                >
+                                  Expire
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    updateSubscription.mutate({
+                                      userId: student.id,
+                                      status: "ACTIVE",
+                                      plan: "ANNUAL",
+                                    })
+                                  }
+                                  disabled={updateSubscription.isPending}
+                                  className="h-7 min-w-[72px] text-[11px] rounded-lg text-primary border-primary/30 hover:bg-primary/10 hover:text-primary justify-center cursor-pointer"
+                                >
+                                  <span>Activate</span>
+                                </Button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );

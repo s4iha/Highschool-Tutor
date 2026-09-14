@@ -53,6 +53,7 @@ export const useDashboardStore = create<DashboardState>()(
       name: "highschool-tutor-dashboard-store",
       partialize: (state) => ({
         subjectsViewMode: state.subjectsViewMode,
+        sidebarCollapsed: state.sidebarCollapsed,
       }),
     }
   )

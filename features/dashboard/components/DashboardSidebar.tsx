@@ -9,8 +9,6 @@ import {
   BookOpen,
   Bot,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   LogOut,
   X,
 } from "lucide-react";
@@ -27,7 +25,6 @@ export default function DashboardSidebar() {
     activeTab,
     setActiveTab,
     sidebarCollapsed,
-    toggleSidebar,
     mobileSidebarOpen,
     setMobileSidebarOpen,
   } = useDashboardStore();
@@ -73,19 +70,24 @@ export default function DashboardSidebar() {
 
   const sidebarContent = (
     <div className="relative flex flex-col h-full bg-card overflow-hidden">
-      {/* Sidebar Header: Logo and Brand (Increased Size) */}
-      <div className="p-4 border-b border-border flex items-center justify-between gap-3 shrink-0">
+      {/* Sidebar Header: Logo and Brand */}
+      <div
+        className={`p-4 border-b border-border flex items-center justify-between gap-3 shrink-0 ${
+          sidebarCollapsed ? "justify-center px-2" : ""
+        }`}
+      >
         <Link
           href="/"
           className="flex items-center gap-3 min-w-0 transition-opacity hover:opacity-90"
         >
-          <div className="relative size-11 shrink-0 overflow-hidden rounded-2xl bg-primary/10 p-1.5 flex items-center justify-center border border-primary/20 shadow-xs">
+          <div className="size-9 rounded-xl overflow-hidden shrink-0 shadow-xs flex items-center justify-center bg-card border border-border/60">
             <Image
-              src="/logo/highschool-tutor-logo-favicon-squared.png"
-              alt="HighSchool Tutor"
-              width={44}
-              height={44}
-              className="object-contain"
+              src="/logo/highschool-tutor-logo-favicon-rounded.png"
+              alt="Highschool Tutor"
+              width={36}
+              height={36}
+              className="w-full h-full object-cover"
+              priority
             />
           </div>
           {!sidebarCollapsed && (
@@ -110,20 +112,6 @@ export default function DashboardSidebar() {
           <X className="w-5 h-5" />
         </button>
       </div>
-
-      {/* Collapse Toggle Button (Desktop) */}
-      <button
-        type="button"
-        onClick={toggleSidebar}
-        className="hidden lg:flex absolute -right-3 top-6 z-40 p-1 rounded-full bg-card border border-border text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shadow-sm"
-        aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        {sidebarCollapsed ? (
-          <ChevronRight className="w-3.5 h-3.5" />
-        ) : (
-          <ChevronLeft className="w-3.5 h-3.5" />
-        )}
-      </button>
 
       {/* Nav items list & upgrade banner (scrollable on compact screens) */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-4 min-h-0">
@@ -210,8 +198,8 @@ export default function DashboardSidebar() {
     <>
       {/* Desktop Persistent Sidebar (Fixed Viewport Height) */}
       <aside
-        className={`sticky top-0 h-screen hidden lg:flex flex-col bg-card border-r border-border transition-all duration-200 z-30 shrink-0 overflow-hidden ${
-          sidebarCollapsed ? "w-20" : "w-64"
+        className={`sticky top-0 h-screen hidden lg:flex flex-col bg-card border-r border-border transition-all duration-300 z-30 shrink-0 overflow-hidden ${
+          sidebarCollapsed ? "w-[72px]" : "w-64"
         }`}
       >
         {sidebarContent}
