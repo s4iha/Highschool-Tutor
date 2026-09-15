@@ -30,7 +30,7 @@ services:
   db-migrate:
     image: ${DOCKER_IMAGE:-ghcr.io/s4iha/highschool-tutor:latest}
     container_name: highschool-tutor-migrate
-    command: npx prisma migrate deploy
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-highschool_tutor_prod}?schema=public
     depends_on:
@@ -66,6 +66,8 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
