@@ -4,6 +4,7 @@ import {
   lessonSchema,
   recordAttemptInputSchema,
   batchTranslateQuizInputSchema,
+  askTutorInputSchema,
 } from "@/features/curriculum/schemas/curriculum.schema";
 
 describe("Curriculum Zod Schemas Validation", () => {
@@ -126,6 +127,68 @@ describe("Curriculum Zod Schemas Validation", () => {
       };
 
       const result = batchTranslateQuizInputSchema.safeParse(payload);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe("askTutorInputSchema with persona support", () => {
+    it("should accept valid payload with default socratic persona", () => {
+      const payload = {
+        subjectSlug: "math-7-q1",
+        lessonTitle: "Sets and Real Numbers",
+        question: "What is a subset?",
+        options: { A: "Part of set", B: "Whole set", C: "Empty", D: "Universal" },
+        answer: "A",
+        explanation: "A subset contains elements of another set.",
+        language: "English",
+        history: [{ role: "user", content: "Hi" }, { role: "assistant", content: "Let's explore." }],
+        message: "Can you give me an analogy?",
+      };
+
+      const parsed = askTutorInputSchema.safeParse(payload);
+      expect(parsed.success).toBe(true);
+      if (parsed.success) {
+        expect(parsed.data.persona).toBe("socratic");
+      }
+    });
+
+    it("should accept explicit persona: detailed and exam-prep", () => {
+      const detailedPayload = {
+        subjectSlug: "math-7-q1",
+        lessonTitle: "Sets",
+        question: "Q",
+        options: { A: "1", B: "2", C: "3", D: "4" },
+        answer: "A",
+        explanation: "Exp",
+        persona: "detailed",
+        history: [],
+        message: "Explain in detail please",
+      };
+
+      const examPayload = {
+        ...detailedPayload,
+        persona: "exam-prep",
+        message: "What are common test mistakes?",
+      };
+
+      expect(askTutorInputSchema.safeParse(detailedPayload).success).toBe(true);
+      expect(askTutorInputSchema.safeParse(examPayload).success).toBe(true);
+    });
+
+    it("should reject invalid persona value", () => {
+      const invalidPayload = {
+        subjectSlug: "math-7-q1",
+        lessonTitle: "Sets",
+        question: "Q",
+        options: { A: "1", B: "2", C: "3", D: "4" },
+        answer: "A",
+        explanation: "Exp",
+        persona: "unrestricted-pirate",
+        history: [],
+        message: "Hello",
+      };
+
+      const result = askTutorInputSchema.safeParse(invalidPayload);
       expect(result.success).toBe(false);
     });
   });
