@@ -18,7 +18,9 @@ import {
 } from "../schemas/curriculum.schema";
 import {
   checkAndConsumeAiCredit,
+  getAiCreditBalance,
   sanitizeStudentInput,
+  validateEducationalQuery,
 } from "../utils/ai-credits";
 import {
   canAccessSubject,
@@ -251,10 +253,21 @@ export async function askTutorAction(rawInput: unknown): Promise<{
   success: boolean;
   reply?: string;
   error?: string;
+  creditsRemaining?: number;
+  isUnlimited?: boolean;
 }> {
   try {
     const input = askTutorInputSchema.parse(rawInput);
     const sessionUser = await getCurrentUser();
+
+    // Educational content and jailbreak moderation check
+    const validation = validateEducationalQuery(input.message);
+    if (!validation.allowed) {
+      return {
+        success: false,
+        error: validation.reason || "Please keep your questions focused on academic subjects and DepEd K-12 lessons.",
+      };
+    }
 
     // Check daily AI credits
     const creditCheck = await checkAndConsumeAiCredit(sessionUser?.id, "ai_tutor");
@@ -262,6 +275,8 @@ export async function askTutorAction(rawInput: unknown): Promise<{
       return {
         success: false,
         error: creditCheck.error,
+        creditsRemaining: 0,
+        isUnlimited: false,
       };
     }
 
@@ -279,15 +294,40 @@ export async function askTutorAction(rawInput: unknown): Promise<{
       language: input.language,
       history: input.history,
       message: sanitizedMessage,
+      persona: input.persona,
     });
 
-    return { success: true, reply };
+    return {
+      success: true,
+      reply,
+      creditsRemaining: creditCheck.remaining,
+      isUnlimited: creditCheck.isUnlimited,
+    };
   } catch (error) {
     console.error("askTutorAction error:", error);
+    let errorMessage = "Tutor reply failed";
+    if (error instanceof Error) {
+      errorMessage = error.name === "ZodError" ? "Invalid input: Please check your message and try again." : error.message;
+    }
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Tutor reply failed",
+      error: errorMessage,
     };
+  }
+}
+
+export async function getAiCreditsStatusAction(): Promise<{
+  success: boolean;
+  remaining: number;
+  totalMax: number;
+  isUnlimited: boolean;
+}> {
+  try {
+    const sessionUser = await getCurrentUser();
+    const balance = await getAiCreditBalance(sessionUser?.id);
+    return { success: true, ...balance };
+  } catch {
+    return { success: false, remaining: 20, totalMax: 20, isUnlimited: false };
   }
 }
 

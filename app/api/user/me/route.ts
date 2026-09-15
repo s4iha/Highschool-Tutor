@@ -89,6 +89,7 @@ export async function GET() {
               track: profile.track,
               school: profile.school,
               termPreference: profile.termPreference || "",
+              tutoringPersona: profile.tutoringPersona || "socratic",
               hasOnboarded: profile.hasOnboarded,
               hasCompletedTour: profile.hasCompletedTour ?? false,
             }

@@ -14,6 +14,7 @@ export interface UserData {
     track: string;
     school: string;
     termPreference?: string | null;
+    tutoringPersona?: string | null;
     hasOnboarded: boolean;
     hasCompletedTour?: boolean;
   } | null;
