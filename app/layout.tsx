@@ -8,6 +8,7 @@ import { Toaster } from "@/shared/components/ui/sonner";
 import { UpgradeModal } from "@/shared/components/ui/UpgradeModal";
 import { OnboardingModal } from "@/features/auth/components/OnboardingModal";
 import "./globals.css";
+import "katex/dist/katex.min.css";
 import { cn } from "@/lib/utils";
 
 const sourceSans3Heading = Source_Sans_3({subsets:['latin'],variable:'--font-heading'});
