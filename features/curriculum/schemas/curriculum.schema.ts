@@ -37,6 +37,7 @@ export const askTutorInputSchema = z.object({
   answer: z.string(),
   explanation: z.string(),
   language: z.string().default("English"),
+  persona: z.enum(["socratic", "detailed", "exam-prep"]).default("socratic"),
   history: z
     .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() }))
     .max(20),

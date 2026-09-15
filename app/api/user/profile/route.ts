@@ -9,6 +9,7 @@ const updateProfileSchema = z.object({
   gradeLevel: z.string().optional(),
   track: z.string().optional(),
   termPreference: z.string().optional(),
+  tutoringPersona: z.enum(["socratic", "detailed", "exam-prep"]).optional(),
 });
 
 export async function GET() {
@@ -64,7 +65,7 @@ export async function PUT(req: Request) {
       );
     }
 
-    const { fullName, school, gradeLevel, track, termPreference } = validated.data;
+    const { fullName, school, gradeLevel, track, termPreference, tutoringPersona } = validated.data;
 
     const profile = await prisma.profile.upsert({
       where: { id: sessionUser.id },
@@ -74,6 +75,7 @@ export async function PUT(req: Request) {
         ...(gradeLevel ? { gradeLevel } : {}),
         ...(track ? { track } : {}),
         ...(termPreference !== undefined ? { termPreference } : {}),
+        ...(tutoringPersona ? { tutoringPersona } : {}),
       },
       create: {
         id: sessionUser.id,
@@ -83,6 +85,7 @@ export async function PUT(req: Request) {
         gradeLevel: gradeLevel || "Grade 11",
         track: track || "STEM Strand",
         termPreference: termPreference || "",
+        tutoringPersona: tutoringPersona || "socratic",
         hasOnboarded: true,
       },
     });

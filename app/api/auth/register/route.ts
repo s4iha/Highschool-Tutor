@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { signToken } from "@/lib/jwt";
 import { z } from "zod";
+import { isDisposableEmail } from "@/features/auth/utils/disposable-domains";
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -23,6 +24,13 @@ export async function POST(req: Request) {
     }
 
     const { email, password, name } = validated.data;
+
+    if (isDisposableEmail(email)) {
+      return NextResponse.json(
+        { error: "Disposable or temporary email addresses are not allowed. Please use your personal or school email." },
+        { status: 422 }
+      );
+    }
 
     const existingUser = await prisma.user.findUnique({
       where: { email },

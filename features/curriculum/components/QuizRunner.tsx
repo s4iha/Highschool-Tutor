@@ -9,7 +9,7 @@ import {
   ArrowRight,
   CheckCircle2,
   XCircle,
-  Sparkles,
+  Loader2,
   Bot,
   RefreshCw,
   Trophy,
@@ -24,6 +24,12 @@ import {
   recordQuizAttemptAction,
   batchTranslateAction,
 } from "../actions/curriculum.actions";
+import {
+  createQuizSessionAction,
+  getQuizSessionAction,
+  submitQuizSessionAction,
+} from "../actions/quiz-session.actions";
+import { MarkdownRenderer } from "@/shared/components/ui/MarkdownRenderer";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { AITutorDrawer } from "./AITutorDrawer";
 import { TranslationControls } from "./TranslationControls";
@@ -38,26 +44,28 @@ import { cn } from "@/lib/utils";
 interface QuizRunnerProps {
   subject: Subject;
   lessonNumber: number;
+  initialSessionId?: string;
 }
 
-export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
+export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunnerProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const { user } = useUser();
 
-  // Mode is locked from the URL configuration modal to prevent mid-quiz cheating
-  const mode: "study" | "exam" = (searchParams.get("mode") as "study" | "exam") || "study";
+  const [sessionId, setSessionId] = React.useState<string | null>(initialSessionId || null);
+  const rawModeParam = (searchParams.get("mode") as "study" | "exam") || "study";
+  const [mode, setMode] = React.useState<"study" | "exam">(rawModeParam);
   const countParam = searchParams.get("count");
   const initialCount = countParam ? Math.max(1, parseInt(countParam, 10)) : 10;
 
-  const [allQuestions, setAllQuestions] = React.useState<QuizQuestion[]>([]);
   const [questions, setQuestions] = React.useState<QuizQuestion[]>([]);
-  const [selectedCount] = React.useState<number>(initialCount);
+  const [selectedCount, setSelectedCount] = React.useState<number>(initialCount);
   const [lessonTitle, setLessonTitle] = React.useState<string>(`Lesson ${lessonNumber}`);
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const [userAnswers, setUserAnswers] = React.useState<Record<number, "A" | "B" | "C" | "D">>({});
   const [isSubmitted, setIsSubmitted] = React.useState(false);
+  const [serverScore, setServerScore] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [tutorOpen, setTutorOpen] = React.useState(false);
   const [savingAttempt, setSavingAttempt] = React.useState(false);
@@ -73,50 +81,91 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
 
   React.useEffect(() => {
     let isMounted = true;
-    const fetchQuiz = async () => {
-      const res = await getQuizAction(subject.slug, lessonNumber, false);
-      if (isMounted) {
-        if (res.success && res.questions.length > 0) {
-          setAllQuestions(res.questions);
-          setLessonTitle(res.lessonTitle);
-          const sampled = sampleQuizQuestions(res.questions, initialCount);
-          setQuestions(sampled);
+    const initSession = async () => {
+      try {
+        let activeSessionId = initialSessionId;
+        if (!activeSessionId) {
+          const res = await createQuizSessionAction({
+            subjectSlug: subject.slug,
+            lessonNumber,
+            mode: rawModeParam,
+            count: initialCount,
+          });
+          if (res.success && res.sessionId) {
+            activeSessionId = res.sessionId;
+            if (isMounted) setSessionId(res.sessionId);
+          }
         }
-        setLoading(false);
+
+        if (activeSessionId) {
+          const sessionRes = await getQuizSessionAction(activeSessionId);
+          if (isMounted && sessionRes.success && sessionRes.session) {
+            setQuestions(sessionRes.session.questions);
+            setLessonTitle(sessionRes.session.lessonTitle);
+            setMode(sessionRes.session.mode);
+            setSelectedCount(sessionRes.session.questionCount);
+            if (sessionRes.session.completedAt && sessionRes.session.score !== null) {
+              setIsSubmitted(true);
+              setServerScore(sessionRes.session.score);
+            }
+          }
+        } else {
+          // Fallback if session creation failed
+          const res = await getQuizAction(subject.slug, lessonNumber, false);
+          if (isMounted && res.success && res.questions.length > 0) {
+            setLessonTitle(res.lessonTitle);
+            const sampled = sampleQuizQuestions(res.questions, initialCount);
+            setQuestions(sampled);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to initialize quiz session:", err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     };
 
-    fetchQuiz();
+    initSession();
 
     return () => {
       isMounted = false;
     };
-  }, [subject.slug, lessonNumber, initialCount]);
+  }, [subject.slug, lessonNumber, initialSessionId, initialCount, rawModeParam]);
 
-  const loadQuiz = async (refresh: boolean = false) => {
+  const loadQuiz = async () => {
     setLoading(true);
     setUserAnswers({});
     setIsSubmitted(false);
+    setServerScore(null);
     setCurrentIndex(0);
     setTranslatedContent({});
 
-    const res = await getQuizAction(subject.slug, lessonNumber, refresh);
-    if (res.success && res.questions.length > 0) {
-      setAllQuestions(res.questions);
-      setLessonTitle(res.lessonTitle);
-      const sampled = sampleQuizQuestions(res.questions, selectedCount);
-      setQuestions(sampled);
+    try {
+      const sessRes = await createQuizSessionAction({
+        subjectSlug: subject.slug,
+        lessonNumber,
+        mode,
+        count: selectedCount,
+      });
+      if (sessRes.success && sessRes.sessionId) {
+        setSessionId(sessRes.sessionId);
+        const sessionRes = await getQuizSessionAction(sessRes.sessionId);
+        if (sessionRes.success && sessionRes.session) {
+          setQuestions(sessionRes.session.questions);
+          setLessonTitle(sessionRes.session.lessonTitle);
+          setMode(sessionRes.session.mode);
+          setSelectedCount(sessionRes.session.questionCount);
+        }
+      }
+    } catch (err) {
+      console.error("Error reloading quiz session:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleRetakeSame = () => {
-    const sampled = sampleQuizQuestions(allQuestions, selectedCount);
-    setQuestions(sampled);
-    setUserAnswers({});
-    setCurrentIndex(0);
-    setIsSubmitted(false);
-    setTranslatedContent({});
+    loadQuiz();
   };
 
   const handleLanguageChange = (newLang: string) => {
@@ -179,33 +228,46 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
   };
 
   const calculateScore = () => {
+    if (serverScore !== null) return serverScore;
     let score = 0;
     questions.forEach((q, idx) => {
-      if (userAnswers[idx] === q.answer) score++;
+      if (userAnswers[idx] && userAnswers[idx] === q.answer) score++;
     });
     return score;
   };
 
   const handleSubmitExam = async () => {
     setIsSubmitted(true);
-    const score = calculateScore();
     setSavingAttempt(true);
-    await recordQuizAttemptAction({
-      subjectSlug: subject.slug,
-      subjectCode: subject.code,
-      lessonNumber,
-      lessonTitle,
-      score,
-      total: questions.length,
-      mode,
-    });
-    // Invalidate queries so that returning to LessonList or Dashboard updates immediately in real-time
-    await queryClient.invalidateQueries({ queryKey: ["subject-progress", subject.slug] });
-    await queryClient.invalidateQueries({ queryKey: ["user-quiz-attempts"] });
-    await queryClient.invalidateQueries({ queryKey: ["lessons", subject.slug] });
-    await queryClient.invalidateQueries({ queryKey: ["student", "dashboard-data"] });
-    router.refresh();
-    setSavingAttempt(false);
+    try {
+      if (sessionId) {
+        const subRes = await submitQuizSessionAction(sessionId, userAnswers);
+        if (subRes.success) {
+          if (subRes.score !== undefined) setServerScore(subRes.score);
+          if (subRes.questions) setQuestions(subRes.questions);
+        }
+      } else {
+        const score = calculateScore();
+        setServerScore(score);
+        await recordQuizAttemptAction({
+          subjectSlug: subject.slug,
+          subjectCode: subject.code,
+          lessonNumber,
+          lessonTitle,
+          score,
+          total: questions.length,
+          mode,
+        });
+      }
+      // Invalidate queries so that returning to LessonList or Dashboard updates immediately in real-time
+      await queryClient.invalidateQueries({ queryKey: ["subject-progress", subject.slug] });
+      await queryClient.invalidateQueries({ queryKey: ["user-quiz-attempts"] });
+      await queryClient.invalidateQueries({ queryKey: ["lessons", subject.slug] });
+      await queryClient.invalidateQueries({ queryKey: ["student", "dashboard-data"] });
+      router.refresh();
+    } finally {
+      setSavingAttempt(false);
+    }
   };
 
   // Improved AI Loading Card (Item #7)
@@ -214,7 +276,7 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
       <div className="mx-auto max-w-lg py-16 px-4">
         <Card className="rounded-3xl border border-border bg-card shadow-lg text-center p-8 sm:p-12 space-y-6">
           <div className="relative mx-auto size-16 flex items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Sparkles className="size-8 animate-spin text-primary" />
+            <Loader2 className="size-8 animate-spin text-primary" />
           </div>
           <div className="space-y-2">
             <h3 className="text-xl font-black text-foreground tracking-tight">
@@ -235,12 +297,12 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
     );
   }
 
-  if (allQuestions.length === 0) {
+  if (questions.length === 0) {
     return (
       <div className="mx-auto max-w-lg py-16 text-center space-y-4">
         <h2 className="text-xl font-bold text-foreground">No questions generated</h2>
         <p className="text-sm text-muted-foreground">Unable to generate quiz questions for this lesson.</p>
-        <Button onClick={() => loadQuiz(true)} className="gap-2">
+        <Button onClick={() => loadQuiz()} className="gap-2">
           <RefreshCw className="size-4" />
           <span>Regenerate Quiz</span>
         </Button>
@@ -326,6 +388,10 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
     );
   }
 
+  if (!currentQ) {
+    return null;
+  }
+
   const selectedAnswer = userAnswers[currentIndex];
   const isAnswered = Boolean(selectedAnswer);
   const displayQuestion =
@@ -408,7 +474,7 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
             </Button>
           </div>
           <CardTitle className="text-base sm:text-lg font-bold leading-snug text-foreground pt-1">
-            {displayQuestion}
+            <MarkdownRenderer content={displayQuestion} />
           </CardTitle>
         </CardHeader>
 
@@ -442,7 +508,9 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
                   <span className="flex size-7 shrink-0 items-center justify-center rounded-xl bg-muted text-xs font-bold text-foreground">
                     {key}
                   </span>
-                  <span className="leading-snug">{displayOptions[key]}</span>
+                  <div className="leading-snug">
+                    <MarkdownRenderer content={displayOptions?.[key] || ""} inline />
+                  </div>
                 </div>
 
                 {showStudyFeedback && (
@@ -470,19 +538,9 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
                   </AlertTitle>
                 </div>
                 <AlertDescription className="mt-1 text-xs leading-relaxed">
-                  {displayExplanation}
+                  <MarkdownRenderer content={displayExplanation} />
                 </AlertDescription>
               </Alert>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setTutorOpen(true)}
-                className="w-full gap-2 text-xs border-primary/20 text-primary bg-primary/5 hover:bg-primary/10 rounded-xl font-bold"
-              >
-                <Sparkles className="size-3.5" />
-                <span>Ask AI Tutor to explain why with analogies</span>
-              </Button>
             </div>
           )}
         </CardContent>
@@ -533,6 +591,7 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
         lessonTitle={lessonTitle}
         currentQuestion={currentQ}
         language={language}
+        persona={(user?.profile?.tutoringPersona as "socratic" | "detailed" | "exam-prep") || "socratic"}
       />
 
       {/* Socratic Tutor FAB */}
@@ -542,9 +601,6 @@ export function QuizRunner({ subject, lessonNumber }: QuizRunnerProps) {
         aria-label="Open AI Tutor"
       >
         <Bot className="size-6" />
-        <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white border border-background">
-          <Sparkles className="size-2.5" />
-        </span>
       </button>
     </div>
   );

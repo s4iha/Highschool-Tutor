@@ -1,5 +1,26 @@
 # Project Backlog & Change Log
 
+## [2026-09-15]
+### Task 021 - AI Chatbot Hardening, UX Fixes, and Quiz Security
+- **LaTeX & Markdown Math Rendering**: Installed `react-markdown`, `remark-math`, `rehype-katex`, and `katex`. Created `shared/components/ui/MarkdownRenderer.tsx` with KaTeX math rendering (`$...$`, `$$...$$`) and rich markdown styling. Integrated across `AITutorDrawer`, `StudentDashboardView` (AI messages), and `QuizRunner` (questions, options, and explanations).
+- **Curriculum Page Padding Reduction**: Reduced excessive vertical padding on `/curriculum` (`app/(dashboard)/curriculum/page.tsx`) from `py-6 sm:py-8` to `py-2 sm:py-3` for tighter alignment and reduced scroll distance.
+- **Chatbot Guardrails & Prompt Hardening**: Expanded prompt injection regexes in `features/curriculum/utils/ai-credits.ts` (blocking DAN mode, developer mode, system prompt reveal, rule override, instruction clearing). Added `validateEducationalQuery` guardrail to filter non-educational queries without consuming AI credits. Hardened Gemini system prompt against persona override and system prompt extraction.
+- **AI Greeting Suppression**: Directed Gemini system prompt to strictly omit conversational greetings ("Kumusta!", "Hello!", "Good day!") while preserving client-side welcome preambles.
+- **Dashboard Chat History Bug Resolution**: Resolved critical serialization bug where `StudentDashboardView` mapped history items as `{ role: "model", text }` instead of `{ role: "assistant", content }`, which previously broke Zod validation on multi-turn conversations.
+- **Logout Confirmation**: Added `ConfirmDialog` wrapping Shadcn `AlertDialog` in `DashboardSidebar.tsx` to prevent accidental logouts with cancel and destructive confirm actions.
+- **Disposable Email Filtering**: Created `features/auth/utils/disposable-domains.ts` containing a blocklist of 100+ temporary email providers. Added validation check to `app/api/auth/register/route.ts` returning 422 with a helpful message directing students to use personal/school emails.
+- **In-Chat AI Credits Visibility**: Added live credits badge (`✨ X left` / `Unlimited`) and daily quota exhaustion alerts directly to both `AITutorDrawer` header and the dashboard AI Tutor tab header. Automatically disables message inputs and quick prompts when credits are exhausted.
+- **Quiz Generation Loading Spinner**: Replaced rotating `Sparkles` icon with an accessible, spinning `Loader2` in `QuizRunner.tsx`.
+- **Quiz URL Security & Server-Side Sessions**: Added `QuizSession` model and `tutoringPersona` to `prisma/schema.prisma`. Created standard PostgreSQL migration `prisma/migrations/20260915120000_add_tutoring_persona_and_quiz_sessions/migration.sql` with Row Level Security (RLS) policies. Implemented `quiz-session.actions.ts` (`createQuizSessionAction`, `getQuizSessionAction`, `submitQuizSessionAction`) enforcing server-side lesson paywalls, parameter locking (`mode`, `count`), exam mode answer concealment (preventing inspection in DOM/network payloads), and 100% server-side answer verification.
+- **AI Tutor Persona Full Wiring**: Added `tutoringPersona` field to user `Profile` in PostgreSQL, updated `/api/user/profile` and `/api/user/me` routes, wired settings selector in `StudentDashboardView.tsx`, and passed dynamic persona behavior (Socratic, Detailed/Comprehensive, Exam Reviewer) into the Gemini system prompt.
+- **Quiz Runner Questions State & Rendering Resolution**: Resolved an issue where `QuizRunner` retained legacy `allQuestions` empty-state checking instead of evaluating the active `questions` array returned by `QuizSession`. This previously caused the client UI to immediately present "No questions generated" even after the server responded with HTTP 200 and a populated question array. Removed legacy `allQuestions` state, added null safety guards, and updated `MarkdownRenderer` with `inline` mode for math rendering within quiz option buttons.
+- **AI Persona Reflection & Chatbot Synchronization**: Eliminated hardcoded "Socratic" labels across the chatbot ecosystem. Dynamically display the active persona (Socratic Guide, Comprehensive, Exam Reviewer) in `SheetTitle`, greetings, and thinking indicators. Integrated an in-drawer and in-dashboard persona switcher dropdown so students can toggle tutoring modes mid-conversation without visiting the settings tab.
+- **Prompt Engineering for Persona & Language Switching**: Upgraded Gemini system prompt in `features/curriculum/api/gemini-service.ts` using structured `prompt-engineer` patterns. Enforced strict question-led guidance for Socratic mode, formulaic derivations and step-by-step masterclasses for Comprehensive mode, and DepEd periodic test elimination tactics for Exam Reviewer mode. Added explicit instructions to immediately switch languages mid-conversation while maintaining conversational context.
+- **Mid-Conversation Language Switching UX**: Added system notification pills (`Language switched to English/Taglish`) inside the chat history when users switch languages mid-conversation, preserving full previous message continuity.
+- **AI Tutor Auto-Scroll to Bottom**: Resolved drawer auto-scroll timing issue in `AITutorDrawer.tsx` by synchronizing scroll execution with Radix Sheet mounting frames via `requestAnimationFrame` and staggered timeouts. Added dedicated `chatScrollRef` and auto-scrolling to the AI Tutor tab in `StudentDashboardView.tsx`.
+- **Daily AI Credits Reset Messaging**: Confirmed and enforced the daily credit recharge cadence (20 free credits/day resetting at midnight PHT), aligning UI badges, warning cards, and input placeholders across all components.
+- **Verification Results**: Verified 0 TypeScript compiler errors (`npx tsc --noEmit`), 0 ESLint errors and warnings (`npm run lint`), all 97 unit tests passing across 14 test suites (`npm test`), and Next.js 16 production build pass with Turbopack (`npm run build`).
+
 ## [2026-09-14]
 ### Task 020 - Curriculum Deduplication and Grade Level Auto-Enrollment
 - **Curriculum Catalog Deduplication (130 → 42 Cards)**: Refactored `features/curriculum/utils/curriculum-data.ts` and `SubjectCatalog.tsx` to de-duplicate Junior High School curriculum cross-products (96 repeating trimester cards compressed into 8 distinct core subject cards). Maintained 34 distinct Senior High School STEM subjects grouped across Grade 11 and Grade 12 semesters, reducing visual noise by 68%.
@@ -189,3 +210,15 @@
 - Configured database scripts and seed execution in `package.json` and created `prisma/seed.ts`.
 - Initialized workspace documentation standard folders under `docs/`.
 - Verified TypeScript compilation (`npx tsc --noEmit`), ESLint linting (`npm run lint`), and Next.js standalone build (`npm run build`) pass cleanly with zero errors and zero warnings.
+
+
+## [2026-09-15]
+
+### Task 021 - Follow-up Fix for Non-Educational Query JSON Error
+
+- Fixed a bug where non-educational queries (and queries in the dashboard) were returning a raw JSON string due to Zod validation failure.
+- Updated \StudentDashboardView.tsx\ to provide the required \nswer\ field.
+- Caught Zod validation errors in \curriculum.actions.ts\ and standardized the error output.
+- Instructed the AI to politely and informatively refuse non-educational topics in \gemini-service.ts\.
+- Verification passed cleanly.
+

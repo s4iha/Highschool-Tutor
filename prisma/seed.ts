@@ -148,7 +148,7 @@ async function main() {
     },
   });
 
-  if (studentCount === 0) {
+  if (studentCount === 0 && process.env.NODE_ENV !== "production") {
     const sampleStudents = [
       {
         name: "Juan Dela Cruz",
