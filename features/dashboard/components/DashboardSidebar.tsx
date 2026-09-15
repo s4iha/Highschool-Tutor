@@ -14,20 +14,33 @@ import {
 } from "lucide-react";
 import { useDashboardStore, DashboardTab } from "../hooks/useDashboardStore";
 import { useUser } from "@/features/auth/hooks/useUser";
-import { authClient } from "@/features/auth/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { toast } from "sonner";
 
-export default function DashboardSidebar() {
+interface DashboardSidebarProps {
+  activeTab?: string;
+  onTabChange?: (tab: string) => void;
+}
+
+export default function DashboardSidebar({
+  activeTab: propActiveTab,
+  onTabChange,
+}: DashboardSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useUser();
   const {
-    activeTab,
+    activeTab: storeActiveTab,
     setActiveTab,
     sidebarCollapsed,
     mobileSidebarOpen,
     setMobileSidebarOpen,
   } = useDashboardStore();
+  const [showLogoutConfirm, setShowLogoutConfirm] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  const activeTab = propActiveTab !== undefined ? propActiveTab : storeActiveTab;
 
   const studentNavItems: {
     id: DashboardTab;
@@ -42,6 +55,7 @@ export default function DashboardSidebar() {
 
   const handleLogout = async () => {
     try {
+      setIsLoggingOut(true);
       try {
         await authClient.signOut();
       } catch (clientErr) {
@@ -53,6 +67,9 @@ export default function DashboardSidebar() {
       router.refresh();
     } catch {
       toast.error("Logout failed");
+    } finally {
+      setIsLoggingOut(false);
+      setShowLogoutConfirm(false);
     }
   };
 
@@ -128,6 +145,7 @@ export default function DashboardSidebar() {
                 type="button"
                 onClick={() => {
                   setActiveTab(item.id);
+                  onTabChange?.(item.id);
                   setMobileSidebarOpen(false);
                   if (pathname !== "/dashboard") {
                     router.push("/dashboard");
@@ -184,7 +202,7 @@ export default function DashboardSidebar() {
 
           <button
             type="button"
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className={`p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors cursor-pointer ${
               sidebarCollapsed ? "w-full flex justify-center" : ""
             }`}
@@ -225,6 +243,18 @@ export default function DashboardSidebar() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={showLogoutConfirm}
+        onOpenChange={setShowLogoutConfirm}
+        title="Log Out"
+        description="Are you sure you want to log out of your account?"
+        confirmLabel="Log Out"
+        cancelLabel="Cancel"
+        variant="destructive"
+        isLoading={isLoggingOut}
+        onConfirm={handleLogout}
+      />
     </>
   );
 }
