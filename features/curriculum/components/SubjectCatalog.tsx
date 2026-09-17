@@ -167,7 +167,7 @@ export function SubjectCatalog() {
             >
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-primary/60 opacity-0 transition-opacity group-hover:opacity-100" />
 
-              <CardHeader className="space-y-2.5 pb-2">
+              <CardHeader className="p-4 space-y-2 pb-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
                     {subject.code}
@@ -176,33 +176,33 @@ export function SubjectCatalog() {
                     {resolvedJhsTerm}
                   </Badge>
                 </div>
-                <CardTitle className="text-base font-bold group-hover:text-primary transition-colors line-clamp-2 min-h-[3rem]">
+                <CardTitle className="text-sm sm:text-base font-bold group-hover:text-primary transition-colors line-clamp-2">
                   {subject.name}
                 </CardTitle>
-                <CardDescription className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CardDescription className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground">
                   <span>{isStudentJHS ? studentGrade : "Grades 7–10"}</span>
                   <span>•</span>
                   <span>DepEd MATATAG</span>
                 </CardDescription>
               </CardHeader>
 
-              <CardContent className="pb-3">
-                <div className="rounded-xl bg-muted/50 p-2 text-xs text-muted-foreground flex items-center justify-between">
+              <CardContent className="p-4 pt-0 pb-3">
+                <div className="rounded-xl bg-muted/50 p-2 text-[11px] sm:text-xs text-muted-foreground flex items-center justify-between">
                   <span className="flex items-center gap-1">
                     <Layers className="size-3 text-primary" />
                     Coverage
                   </span>
                   <span className="font-medium text-foreground">
-                    Grades 7–10 • Trimesters 1–3
+                    Grades 7–10 • 12 Lessons &amp; Drills
                   </span>
                 </div>
               </CardContent>
 
-              <CardFooter className="pt-0">
+              <CardFooter className="p-4 pt-0">
                 <Button
                   asChild
                   variant="secondary"
-                  className="w-full gap-2 rounded-xl group/btn hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-xs font-medium"
+                  className="w-full gap-2 rounded-xl group/btn hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-xs font-medium h-9"
                   size="sm"
                 >
                   <Link href={`/curriculum/${subject.defaultSlug}`}>
@@ -280,7 +280,7 @@ export function SubjectCatalog() {
                     >
                       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-primary/60 opacity-0 transition-opacity group-hover:opacity-100" />
 
-                      <CardHeader className="space-y-2.5 pb-2">
+                      <CardHeader className="p-4 space-y-2 pb-2">
                         <div className="flex items-center justify-between gap-2">
                           <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
                             {subject.code}
@@ -289,33 +289,33 @@ export function SubjectCatalog() {
                             {subject.term}
                           </Badge>
                         </div>
-                        <CardTitle className="text-base font-bold group-hover:text-primary transition-colors line-clamp-2 min-h-[3rem]">
+                        <CardTitle className="text-sm sm:text-base font-bold group-hover:text-primary transition-colors line-clamp-2">
                           {subject.name}
                         </CardTitle>
-                        <CardDescription className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <CardDescription className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground">
                           <span>{subject.grade}</span>
                           <span>•</span>
                           <span>DepEd MATATAG</span>
                         </CardDescription>
                       </CardHeader>
 
-                      <CardContent className="pb-3">
-                        <div className="rounded-xl bg-muted/50 p-2 text-xs text-muted-foreground flex items-center justify-between">
+                      <CardContent className="p-4 pt-0 pb-3">
+                        <div className="rounded-xl bg-muted/50 p-2 text-[11px] sm:text-xs text-muted-foreground flex items-center justify-between">
                           <span className="flex items-center gap-1">
                             <Layers className="size-3 text-primary" />
-                            Modules
+                            Curriculum
                           </span>
                           <span className="font-medium text-foreground">
-                            8–12 Lessons + AI Quiz
+                            12 Lessons &amp; Drills
                           </span>
                         </div>
                       </CardContent>
 
-                      <CardFooter className="pt-0">
+                      <CardFooter className="p-4 pt-0">
                         <Button
                           asChild
                           variant="secondary"
-                          className="w-full gap-2 rounded-xl group/btn hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-xs font-medium"
+                          className="w-full gap-2 rounded-xl group/btn hover:bg-primary hover:text-primary-foreground transition-all duration-200 text-xs font-medium h-9"
                           size="sm"
                         >
                           <Link href={`/curriculum/${subject.defaultSlug}`}>
