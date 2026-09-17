@@ -453,7 +453,7 @@ export function AdminDashboard() {
                     </label>
                     <Input
                       type="number"
-                      value={currentSettings.monthlyPricePhp || 199}
+                      value={currentSettings.monthlyPricePhp || 300}
                       onChange={(e) =>
                         setLocalFormData((prev) => ({
                           ...prev,
@@ -471,7 +471,7 @@ export function AdminDashboard() {
                     </label>
                     <Input
                       type="number"
-                      value={currentSettings.annualPricePhp || 1499}
+                      value={currentSettings.annualPricePhp || 2600}
                       onChange={(e) =>
                         setLocalFormData((prev) => ({
                           ...prev,
@@ -480,7 +480,7 @@ export function AdminDashboard() {
                       }
                       className="rounded-xl text-sm"
                     />
-                    <p className="text-[11px] text-muted-foreground">Full academic school year access.</p>
+                    <p className="text-[11px] text-muted-foreground">Full academic school year access (Save ₱1,000).</p>
                   </div>
                 </div>
 

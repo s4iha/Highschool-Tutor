@@ -8,6 +8,13 @@ import type {
   QuizConfigUpdateInput,
   QuizQuestionItem,
 } from "../schemas/adminSchemas";
+import {
+  getLessonMaterialAction,
+  getSubjectLessonMaterialsAction,
+  saveLessonMaterialAction,
+  generateLessonMaterialAiAction,
+  type LessonMaterialData,
+} from "@/features/curriculum/actions/lesson-material.actions";
 
 // =============================================================================
 // TypeScript Interfaces
@@ -490,6 +497,121 @@ export function useDeleteQuizConfigMutation() {
     },
     onError: (err: Error) => {
       toast.error("Clear Failed", { description: err.message });
+    },
+  });
+}
+
+// =============================================================================
+// Admin Lesson Material Hooks
+// =============================================================================
+
+export interface AdminLessonMaterialItem {
+  id: string;
+  subjectSlug: string;
+  lessonNumber: number;
+  lessonTitle: string;
+  summary: string | null;
+  updatedAt: Date;
+}
+
+export function useAdminSubjectLessonMaterialsQuery(slug: string) {
+  return useQuery<AdminLessonMaterialItem[]>({
+    queryKey: ["admin", "lesson-materials", "subject", slug],
+    queryFn: async () => {
+      const res = await getSubjectLessonMaterialsAction(slug);
+      if (!res.success) throw new Error(res.error || "Failed to fetch lesson materials");
+      return (res.materials || []) as AdminLessonMaterialItem[];
+    },
+    enabled: Boolean(slug),
+    staleTime: 30 * 1000,
+  });
+}
+
+export function useAdminLessonMaterialQuery(slug: string, lessonNumber: number) {
+  return useQuery<LessonMaterialData | undefined>({
+    queryKey: ["admin", "lesson-materials", "detail", slug, lessonNumber],
+    queryFn: async () => {
+      const res = await getLessonMaterialAction(slug, lessonNumber);
+      if (!res.success) throw new Error(res.error || "Failed to fetch lesson material");
+      return res.material;
+    },
+    enabled: Boolean(slug && lessonNumber > 0),
+    staleTime: 10 * 1000,
+  });
+}
+
+export function useSaveLessonMaterialMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: {
+      subjectSlug: string;
+      lessonNumber: number;
+      lessonTitle: string;
+      content: string;
+      summary?: string;
+    }) => {
+      const res = await saveLessonMaterialAction(data);
+      if (!res.success) {
+        throw new Error(res.error || "Failed to save lesson material");
+      }
+      return res.material;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "lesson-materials", "subject", variables.subjectSlug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "lesson-materials", "detail", variables.subjectSlug, variables.lessonNumber],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["curriculum", "lesson-material", variables.subjectSlug, variables.lessonNumber],
+      });
+      toast.success("Lesson Material Saved", {
+        description: `Material for Lesson ${variables.lessonNumber} updated successfully.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast.error("Save Failed", { description: err.message });
+    },
+  });
+}
+
+export function useGenerateLessonMaterialMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      slug,
+      lessonNumber,
+      lessonTitleOverride,
+    }: {
+      slug: string;
+      lessonNumber: number;
+      lessonTitleOverride?: string;
+    }) => {
+      const res = await generateLessonMaterialAiAction(slug, lessonNumber, lessonTitleOverride);
+      if (!res.success) {
+        throw new Error(res.error || "Failed to generate lesson material");
+      }
+      return res.material;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "lesson-materials", "subject", variables.slug],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "lesson-materials", "detail", variables.slug, variables.lessonNumber],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["curriculum", "lesson-material", variables.slug, variables.lessonNumber],
+      });
+      toast.success("AI Lesson Generated", {
+        description: `Generated comprehensive study material for Lesson ${variables.lessonNumber}.`,
+      });
+    },
+    onError: (err: Error) => {
+      toast.error("Generation Failed", { description: err.message });
     },
   });
 }

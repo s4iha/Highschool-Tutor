@@ -8,6 +8,13 @@ export interface UserData {
   name: string;
   image?: string | null;
   role: string;
+  subscription?: {
+    id: string;
+    plan: string;
+    status: string;
+    amountPhp: number;
+    expiresAt?: string | Date | null;
+  } | null;
   profile?: {
     fullName: string;
     gradeLevel: string;

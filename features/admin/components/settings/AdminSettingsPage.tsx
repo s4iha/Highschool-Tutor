@@ -108,7 +108,7 @@ export function AdminSettingsPage() {
                     </label>
                     <Input
                       type="number"
-                      value={currentSettings.monthlyPricePhp ?? 199}
+                      value={currentSettings.monthlyPricePhp ?? 300}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
@@ -128,7 +128,7 @@ export function AdminSettingsPage() {
                     </label>
                     <Input
                       type="number"
-                      value={currentSettings.annualPricePhp ?? 1499}
+                      value={currentSettings.annualPricePhp ?? 2600}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
@@ -138,7 +138,7 @@ export function AdminSettingsPage() {
                       className="rounded-xl text-sm"
                     />
                     <p className="text-[11px] text-muted-foreground">
-                      Full school year access for all grade levels.
+                      Full school year access (Save ₱1,000 compared to 12 months).
                     </p>
                   </div>
                 </div>
@@ -227,28 +227,6 @@ export function AdminSettingsPage() {
                       Lessons 1–3 free; Lesson 4+ triggers GCash checkout modal.
                     </p>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border border-border/40 mt-2">
-                  <div className="space-y-0.5">
-                    <div className="text-xs font-semibold text-foreground">
-                      Allow AI Tutor Hints on Free Tier
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">
-                      Students receive Google Gemini Socratic hints during free trial lessons.
-                    </div>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={currentSettings.enableAiTutorTrial ?? true}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        enableAiTutorTrial: e.target.checked,
-                      }))
-                    }
-                    className="size-4 rounded text-primary focus:ring-primary"
-                  />
                 </div>
               </CardContent>
             </Card>

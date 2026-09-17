@@ -12,6 +12,7 @@ import {
 import { toast } from "sonner";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 import { usePublicConfigQuery } from "@/features/settings";
+import { useUser } from "@/features/auth/hooks/useUser";
 import {
   Dialog,
   DialogContent,
@@ -26,14 +27,25 @@ export function UpgradeModal() {
   const { isOpen, featureName, reason, closeUpgradeModal } =
     useUpgradeModalStore();
   const { data: config } = usePublicConfigQuery();
+  const { user } = useUser();
+
+  const isExistingSubscriber = user?.subscription?.status === "ACTIVE";
 
   const [step, setStep] = React.useState<"plan_selection" | "payment_instructions">("plan_selection");
-  const [planType, setPlanType] = React.useState<"single_grade" | "all_grades">("all_grades");
-  const [selectedGrade, setSelectedGrade] = React.useState<string>("Grade 10");
+  const [planType, setPlanType] = React.useState<"monthly" | "annual">("monthly");
+
+  // Synchronize default plan choice when modal opens or user subscription status loads
+  React.useEffect(() => {
+    if (isExistingSubscriber) {
+      setPlanType("annual");
+    } else {
+      setPlanType("monthly");
+    }
+  }, [isExistingSubscriber, isOpen]);
 
   // Dynamic configuration from admin settings
-  const annualPrice = config?.annualPricePhp ?? 1499;
-  const singleGradePrice = Math.floor(annualPrice / 3);
+  const monthlyPrice = config?.monthlyPricePhp ?? 300;
+  const annualPrice = config?.annualPricePhp ?? 2600;
   const maxTrialSubjects = config?.maxTrialSubjects ?? 3;
   const maxFreeLessons = config?.maxFreeLessons ?? 3;
   const gcashReceiverNumber = config?.gcashReceiverNumber ?? "0917-888-4321";
@@ -41,20 +53,13 @@ export function UpgradeModal() {
   const mayaReceiverNumber = config?.mayaReceiverNumber ?? "0918-999-8765";
   const mayaAccountName = config?.mayaAccountName ?? "HIGHSCHOOL TUTOR PH";
 
-  const gradeOptions = [
-    "Grade 7",
-    "Grade 8",
-    "Grade 9",
-    "Grade 10",
-    "Grade 11",
-    "Grade 12",
-  ];
-
-  const currentPrice = planType === "all_grades" ? annualPrice : singleGradePrice;
+  const currentPrice = planType === "annual" ? annualPrice : monthlyPrice;
   const planTitle =
-    planType === "all_grades"
-      ? "Complete High School Bundle (Grades 7–12)"
-      : `${selectedGrade} Access Pass`;
+    planType === "annual"
+      ? isExistingSubscriber
+        ? "Annual Pass Upgrade (Save ₱1,000)"
+        : "Annual Unlimited Pass"
+      : "Monthly Access Pass";
 
   const handleClose = () => {
     setStep("plan_selection");
@@ -83,89 +88,79 @@ export function UpgradeModal() {
                 <Crown className="size-5 text-primary" />
               </div>
               <DialogTitle className="text-xl sm:text-2xl font-bold font-heading text-foreground">
-                Choose Your Study Plan
+                {isExistingSubscriber ? "Upgrade Your Membership" : "Choose Your Study Plan"}
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground max-w-md mx-auto">
                 {reason ||
-                  `Unlock full access to ${
-                    featureName || "all DepEd high school lessons"
-                  } with DepEd MATATAG curriculum and unlimited Gemini AI Socratic tutoring.`}
+                  (isExistingSubscriber
+                    ? "Upgrade your existing subscription to our Annual Pass for ₱2,600 and save ₱1,000 compared to paying monthly."
+                    : `Unlock full access to ${
+                        featureName || "all DepEd high school lessons"
+                      } with DepEd MATATAG curriculum and unlimited practice tests.`)}
               </DialogDescription>
             </DialogHeader>
 
             {/* Plan Selector */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 my-3">
-              {/* Single Grade Level */}
+              {/* Monthly Pass */}
               <div
-                onClick={() => setPlanType("single_grade")}
+                onClick={() => setPlanType("monthly")}
                 className={`relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                  planType === "single_grade"
+                  planType === "monthly"
                     ? "border-primary bg-primary/5 shadow-xs"
                     : "border-border/60 bg-background hover:border-border"
                 }`}
               >
+                {!isExistingSubscriber && (
+                  <Badge className="absolute -top-2.5 right-3 bg-muted text-foreground border border-border text-[10px] font-bold px-2 py-0.5">
+                    STANDARD
+                  </Badge>
+                )}
                 <div className="space-y-1">
                   <span className="text-xs font-semibold text-muted-foreground uppercase">
-                    Single Grade Pass
+                    {isExistingSubscriber ? "Renew Monthly" : "Monthly Pass"}
                   </span>
                   <div className="text-2xl font-bold text-foreground font-heading">
-                    ₱{singleGradePrice.toLocaleString()}
-                    <span className="text-xs font-normal text-muted-foreground">/school yr</span>
+                    ₱{monthlyPrice.toLocaleString()}
+                    <span className="text-xs font-normal text-muted-foreground">/month</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground pt-0.5">
-                    Full 1-year access for 1 selected grade level.
+                    Flexible 30-day recurring access to all DepEd JHS & SHS subjects.
                   </p>
                 </div>
-
-                {planType === "single_grade" && (
-                  <div
-                    className="mt-2.5 pt-2.5 border-t border-border/60 space-y-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">
-                      Select Grade Level:
-                    </label>
-                    <select
-                      value={selectedGrade}
-                      onChange={(e) => setSelectedGrade(e.target.value)}
-                      className="w-full text-xs font-semibold bg-background border border-border rounded-lg px-2 py-1.5 text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                    >
-                      {gradeOptions.map((g) => (
-                        <option key={g} value={g}>
-                          {g} Core & Tracks
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+                <div className="mt-3 pt-2 border-t border-border/40 text-[10px] font-medium text-muted-foreground">
+                  Includes all short lessons & quizzes
+                </div>
               </div>
 
-              {/* All Grades 7-12 Bundle */}
+              {/* Annual Pass / Upgrade Option */}
               <div
-                onClick={() => setPlanType("all_grades")}
+                onClick={() => setPlanType("annual")}
                 className={`relative flex flex-col justify-between p-3.5 sm:p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                  planType === "all_grades"
+                  planType === "annual"
                     ? "border-primary bg-primary/5 shadow-xs"
                     : "border-border/60 bg-background hover:border-border"
                 }`}
               >
-                <Badge className="absolute -top-2.5 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5">
-                  BEST VALUE • SAVE 50%
+                <Badge className="absolute -top-2.5 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 shadow-xs">
+                  SAVE ₱1,000
                 </Badge>
                 <div className="space-y-1">
                   <span className="text-xs font-semibold text-primary uppercase flex items-center gap-1">
-                    All Levels (7–12)
+                    {isExistingSubscriber ? "Annual Upgrade" : "Annual Pass"}
                   </span>
                   <div className="text-2xl font-bold text-foreground font-heading">
                     ₱{annualPrice.toLocaleString()}
-                    <span className="text-xs font-normal text-muted-foreground">/full access</span>
+                    <span className="text-xs font-normal text-muted-foreground">/full year</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground pt-0.5">
-                    Complete access to all Junior & Senior High School subjects (Grades 7 to 12).
+                    {isExistingSubscriber
+                      ? "Special upgrade price for existing subscribers: 365 days of unlimited access."
+                      : "Full 365-day access to all DepEd subjects (save ₱1,000 compared to 12 months)."}
                   </p>
                 </div>
-                <div className="mt-2.5 pt-2 text-[10px] font-semibold text-primary/90 flex items-center gap-1">
-                  <span>Includes JHS Core + STEM, ABM, HUMSS</span>
+                <div className="mt-3 pt-2 border-t border-border/40 text-[10px] font-semibold text-primary/90 flex items-center gap-1">
+                  <span>Best value • ₱216/month equivalent</span>
                 </div>
               </div>
             </div>
@@ -174,20 +169,20 @@ export function UpgradeModal() {
             <div className="rounded-2xl bg-muted/40 border border-border/40 p-3.5 space-y-2">
               <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                 <ShieldCheck className="size-4 text-emerald-500" />
-                Everything included in Premium:
+                Everything included in HighSchool Tutor Pass:
               </span>
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
                 <li className="flex items-center gap-2">
                   <Check className="size-3.5 text-primary shrink-0" />
-                  <span>All 130+ DepEd JHS & SHS STEM subjects</span>
+                  <span>All DepEd JHS & SHS curriculum subjects</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="size-3.5 text-primary shrink-0" />
-                  <span>Unlock all 12 lessons per subject</span>
+                  <span>Short lessons & study notes before quizzes</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="size-3.5 text-primary shrink-0" />
-                  <span>Unlimited Gemini Socratic AI hints</span>
+                  <span>Curated AI study prompt templates & guides</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="size-3.5 text-primary shrink-0" />
@@ -204,7 +199,7 @@ export function UpgradeModal() {
               >
                 <span>
                   Proceed to Payment (₱{currentPrice.toLocaleString()} •{" "}
-                  {planType === "all_grades" ? "All 7–12" : selectedGrade})
+                  {planType === "annual" ? "Annual Pass" : "Monthly Pass"})
                 </span>
               </Button>
 
@@ -249,7 +244,7 @@ export function UpgradeModal() {
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                Academic School Year Unlimited Access
+                {planType === "annual" ? "365-Day Unlimited High School Access" : "30-Day Recurring Learning Access"}
               </p>
             </div>
 

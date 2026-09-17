@@ -85,8 +85,8 @@ async function main() {
     update: {},
     create: {
       id: "default_config",
-      monthlyPricePhp: 199,
-      annualPricePhp: 1499,
+      monthlyPricePhp: 300,
+      annualPricePhp: 2600,
       maxTrialSubjects: 3,
       maxFreeLessons: 3,
       gcashReceiverNumber: "0917-888-4321",
@@ -110,8 +110,8 @@ async function main() {
       publishedAt: new Date(),
     },
     {
-      title: "Back to School Promo: 20% Off Annual Pass",
-      body: "Upgrade your learning access today for only ₱1,499 for the entire academic school year via GCash and Maya.",
+      title: "Special Upgrade Promo: Save ₱1,000 on Annual Pass",
+      body: "Upgrade your learning access today for only ₱2,600 for the entire academic school year via GCash and Maya (save ₱1,000 compared to monthly).",
       type: AnnouncementType.PROMO,
       targetAudience: AudienceType.TRIAL,
       isActive: true,
