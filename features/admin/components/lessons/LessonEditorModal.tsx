@@ -6,10 +6,7 @@ import {
   Save,
   Eye,
   Edit3,
-  BookOpen,
   Loader2,
-  CheckCircle2,
-  AlertCircle,
   HelpCircle,
 } from "lucide-react";
 import {
@@ -51,7 +48,7 @@ export function LessonEditorModal({
   const [title, setTitle] = React.useState("");
   const [summary, setSummary] = React.useState("");
   const [content, setContent] = React.useState("");
-  const [hasInitialized, setHasInitialized] = React.useState(false);
+  const [prevKey, setPrevKey] = React.useState<string | null>(null);
 
   const { data: material, isLoading } = useAdminLessonMaterialQuery(
     subjectSlug,
@@ -61,23 +58,27 @@ export function LessonEditorModal({
   const saveMutation = useSaveLessonMaterialMutation();
   const generateMutation = useGenerateLessonMaterialMutation();
 
-  // Initialize or reset form state when modal opens or query loads
-  React.useEffect(() => {
-    if (open && material && (!hasInitialized || material.lessonNumber === lessonNumber)) {
-      setTitle(material.lessonTitle || defaultLessonTitle);
-      setSummary(material.summary || "");
-      setContent(material.content || "");
-      setHasInitialized(true);
-    }
-  }, [open, material, lessonNumber, defaultLessonTitle, hasInitialized]);
+  // Adjust state when modal opens or lesson data changes without cascading renders
+  const currentKey = open
+    ? `${subjectSlug}-${lessonNumber}-${material ? "has-material-" + material.lessonTitle : "no-material"}`
+    : "closed";
 
-  // Reset flag on close
-  React.useEffect(() => {
-    if (!open) {
-      setHasInitialized(false);
+  if (currentKey !== prevKey) {
+    setPrevKey(currentKey);
+    if (open) {
+      if (material) {
+        setTitle(material.lessonTitle || defaultLessonTitle);
+        setSummary(material.summary || "");
+        setContent(material.content || "");
+      } else {
+        setTitle(defaultLessonTitle);
+        setSummary("");
+        setContent("");
+      }
+    } else {
       setActiveTab("edit");
     }
-  }, [open]);
+  }
 
   const handleGenerateAi = () => {
     generateMutation.mutate(

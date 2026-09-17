@@ -94,7 +94,7 @@ export default function StudentDashboardView({
   const queryClient = useQueryClient();
 
   // Load real-time aggregated dashboard data
-  const { data: dashboardData, refetch: refetchDashboard } = useDashboardData(!!user?.id);
+  const { data: dashboardData } = useDashboardData(!!user?.id);
   const metrics = dashboardData?.metrics;
   const activeLearning = dashboardData?.activeLearning;
 

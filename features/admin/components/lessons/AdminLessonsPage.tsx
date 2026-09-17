@@ -8,10 +8,8 @@ import {
   Search,
   CheckCircle2,
   Clock,
-  FileText,
   Loader2,
   RefreshCw,
-  ExternalLink,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { SUBJECTS } from "@/features/curriculum/utils/curriculum-data";

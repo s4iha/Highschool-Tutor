@@ -32,16 +32,16 @@ export function UpgradeModal() {
   const isExistingSubscriber = user?.subscription?.status === "ACTIVE";
 
   const [step, setStep] = React.useState<"plan_selection" | "payment_instructions">("plan_selection");
-  const [planType, setPlanType] = React.useState<"monthly" | "annual">("monthly");
+  const [planType, setPlanType] = React.useState<"monthly" | "annual">(
+    isExistingSubscriber ? "annual" : "monthly"
+  );
+  const [prevSubscriberState, setPrevSubscriberState] = React.useState<boolean>(isExistingSubscriber);
 
-  // Synchronize default plan choice when modal opens or user subscription status loads
-  React.useEffect(() => {
-    if (isExistingSubscriber) {
-      setPlanType("annual");
-    } else {
-      setPlanType("monthly");
-    }
-  }, [isExistingSubscriber, isOpen]);
+  // Synchronize default plan choice when user subscription status loads without cascading renders
+  if (isExistingSubscriber !== prevSubscriberState) {
+    setPrevSubscriberState(isExistingSubscriber);
+    setPlanType(isExistingSubscriber ? "annual" : "monthly");
+  }
 
   // Dynamic configuration from admin settings
   const monthlyPrice = config?.monthlyPricePhp ?? 300;
