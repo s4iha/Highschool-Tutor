@@ -1,5 +1,49 @@
 # Project Backlog & Change Log
 
+## [2026-09-17]
+### Task 022 - Pricing Updates, AI Chatbot Removal, Pre-configured Prompt Modal, Lesson Directory & Mobile Subject Cards
+- **Subscription Pricing Overhaul (₱300/mo & ₱2,600/yr Upgrade)**:
+  - Updated `AdminConfig` defaults in `prisma/schema.prisma` (`monthlyPricePhp` = 300, `annualPricePhp` = 2600) and updated database seed (`prisma/seed.ts`). Ran database sync and seed.
+  - Overhauled `UpgradeModal.tsx`: dynamic billing logic presenting the Monthly plan (₱300/month) for new students and the Annual Upgrade option (₱2,600/year, saving ₱1,000/yr compared to 12 months) for existing/active subscribers. Removed legacy grade-level multi-selects and chatbot references.
+  - Updated `app/api/user/me/route.ts` and `useUser.ts` to surface active subscription metadata to client components.
+  - Updated Admin Settings (`AdminSettingsPage.tsx`) and schema (`adminSchemas.ts`) with default ₱300 / ₱2,600 values and removed obsolete AI trial toggles.
+- **AI Chatbot & AI Credits Functionality Removal (UI & Logic)**:
+  - Preserved database tables (`AiCreditUsage`, `aiCredits`) intact for historical audit logs per user preference.
+  - Removed all chatbot UI from `StudentDashboardView.tsx`: deleted chatbot state, mock message history, quick prompts, thinking indicator, and persona selector. Replaced Daily Credits metric card with "Enrolled Subjects" count.
+  - Removed `AITutorDrawer` integration and legacy chatbot toggle from `QuizRunner.tsx`.
+  - Removed AI credit checks and deductions gating quiz generation in `features/curriculum/actions/curriculum.actions.ts`, ensuring students have unblocked access to study drills.
+  - Cleaned up dashboard navigation in `DashboardSidebar.tsx` and updated the driver.js tour in `useDashboardTour.ts`.
+- **Pre-Configured AI Study Prompts "Help" Modal**:
+  - Authored `AiPromptsHelpModal.tsx` featuring the suggested guide:
+    - Step 1: Download your AI tool (ChatGPT, Claude, Gemini, Copilot).
+    - Step 2: How to write great prompts (Give it a role, Be specific, Set constraints).
+    - Step 3: 10 copy-and-paste prompt templates (Explain like I'm 10, Step-by-step problem solver, Practice quiz generator, Real-world analogy, Socratic tutor, Concept map, Memory mnemonics, Common mistakes analyzer, Exam review sheet, Counter-argument tester) with one-click clipboard copying and dynamic topic substitution.
+  - Created `useAiPromptsModalStore` (Zustand) for global trigger management.
+  - Built `AiPromptsFab.tsx` (Floating Action Button) positioned at `bottom-6 right-6` on the Student Dashboard, Quiz Runner, and Lesson List.
+- **Short Lesson Material Before Quiz & Admin Lesson Directory**:
+  - Added `LessonMaterial` model to `prisma/schema.prisma` (`subjectSlug`, `lessonNumber`, `lessonTitle`, `content`, `summary`, `keyTakeaways`) with compound unique constraint `@@unique([subjectSlug, lessonNumber])`.
+  - Added `generateLessonContentWithGemini` in `gemini-service.ts` to produce structured Markdown with LaTeX math, key competencies, and practical examples.
+  - Implemented server actions in `lesson-material.actions.ts`: `getLessonMaterialAction`, `saveLessonMaterialAction`, `generateLessonMaterialAiAction`, and `getSubjectLessonMaterialsAction`.
+  - Built `LessonReaderModal.tsx` displaying rich lesson notes with KaTeX math rendering, prompt guide shortcuts, and a direct CTA to "Start Practice Quiz".
+  - Updated student `LessonList.tsx` with dual action buttons: "View Lesson" and "Take Quiz".
+  - Built complete Admin Lesson Directory (`app/(admin)/admin/lessons/page.tsx`, `AdminLessonsPage.tsx`, `LessonEditorModal.tsx`) supporting subject selection across 130+ DepEd courses, curriculum lesson overview with database status badges, one-click AI generation with Gemini, live markdown preview, and curation. Registered in `AdminSidebar.tsx`.
+- **Mobile Subject & Lesson Card UI Polish**:
+  - Redesigned subject cards in `features/curriculum/components/SubjectCatalog.tsx` across both JHS and SHS sections: removed rigid `min-h-[3rem]` heights that created uneven gaps on mobile screens, updated module text to "12 Lessons & Drills", and adjusted padding and touch targets for mobile viewports (`< 640px`).
+  - Refactored `LessonList.tsx` cards with clean status badges and responsive button layout.
+- **Xendit Payment Gateway Approval Checklist**:
+  - Authored comprehensive compliance and go-live guide in `docs/xendit-approval-checklist.md` covering Philippine KYB/KYC regulations (SEC/DTI, BIR 2303, Mayor's Permit), required legal pages (Terms, Privacy under RA 10173, Refund Policy, Contact Details), pricing disclosure, webhook security and signature validation, and sandbox/live transaction testing.
+- **AI Study Prompts Help Modal & FAB UI Polish (Task 022 Follow-up)**:
+  - Eliminated redundancy between sidebar navigation link and floating button: removed the sidebar link from `DashboardSidebar.tsx` to prevent perception of a separate route.
+  - Rebuilt `AiPromptsFab.tsx` using a friendly question-mark icon (`HelpCircle`) instead of the overused `Sparkles` icon, with smooth hover transitions.
+  - Redesigned `AiPromptsHelpModal.tsx` with a sticky header (containing title, description, and dynamic topic customization bar), scrollable body for steps and 10 prompts, and a sticky footer with online tool references and the close action.
+  - Updated Step 1 guide text to invite students to visit free web AI providers online (ChatGPT, Gemini, Claude, Copilot) rather than asking them to install apps.
+  - In `QuizRunner.tsx`, preserved the instant explanation feedback for "Study Mode" while strictly hiding all AI prompts help (both the header button and FAB) during "Exam Mode" for unassisted test simulations.
+  - Fixed the "Change Options" button on the Quiz Results screen to append `?reconfigure={lessonId}`, and updated `LessonList.tsx` to automatically re-open the quiz configuration dialog with the selected lesson so students can immediately change questions and mode.
+- **Verification Results**:
+  - 0 TypeScript compiler errors (`npx tsc --noEmit`).
+  - All 97 unit tests passing across 14 test suites (`npm test`).
+  - Next.js 16 production build succeeded with Turbopack across all 31 routes including `/admin/lessons` (`npm run build`).
+
 ## [2026-09-15]
 ### Task 021 - AI Chatbot Hardening, UX Fixes, and Quiz Security
 - **LaTeX & Markdown Math Rendering**: Installed `react-markdown`, `remark-math`, `rehype-katex`, and `katex`. Created `shared/components/ui/MarkdownRenderer.tsx` with KaTeX math rendering (`$...$`, `$$...$$`) and rich markdown styling. Integrated across `AITutorDrawer`, `StudentDashboardView` (AI messages), and `QuizRunner` (questions, options, and explanations).
@@ -222,3 +266,8 @@
 - Instructed the AI to politely and informatively refuse non-educational topics in \gemini-service.ts\.
 - Verification passed cleanly.
 
+### Task 022 Bug Fixes - AI Prompts & Quiz Configuration Flow
+- Removed redundant AiPromptsFab across all pages to reduce UI clutter, keeping the sidebar and Quiz header buttons as primary entry points.
+- Updated AiPromptsHelpModal instruction text to suggest visiting free AI providers online instead of downloading/installing them.
+- Ensured the 'AI Study Prompts' button in QuizRunner is hidden during 'Exam Mode', while preserving explanation feedback for 'Study Mode'.
+- Fixed the 'Change Options' button routing in QuizRunner by appending a ?reconfigure={lessonId} query parameter, automatically triggering the configuration modal in LessonList upon return.

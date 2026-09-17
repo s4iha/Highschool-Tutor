@@ -11,6 +11,7 @@ import {
   Megaphone,
   Settings,
   GraduationCap,
+  BookOpen,
   X,
 } from "lucide-react";
 import { useAdminSidebarStore } from "../hooks/useAdminSidebarStore";
@@ -28,6 +29,12 @@ export const NAV_ITEMS = [
     title: "Students & Subs",
     href: "/admin/students",
     icon: Users,
+    exact: false,
+  },
+  {
+    title: "Lesson Directory",
+    href: "/admin/lessons",
+    icon: BookOpen,
     exact: false,
   },
   {

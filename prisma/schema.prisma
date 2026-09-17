@@ -74,6 +74,7 @@ model Account {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   issuer                String?   @db.Text
+  type                  String?
 
   @@map("account")
 }
@@ -237,6 +238,22 @@ model CachedQuiz {
   @@map("cached_quizzes")
 }
 
+model LessonMaterial {
+  id           String   @id @default(cuid())
+  subjectSlug  String
+  lessonNumber Int
+  lessonTitle  String
+  content      String   @db.Text
+  summary      String?  @db.Text
+  keyTakeaways Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([subjectSlug, lessonNumber])
+  @@index([subjectSlug, lessonNumber])
+  @@map("lesson_materials")
+}
+
 model QuizAttempt {
   id           String   @id @default(cuid())
   userId       String?
@@ -358,8 +375,8 @@ enum AudienceType {
 
 model AdminConfig {
   id                   String   @id @default(cuid())
-  monthlyPricePhp      Int      @default(199)
-  annualPricePhp       Int      @default(1499)
+  monthlyPricePhp      Int      @default(300)
+  annualPricePhp       Int      @default(2600)
   maxTrialSubjects     Int      @default(3)
   maxFreeLessons       Int      @default(3)
   gcashReceiverNumber  String   @default("0917-888-4321")

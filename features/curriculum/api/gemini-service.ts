@@ -395,3 +395,51 @@ Explanation: ${item.explanation}`;
   translationCache.set(cacheKey, rawJson);
   return result;
 }
+
+export async function generateLessonContentWithGemini(
+  subjectName: string,
+  lessonNumber: number,
+  lessonTitle: string,
+  keyConcepts: string[] = []
+): Promise<{ title: string; summary: string; content: string; keyTakeaways: string[] }> {
+  const prompt = `You are a master Philippine DepEd K-12 MATATAG curriculum educator.
+Generate a comprehensive, student-friendly short study lesson for high school students.
+
+Subject: ${subjectName}
+Lesson Number: ${lessonNumber}
+Lesson Title: ${lessonTitle}
+${keyConcepts.length > 0 ? `Key Focus Areas: ${keyConcepts.join(", ")}` : ""}
+
+Structure the lesson in clean GitHub-flavored Markdown formatted with:
+# ${lessonTitle}
+**Overview & Essential Question**: 2-3 sentences introducing the core competency.
+## 1. Key Concepts & Definitions: Clear, easy-to-grasp breakdown with bold keywords.
+## 2. Step-by-Step Guide / Real-World Application: Step-by-step example or relatable Philippine context.
+## 3. Common Misconceptions: Mistakes students frequently make on tests and how to avoid them.
+## 4. Quick Review Summary: 3 high-yield summary bullet points.
+
+Keep the tone encouraging, clear, and academic yet accessible for Filipino high school learners. Include LaTeX math notation ($...$) where applicable.`;
+
+  const schema = {
+    type: "OBJECT",
+    properties: {
+      title: { type: "STRING" },
+      summary: { type: "STRING" },
+      content: { type: "STRING" },
+      keyTakeaways: {
+        type: "ARRAY",
+        items: { type: "STRING" },
+      },
+    },
+    required: ["title", "summary", "content", "keyTakeaways"],
+  };
+
+  const raw = await callGemini(
+    [{ parts: [{ text: prompt }] }],
+    "You are an expert DepEd MATATAG curriculum educator. Output strictly valid JSON matching the schema.",
+    schema
+  );
+
+  return JSON.parse(raw);
+}
+

@@ -75,6 +75,14 @@ export async function GET() {
 
     const resolvedName = profile?.fullName?.trim() || user.name?.trim() || "";
 
+    const activeSubscription = await prisma.subscription.findFirst({
+      where: {
+        userId: user.id,
+        status: "ACTIVE",
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
     return NextResponse.json({
       user: {
         id: user.id,
@@ -82,6 +90,15 @@ export async function GET() {
         name: resolvedName,
         image: user.image,
         role: userRole,
+        subscription: activeSubscription
+          ? {
+              id: activeSubscription.id,
+              plan: activeSubscription.plan,
+              status: activeSubscription.status,
+              amountPhp: activeSubscription.amountPhp,
+              expiresAt: activeSubscription.expiresAt,
+            }
+          : null,
         profile: profile
           ? {
               fullName: resolvedName,

@@ -5,9 +5,7 @@ import Link from "next/link";
 import {
   BookOpen,
   Award,
-  Bot,
   ArrowRight,
-  Send,
   Layers,
   ChevronRight,
   Crown,
@@ -37,39 +35,13 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-  getUserQuizAttemptsAction,
-  askTutorAction,
-} from "@/features/curriculum/actions/curriculum.actions";
-import { MarkdownRenderer } from "@/shared/components/ui/MarkdownRenderer";
+import { getUserQuizAttemptsAction } from "@/features/curriculum/actions/curriculum.actions";
+import { useAiPromptsModalStore } from "@/shared/hooks/useAiPromptsModalStore";
+import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
+import { AiPromptsFab } from "@/shared/components/ui/AiPromptsFab";
 
 interface StudentDashboardViewProps {
   activeTab?: DashboardTab;
-}
-
-const personaLabels: Record<"socratic" | "detailed" | "exam-prep", string> = {
-  socratic: "Socratic Guide",
-  detailed: "Comprehensive",
-  "exam-prep": "Exam Reviewer",
-};
-
-function getDashboardGreeting(
-  lang: "taglish" | "english",
-  persona: "socratic" | "detailed" | "exam-prep"
-) {
-  if (persona === "detailed") {
-    return lang === "taglish"
-      ? "Magandang araw! Ako ang iyong Gemini Comprehensive AI Tutor para sa DepEd K-12 MATATAG. Handa akong magbigay ng detalyadong step-by-step na paliwanag at solusyon. Anong aralin ang nais mong talakayin?"
-      : "Good day! I am your Gemini Comprehensive AI Tutor for DepEd K-12 MATATAG. I provide thorough, step-by-step breakdowns and derivations. Which lesson would you like to explore today?";
-  }
-  if (persona === "exam-prep") {
-    return lang === "taglish"
-      ? "Magandang araw! Ako ang iyong Gemini Exam Reviewer para sa DepEd K-12 MATATAG. Narito ako para magbahagi ng exam strategies, option elimination tips, at periodic test review pointers. Anong exam topic ang paghahandaan natin?"
-      : "Good day! I am your Gemini Exam Reviewer for DepEd K-12 MATATAG. I specialize in periodic exam prep, option elimination tactics, and high-yield test tips. What lesson are we reviewing?";
-  }
-  return lang === "taglish"
-    ? "Magandang araw! Ako ang iyong Gemini Socratic AI Tutor para sa DepEd K-12 MATATAG. Anong subject o lesson ang nais mong suriin gamit ang mga pahiwatig at gabay?"
-    : "Good day! I am your Gemini Socratic AI Tutor for DepEd K-12 MATATAG. Which high school subject or lesson would you like to explore with hints and guided questions?";
 }
 
 export default function StudentDashboardView({
@@ -111,100 +83,7 @@ export default function StudentDashboardView({
   const studentTrack = user?.profile?.track?.trim() || "STEM Strand";
   const studentSchool = user?.profile?.school?.trim() || "DepEd High School";
 
-  // State for AI Tutor Interactive Box
-  const [aiQuery, setAiQuery] = useState("");
-  const [aiLanguage, setAiLanguage] = useState<"taglish" | "english">("taglish");
-  const [customPersona, setCustomPersona] = useState<"socratic" | "detailed" | "exam-prep" | null>(null);
-  const chatPersona = customPersona ?? ((user?.profile?.tutoringPersona as "socratic" | "detailed" | "exam-prep") || "socratic");
-
-  const [aiChatLogs, setAiChatLogs] = useState<
-    { sender: "user" | "ai" | "system"; text: string; time: string }[]
-  >([
-    {
-      sender: "ai",
-      text: getDashboardGreeting("taglish", (user?.profile?.tutoringPersona as "socratic" | "detailed" | "exam-prep") || "socratic"),
-      time: "10:00 AM",
-    },
-  ]);
-  const [isAiResponding, setIsAiResponding] = useState(false);
-  const chatScrollRef = React.useRef<HTMLDivElement>(null);
-
-  // Auto-scroll chat container to bottom
-  const scrollToChatBottom = React.useCallback(() => {
-    if (chatScrollRef.current) {
-      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
-    }
-  }, []);
-
-  React.useEffect(() => {
-    scrollToChatBottom();
-  }, [aiChatLogs, isAiResponding, scrollToChatBottom]);
-
-  React.useEffect(() => {
-    if (activeTab === "ai-tutor") {
-      scrollToChatBottom();
-      const raf = requestAnimationFrame(() => {
-        scrollToChatBottom();
-      });
-      return () => cancelAnimationFrame(raf);
-    }
-  }, [activeTab, scrollToChatBottom]);
-
-  const handlePersonaChange = (newPersona: "socratic" | "detailed" | "exam-prep") => {
-    if (chatPersona === newPersona) return;
-    setCustomPersona(newPersona);
-    setAiChatLogs((prev) => {
-      if (prev.length === 1 && prev[0].sender === "ai") {
-        return [
-          {
-            sender: "ai",
-            text: getDashboardGreeting(aiLanguage, newPersona),
-            time: "Just now",
-          },
-        ];
-      }
-      return [
-        ...prev,
-        {
-          sender: "system",
-          text: `Mode switched to ${personaLabels[newPersona]}`,
-          time: "Just now",
-        },
-      ];
-    });
-  };
-
-  const handleLanguageChange = (lang: "taglish" | "english") => {
-    if (aiLanguage === lang) return;
-    setAiLanguage(lang);
-    setAiChatLogs((prev) => {
-      if (prev.length === 0) {
-        return [
-          {
-            sender: "ai",
-            text: getDashboardGreeting(lang, chatPersona),
-            time: "Just now",
-          },
-        ];
-      }
-
-      const newLogs = [...prev];
-      if (prev.length === 1 && prev[0].sender === "ai") {
-        newLogs[0] = {
-          ...newLogs[0],
-          text: getDashboardGreeting(lang, chatPersona),
-        };
-        return newLogs;
-      }
-
-      newLogs.push({
-        sender: "system",
-        text: `Language switched to ${lang === "taglish" ? "Taglish" : "English"}`,
-        time: "Just now",
-      });
-      return newLogs;
-    });
-  };
+  const openPromptsModal = useAiPromptsModalStore((s) => s.openModal);
 
 
 
@@ -215,7 +94,7 @@ export default function StudentDashboardView({
   const queryClient = useQueryClient();
 
   // Load real-time aggregated dashboard data
-  const { data: dashboardData, refetch: refetchDashboard } = useDashboardData(!!user?.id);
+  const { data: dashboardData } = useDashboardData(!!user?.id);
   const metrics = dashboardData?.metrics;
   const activeLearning = dashboardData?.activeLearning;
 
@@ -249,76 +128,7 @@ export default function StudentDashboardView({
     },
   });
 
-  const handleSendAiMessage = async (preset?: string) => {
-    const query = preset || aiQuery;
-    if (!query.trim()) return;
 
-    const userMsg = { sender: "user" as const, text: query, time: "Just now" };
-    setAiChatLogs((prev) => [...prev, userMsg]);
-    setAiQuery("");
-    setIsAiResponding(true);
-
-    try {
-      const res = await askTutorAction({
-        subjectSlug: activeLearning?.subjectSlug || "general-curriculum",
-        lessonTitle: activeLearning?.lessonTitle || "High School Competencies",
-        question: query,
-        options: { A: "", B: "", C: "", D: "" },
-        answer: "",
-        explanation:
-          chatPersona === "detailed"
-            ? "Provide comprehensive, step-by-step guidance with formulas for Philippine high school learner."
-            : chatPersona === "exam-prep"
-            ? "Provide DepEd periodic exam preparation and test elimination strategies."
-            : "Provide Socratic guidance for Philippine high school learner.",
-        language: aiLanguage === "taglish" ? "Taglish" : "English",
-        message: query,
-        persona: chatPersona,
-        history: aiChatLogs
-          .filter((m) => m.sender === "user" || m.sender === "ai")
-          .slice(-10)
-          .map((m) => ({
-            role: m.sender === "user" ? ("user" as const) : ("assistant" as const),
-            content: m.text,
-          })),
-      });
-
-      if (res.success && res.reply) {
-        setAiChatLogs((prev) => [
-          ...prev,
-          { sender: "ai", text: res.reply!, time: "Just now" },
-        ]);
-        refetchDashboard();
-      } else {
-        setAiChatLogs((prev) => [
-          ...prev,
-          {
-            sender: "ai",
-            text:
-              res.error ||
-              (aiLanguage === "taglish"
-                ? "Paumanhin, hindi maabot ang AI tutor sa ngayon. Pakisubukan muli maya-maya."
-                : "Sorry, unable to reach the AI tutor right now. Please try again shortly."),
-            time: "Just now",
-          },
-        ]);
-      }
-    } catch {
-      setAiChatLogs((prev) => [
-        ...prev,
-        {
-          sender: "ai",
-          text:
-            aiLanguage === "taglish"
-              ? "Paumanhin, nagkaroon ng sagabal sa AI tutor. Pakisubukan muli maya-maya."
-              : "Sorry, an unexpected error occurred in AI tutor. Please try again shortly.",
-          time: "Just now",
-        },
-      ]);
-    } finally {
-      setIsAiResponding(false);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -414,14 +224,14 @@ export default function StudentDashboardView({
 
             <div className="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-1">
               <div className="flex items-center justify-between text-muted-foreground">
-                <span className="text-xs font-bold">Daily Free AI Credits</span>
-                <Sparkles className="w-4 h-4 text-teal-500" />
+                <span className="text-xs font-bold">Enrolled Subjects</span>
+                <BookOpen className="w-4 h-4 text-teal-500" />
               </div>
               <span className="text-2xl font-black text-foreground">
-                {metrics?.totalAiCreditsRemaining ?? 20} / {metrics?.totalAiCreditsMax ?? 20}
+                {dynamicEnrolledSubjects.length}
               </span>
               <p className="text-[11px] text-muted-foreground">
-                {(metrics?.totalAiCreditsRemaining ?? 20) > 0 ? "Credits Available" : "Exhausted Today"}
+                Active DepEd Courses
               </p>
             </div>
           </div>
@@ -560,43 +370,40 @@ export default function StudentDashboardView({
               )}
             </div>
 
-            {/* Right: Quick AI Assistant Mini Box */}
+            {/* Right: AI Study Prompts & Guide Card */}
             <div data-tour="ai-tutor-box" className="lg:col-span-5 p-6 rounded-3xl bg-card border border-border shadow-xs space-y-4 flex flex-col justify-between">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-primary font-bold text-xs">
-                    <Bot className="w-4 h-4" />
-                    <span>Gemini Socratic Assistant</span>
+                    <Sparkles className="w-4 h-4 text-amber-500" />
+                    <span>AI Study Tutor Guide</span>
                   </div>
                   <Badge variant="outline" className="text-[10px]">
-                    Taglish / English
+                    10 Ready Prompts
                   </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Ask any high school concept and receive Socratic reasoning instantly.
+                <h4 className="text-sm font-bold text-foreground">
+                  Using AI as Your Study Tutor
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Turn ChatGPT, Claude, or Gemini into your personal high school tutor with structured prompts.
                 </p>
 
                 {/* Quick Prompts */}
                 <div className="space-y-1.5 pt-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      setActiveTab("ai-tutor");
-                      handleSendAiMessage("Paano i-solve ang rational inequality?");
-                    }}
-                    className="w-full text-left p-2.5 rounded-xl bg-muted/60 hover:bg-muted text-[11px] font-medium text-foreground border border-border transition-colors block"
+                    onClick={() => openPromptsModal(activeLearning?.lessonTitle || "Rational Functions")}
+                    className="w-full text-left p-2.5 rounded-xl bg-muted/60 hover:bg-muted text-[11px] font-medium text-foreground border border-border transition-colors block cursor-pointer"
                   >
-                    💡 Paano i-solve ang rational inequality?
+                    💡 &quot;Explain [Topic] in simple terms as if I am 14...&quot;
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setActiveTab("ai-tutor");
-                      handleSendAiMessage("Explain photosynthesis step-by-step in Taglish");
-                    }}
-                    className="w-full text-left p-2.5 rounded-xl bg-muted/60 hover:bg-muted text-[11px] font-medium text-foreground border border-border transition-colors block"
+                    onClick={() => openPromptsModal(activeLearning?.lessonTitle || "Rational Functions")}
+                    className="w-full text-left p-2.5 rounded-xl bg-muted/60 hover:bg-muted text-[11px] font-medium text-foreground border border-border transition-colors block cursor-pointer"
                   >
-                    🌱 Explain photosynthesis step-by-step
+                    🔍 &quot;Break down how [Topic] works step-by-step...&quot;
                   </button>
                 </div>
               </div>
@@ -604,10 +411,10 @@ export default function StudentDashboardView({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setActiveTab("ai-tutor")}
-                className="w-full rounded-xl text-xs font-bold gap-2 mt-4"
+                onClick={() => openPromptsModal(activeLearning?.lessonTitle)}
+                className="w-full rounded-xl text-xs font-bold gap-2 mt-4 cursor-pointer"
               >
-                <span>Open Full AI Tutor Space</span>
+                <span>Open 10 Copy-and-Paste Prompts</span>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
@@ -809,153 +616,14 @@ export default function StudentDashboardView({
         </div>
       )}
 
-      {/* Gemini AI Socratic Tutor Space */}
-      {activeTab === "ai-tutor" && (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-xl font-black text-foreground">
-                Google Gemini {personaLabels[chatPersona]} AI Tutor
-              </h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {chatPersona === "detailed"
-                  ? "Ask any high school concept in Taglish or English for comprehensive, step-by-step breakdowns."
-                  : chatPersona === "exam-prep"
-                  ? "Review periodic exam tips, option elimination, and practice tactics in Taglish or English."
-                  : "Ask any high school concept in Taglish or English for step-by-step Socratic guidance."}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge
-                variant="outline"
-                className="px-3 py-1.5 text-xs font-bold rounded-xl border border-border/80 flex items-center gap-1.5 bg-background text-foreground"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>{metrics?.totalAiCreditsRemaining ?? 20} credits left</span>
-              </Badge>
-              <div className="flex items-center gap-1.5 bg-background border border-border/80 rounded-xl px-2.5 py-1 text-xs">
-                <span className="text-[11px] font-medium text-muted-foreground">Mode:</span>
-                <select
-                  aria-label="AI Tutor Mode"
-                  value={chatPersona}
-                  onChange={(e) => handlePersonaChange(e.target.value as "socratic" | "detailed" | "exam-prep")}
-                  className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer"
-                >
-                  <option value="socratic">Socratic Guide</option>
-                  <option value="detailed">Comprehensive</option>
-                  <option value="exam-prep">Exam Reviewer</option>
-                </select>
-              </div>
-              <button
-                type="button"
-                onClick={() => handleLanguageChange("taglish")}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                  aiLanguage === "taglish"
-                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                    : "bg-muted text-muted-foreground border-border hover:text-foreground"
-                }`}
-              >
-                🇵🇭 Taglish Mode
-              </button>
-              <button
-                type="button"
-                onClick={() => handleLanguageChange("english")}
-                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                  aiLanguage === "english"
-                    ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                    : "bg-muted text-muted-foreground border-border hover:text-foreground"
-                }`}
-              >
-                🇺🇸 English Mode
-              </button>
-            </div>
-          </div>
-
-          {/* Chat Window */}
-          <div className="p-6 rounded-3xl bg-card border border-border shadow-md space-y-4 flex flex-col h-[520px]">
-            <div ref={chatScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-2">
-              {aiChatLogs.map((msg, idx) => {
-                if (msg.sender === "system") {
-                  return (
-                    <div key={idx} className="flex justify-center items-center my-4">
-                      <span className="bg-muted text-muted-foreground text-[11px] px-3 py-1 rounded-full border border-border/60">
-                        {msg.text}
-                      </span>
-                    </div>
-                  );
-                }
-                
-                return (
-                  <div
-                    key={idx}
-                    className={`flex items-start gap-2.5 ${
-                      msg.sender === "user" ? "flex-row-reverse" : "flex-row"
-                    }`}
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
-                        msg.sender === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-primary/10 text-primary"
-                      }`}
-                    >
-                      {msg.sender === "user" ? "JD" : <Bot className="w-4 h-4" />}
-                    </div>
-                    <div
-                      className={`p-4 rounded-2xl text-xs sm:text-sm max-w-[80%] leading-relaxed ${
-                        msg.sender === "user"
-                          ? "bg-primary text-primary-foreground shadow-xs whitespace-pre-wrap"
-                          : "bg-muted text-card-foreground border border-border"
-                      }`}
-                    >
-                      {msg.sender === "ai" ? (
-                        <MarkdownRenderer content={msg.text} />
-                      ) : (
-                        <p>{msg.text}</p>
-                      )}
-                      <span className="text-[10px] opacity-70 block mt-1 text-right">
-                        {msg.time}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-              {isAiResponding && (
-                <div className="flex items-center gap-2 text-xs text-muted-foreground italic p-2">
-                  <Bot className="w-4 h-4 animate-spin text-primary" />
-                  <span>Gemini {personaLabels[chatPersona]} is thinking...</span>
-                </div>
-              )}
-            </div>
-
-            {/* Message Input Box */}
-            <div className="pt-3 border-t border-border flex items-center gap-2">
-              <Input
-                placeholder="Ask about rational equations, conic sections, biology, or literature..."
-                value={aiQuery}
-                onChange={(e) => setAiQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleSendAiMessage();
-                }}
-                className="rounded-xl text-xs h-10"
-              />
-              <Button
-                onClick={() => handleSendAiMessage()}
-                className="rounded-xl h-10 px-4 font-bold text-xs gap-1.5 shadow-md shadow-primary/20"
-              >
-                <Send className="w-4 h-4" />
-                <span className="hidden sm:inline">Send</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Student Settings Tab */}
       {activeTab === "settings" && (
         <StudentSettingsTab key={user?.id || "guest"} user={user} />
       )}
+
+      {/* Pre-configured AI Study Prompts Help Modal & Floating Action Button */}
+      <AiPromptsHelpModal />
+      <AiPromptsFab topic={activeLearning?.lessonTitle} />
     </div>
   );
 }
@@ -1177,23 +845,23 @@ function StudentSettingsTab({ user }: { user: StudentUserProps | null | undefine
 
           <div className="pt-4 border-t border-border space-y-3">
             <div>
-              <h4 className="text-sm font-bold text-foreground">Socratic AI &amp; Curriculum Defaults</h4>
+              <h4 className="text-sm font-bold text-foreground">Curriculum Standards &amp; Study Defaults</h4>
               <p className="text-xs text-muted-foreground">
-                Set default interaction mode for your AI tutor sessions and grading standards.
+                Official DepEd curriculum standards and study preferences.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 space-y-1">
-                <span className="text-xs font-bold text-foreground">Language Assistance</span>
+                <span className="text-xs font-bold text-foreground">Curriculum Framework</span>
                 <p className="text-[11px] text-muted-foreground">
-                  Default dialect: English &amp; Filipino/Taglish. Switchable anytime during chat.
+                  DepEd K-12 MATATAG Standards with 75% Transmutation Scale.
                 </p>
               </div>
               <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 space-y-1">
                 <span className="text-xs font-bold text-foreground">Grade Transmutation Formula</span>
                 <p className="text-[11px] text-muted-foreground">
-                  DepEd Order No. 015, s. 2026 MATATAG Standard (Active).
+                  DepEd Order No. 015, s. 2026 Standard (Active).
                 </p>
               </div>
             </div>

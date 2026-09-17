@@ -39,11 +39,11 @@ export function useDashboardTour({ user, onTourComplete }: UseDashboardTourProps
         },
       },
       {
-        element: '[data-tour="sidebar-ai-tutor"]',
+        element: '[data-tour="sidebar-ai-prompts"]',
         popover: {
-          title: "Gemini Socratic AI Tutor",
+          title: "AI Study Prompts & Guide",
           description:
-            "Need help? Consult your DepEd-aligned AI Tutor. It uses Socratic questioning in English or Taglish to guide you to the answer without spoiling it.",
+            "Need study help? Tap here anytime for pre-configured prompt templates ready to copy and paste directly into ChatGPT, Gemini, or Claude.",
           side: "right",
           align: "start",
         },

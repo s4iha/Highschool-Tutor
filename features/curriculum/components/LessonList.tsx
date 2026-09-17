@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   BookOpen,
@@ -14,7 +15,6 @@ import {
   Lock,
   Crown,
   Clock,
-  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +37,9 @@ import { Progress } from "@/shared/components/ui/progress";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 import { GradeTermPicker } from "./GradeTermPicker";
+import { LessonReaderModal } from "./LessonReaderModal";
+import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
+import { AiPromptsFab } from "@/shared/components/ui/AiPromptsFab";
 import {
   Dialog,
   DialogContent,
@@ -54,7 +57,11 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
   const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = React.useState(false);
   const [selectedLessonForMode, setSelectedLessonForMode] = React.useState<Lesson | null>(null);
+  const [selectedLessonForReading, setSelectedLessonForReading] = React.useState<Lesson | null>(null);
   const [selectedCount, setSelectedCount] = React.useState<number>(10);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
 
   const { openUpgradeModal } = useUpgradeModalStore();
   const { data: config } = usePublicConfigQuery();
@@ -86,6 +93,21 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
   };
 
   const loading = loadingLessons || loadingProgress;
+
+  React.useEffect(() => {
+    const reconfigureLessonStr = searchParams.get("reconfigure");
+    if (reconfigureLessonStr && lessons.length > 0) {
+      const lessonNum = parseInt(reconfigureLessonStr, 10);
+      const lesson = lessons.find((l) => l.number === lessonNum);
+      if (lesson) {
+        // We delay state setting slightly to satisfy React strict mode and avoid set-state-in-render or sync-set-state warnings
+        setTimeout(() => {
+          setSelectedLessonForMode(lesson);
+          router.replace(`/curriculum/${subject.slug}`);
+        }, 0);
+      }
+    }
+  }, [searchParams, lessons, router, subject.slug]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -294,7 +316,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                   key={lesson.number}
                   onClick={(e) => {
                     if (isAccessible) {
-                      setSelectedLessonForMode(lesson);
+                      setSelectedLessonForReading(lesson);
                     } else {
                       handleLockedLessonClick(e, lesson);
                     }
@@ -307,11 +329,11 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                       : "hover:border-primary/50 bg-card"
                   }`}
                 >
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-3 space-y-2">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
                         <span
-                          className={`flex size-7 items-center justify-center rounded-lg font-mono text-xs font-bold ${
+                          className={`flex size-7 items-center justify-center rounded-lg font-mono text-xs font-bold shrink-0 ${
                             !isAccessible
                               ? "bg-muted text-muted-foreground"
                               : "bg-primary/10 text-primary"
@@ -319,12 +341,12 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                         >
                           {lesson.number}
                         </span>
-                        <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                        <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors truncate">
                           {lesson.title}
                         </CardTitle>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0">
                         {!isAccessible ? (
                           <Badge
                             variant="outline"
@@ -353,7 +375,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                         )}
                       </div>
                     </div>
-                    <CardDescription className="text-xs leading-relaxed pt-1">
+                    <CardDescription className="text-xs leading-relaxed pt-0.5 line-clamp-2">
                       {lesson.summary}
                     </CardDescription>
                   </CardHeader>
@@ -370,12 +392,33 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                       ))}
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-border/40 w-full sm:w-auto justify-end">
                       {isAccessible ? (
-                        <div className="flex items-center gap-1.5 text-xs font-bold text-primary group-hover:translate-x-0.5 transition-transform">
-                          <Play className="size-3.5 fill-current" />
-                          <span>Practice Lesson</span>
-                          <ArrowRight className="size-3.5" />
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLessonForReading(lesson);
+                            }}
+                            className="flex-1 sm:flex-initial rounded-xl text-xs font-semibold gap-1.5 h-8 border-border/80 hover:bg-primary/5 hover:text-primary cursor-pointer"
+                          >
+                            <BookOpen className="size-3.5 text-primary" />
+                            <span>View Lesson</span>
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedLessonForMode(lesson);
+                            }}
+                            className="flex-1 sm:flex-initial rounded-xl text-xs font-bold gap-1.5 h-8 bg-primary text-primary-foreground shadow-xs cursor-pointer"
+                          >
+                            <Play className="size-3.5 fill-current" />
+                            <span>Take Quiz</span>
+                          </Button>
                         </div>
                       ) : (
                         <Button
@@ -385,7 +428,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                           }}
                           variant="secondary"
                           size="sm"
-                          className="gap-1.5 text-xs rounded-xl text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+                          className="w-full sm:w-auto gap-1.5 text-xs rounded-xl text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 cursor-pointer"
                         >
                           <Lock className="size-3.5" />
                           <span>Unlock Lesson</span>
@@ -535,6 +578,27 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Lesson Reader Modal */}
+      {selectedLessonForReading && (
+        <LessonReaderModal
+          isOpen={!!selectedLessonForReading}
+          onClose={() => setSelectedLessonForReading(null)}
+          subjectSlug={subject.slug}
+          subjectName={subject.name}
+          lessonNumber={selectedLessonForReading.number}
+          lessonTitle={selectedLessonForReading.title}
+          onStartQuiz={() => {
+            const l = selectedLessonForReading;
+            setSelectedLessonForReading(null);
+            setSelectedLessonForMode(l);
+          }}
+        />
+      )}
+
+      {/* Pre-configured AI Study Prompts Help Modal & Floating Action Button */}
+      <AiPromptsHelpModal />
+      <AiPromptsFab topic={subject.name} />
     </div>
   );
 }

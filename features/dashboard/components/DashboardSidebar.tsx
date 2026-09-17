@@ -7,7 +7,6 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   BookOpen,
-  Bot,
   Settings,
   LogOut,
   X,
@@ -19,8 +18,8 @@ import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { toast } from "sonner";
 
 interface DashboardSidebarProps {
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
+  activeTab?: DashboardTab;
+  onTabChange?: (tab: DashboardTab) => void;
 }
 
 export default function DashboardSidebar({
@@ -49,7 +48,6 @@ export default function DashboardSidebar({
   }[] = [
     { id: "overview", label: "Dashboard", icon: LayoutDashboard },
     { id: "subjects", label: "Enrolled Subjects", icon: BookOpen },
-    { id: "ai-tutor", label: "Gemini AI Tutor", icon: Bot },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 

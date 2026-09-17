@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
-  Bot,
+  Sparkles,
   RefreshCw,
   Trophy,
   RotateCcw,
@@ -18,6 +18,8 @@ import {
   HelpCircle,
   SlidersHorizontal,
 } from "lucide-react";
+import { useUser } from "@/features/auth/hooks/useUser";
+import { useAiPromptsModalStore } from "@/shared/hooks/useAiPromptsModalStore";
 import type { Subject, QuizQuestion } from "../types/curriculum.types";
 import {
   getQuizAction,
@@ -30,8 +32,8 @@ import {
   submitQuizSessionAction,
 } from "../actions/quiz-session.actions";
 import { MarkdownRenderer } from "@/shared/components/ui/MarkdownRenderer";
-import { useUser } from "@/features/auth/hooks/useUser";
-import { AITutorDrawer } from "./AITutorDrawer";
+import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
+import { AiPromptsFab } from "@/shared/components/ui/AiPromptsFab";
 import { TranslationControls } from "./TranslationControls";
 import { sampleQuizQuestions } from "../utils/quiz-sampler";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/shared/components/ui/card";
@@ -52,6 +54,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const { user } = useUser();
+  const openPromptsModal = useAiPromptsModalStore((s) => s.openModal);
 
   const [sessionId, setSessionId] = React.useState<string | null>(initialSessionId || null);
   const rawModeParam = (searchParams.get("mode") as "study" | "exam") || "study";
@@ -67,7 +70,6 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [serverScore, setServerScore] = React.useState<number | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [tutorOpen, setTutorOpen] = React.useState(false);
   const [savingAttempt, setSavingAttempt] = React.useState(false);
 
   // Translation State
@@ -364,7 +366,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
             </Button>
             <Button
               variant="outline"
-              onClick={() => router.push(`/curriculum/${subject.slug}`)}
+              onClick={() => router.push(`/curriculum/${subject.slug}?reconfigure=${lessonNumber}`)}
               className="w-full sm:w-auto gap-2 rounded-xl text-xs font-bold"
             >
               <SlidersHorizontal className="size-4" />
@@ -463,15 +465,17 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
             <Badge variant="outline" className="text-xs font-mono font-bold">
               {subject.code} • Lesson {lessonNumber}
             </Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setTutorOpen(true)}
-              className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/10 rounded-xl font-bold"
-            >
-              <Bot className="size-3.5" />
-              <span>Ask AI Tutor</span>
-            </Button>
+            {mode === "study" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => openPromptsModal(lessonTitle || subject.name)}
+                className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/10 rounded-xl font-bold"
+              >
+                <Sparkles className="size-3.5 text-amber-500" />
+                <span>AI Study Prompts</span>
+              </Button>
+            )}
           </div>
           <CardTitle className="text-base sm:text-lg font-bold leading-snug text-foreground pt-1">
             <MarkdownRenderer content={displayQuestion} />
@@ -582,26 +586,9 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
         </CardFooter>
       </Card>
 
-      {/* Socratic AI Tutor Sliding Sheet */}
-      <AITutorDrawer
-        isOpen={tutorOpen}
-        onOpenChange={setTutorOpen}
-        subjectName={subject.name}
-        subjectSlug={subject.slug}
-        lessonTitle={lessonTitle}
-        currentQuestion={currentQ}
-        language={language}
-        persona={(user?.profile?.tutoringPersona as "socratic" | "detailed" | "exam-prep") || "socratic"}
-      />
-
-      {/* Socratic Tutor FAB */}
-      <button
-        onClick={() => setTutorOpen(true)}
-        className="fixed bottom-6 right-6 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 z-40 cursor-pointer"
-        aria-label="Open AI Tutor"
-      >
-        <Bot className="size-6" />
-      </button>
+      {/* Pre-configured AI Study Prompts Modal & FAB (Study mode only) */}
+      <AiPromptsHelpModal />
+      {mode === "study" && <AiPromptsFab topic={lessonTitle || subject.name} />}
     </div>
   );
 }

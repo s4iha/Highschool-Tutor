@@ -6,6 +6,7 @@ export { AdminHeader } from "./components/AdminHeader";
 export { AdminDashboardPage } from "./components/dashboard/AdminDashboardPage";
 export { AdminStudentsPage } from "./components/students/AdminStudentsPage";
 export { AdminQuizConfigPage } from "./components/quiz-config/AdminQuizConfigPage";
+export { AdminLessonsPage } from "./components/lessons/AdminLessonsPage";
 export { AdminAnnouncementsPage } from "./components/announcements/AdminAnnouncementsPage";
 export { AdminSettingsPage } from "./components/settings/AdminSettingsPage";
 
