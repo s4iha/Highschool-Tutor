@@ -204,17 +204,7 @@ export async function getQuizAction(
       }
     }
 
-    // 3. Generate via Gemini AI (subject to daily AI credit limit)
-    const creditCheck = await checkAndConsumeAiCredit(sessionUser?.id, "quiz_generation");
-    if (!creditCheck.allowed) {
-      return {
-        success: false,
-        questions: [],
-        lessonTitle: "",
-        error: creditCheck.error,
-      };
-    }
-
+    // 3. Generate via Gemini AI
     const questions = await generateQuizForLesson(subject, lessonNumber, lessonTitle);
 
     // 4. Save to PostgreSQL cache

@@ -55,7 +55,7 @@ export default function DashboardHeader() {
       case "scorecards":
         return "Quarterly Grades & Scorecards";
       case "ai-tutor":
-        return "Gemini Socratic AI Tutor";
+        return "AI Study Prompts & Guide";
       case "settings":
         return "Student Preferences & Settings";
       default:
