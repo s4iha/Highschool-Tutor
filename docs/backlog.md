@@ -271,3 +271,10 @@
 - Updated AiPromptsHelpModal instruction text to suggest visiting free AI providers online instead of downloading/installing them.
 - Ensured the 'AI Study Prompts' button in QuizRunner is hidden during 'Exam Mode', while preserving explanation feedback for 'Study Mode'.
 - Fixed the 'Change Options' button routing in QuizRunner by appending a ?reconfigure={lessonId} query parameter, automatically triggering the configuration modal in LessonList upon return.
+
+## [2026-09-21]
+### Task 023 - Fix Google Sign-in Internal Server Error
+- **Database Schema Sync**: Generated the missing Prisma migration (20260921070730_sync_schema) for the \ccount.type\ column that was added to \schema.prisma\ but not pushed to the production database, preventing Google OAuth sign-ins from completing.
+- **Server Action Mismatch Handling**: Confirmed with the user that the Next.js Server Action ID mismatch error (\Error: The Server Reference ID did not match the expected format\) will be resolved by clearing the \.next\ build cache in their deployment environment during the next release.
+- **Verification Results**: Verified successful database migration generation, and clean build/tests.
+
