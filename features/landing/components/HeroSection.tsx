@@ -34,10 +34,6 @@ export function HeroSection() {
           <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
             {/* Top Eyebrow Badge */}
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary-foreground border border-primary/30 shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 text-primary animate-spin" style={{ animationDuration: "4s" }} />
-              <span className="text-xs font-bold tracking-wide uppercase">
-                DepEd K-12 MATATAG Aligned Platform
-              </span>
             </div>
 
             {/* Main Headline */}
