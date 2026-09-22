@@ -12,5 +12,6 @@ Additionally, the Next.js Server Action mismatch error (`Error: The Server Refer
 
 - [x] Identify the missing column `account.type`.
 - [x] Generate the missing Prisma migration to synchronize the database with `schema.prisma`.
+- [x] Harden `20260921070730_sync_schema` with defensive idempotent SQL (`IF EXISTS`, `IF NOT EXISTS`, safe column addition) to resolve P3009 deployment failure.
 - [x] Verify no TypeScript compiler errors.
 - [x] Verify Next.js production build succeeds.
