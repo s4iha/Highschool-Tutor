@@ -8,6 +8,7 @@ export interface UserData {
   name: string;
   image?: string | null;
   role: string;
+  createdAt?: string;
   subscription?: {
     id: string;
     plan: string;
