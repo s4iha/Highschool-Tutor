@@ -4,8 +4,10 @@ import {
   HeroSection,
   StatsBar,
   AboutSection,
+  HowToUseAppSection,
   CategorySection,
   PopularSubjectsSection,
+  TrialNoticeSection,
   AcademicWorkflowDemo,
   CtaBanner,
 } from "@/features/landing/components";
@@ -24,8 +26,10 @@ export default async function HomePage() {
       <HeroSection />
       <StatsBar />
       <AboutSection />
+      <HowToUseAppSection />
       <CategorySection />
       <PopularSubjectsSection />
+      <TrialNoticeSection />
       <AcademicWorkflowDemo />
       <CtaBanner />
     </div>

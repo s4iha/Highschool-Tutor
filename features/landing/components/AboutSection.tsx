@@ -13,7 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 
 export function AboutSection() {
   const benefits = [
-    "12 well-structured lessons per subject aligned with DepEd K-12 MATATAG competencies",
+    "8 focused lesson modules per subject aligned with DepEd K-12 MATATAG competencies",
     "24 practice quizzes with instant grading, feedback, and verified answer keys",
     "Interactive Socratic AI Tutor providing step-by-step guidance in English and Taglish",
     "DepEd DO 015 s. 2026 transmutation engine with automated gradebook and parent reporting",

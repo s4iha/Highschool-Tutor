@@ -54,7 +54,7 @@ export function TermsOfService() {
             <div className="hidden sm:block text-muted-foreground/40">•</div>
             <div className="flex items-center gap-2">
               <Globe className="w-3.5 h-3.5" />
-              <span>App: HighSchool Tutor (DepEd K-12 MATATAG PWA)</span>
+              <span>App: HighSchool Tutor (DepEd K-12 MATATAG Companion)</span>
             </div>
           </div>
         </div>
@@ -221,8 +221,8 @@ export function TermsOfService() {
                 </div>
                 <div className="space-y-3 text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   <ul className="list-disc list-inside space-y-1.5 pl-2">
-                    <li><strong>Free Tier Guardrails:</strong> Free student accounts may enroll in up to three (3) trial subjects with access to the first three (3) lessons per subject and standard AI inquiries.</li>
-                    <li><strong>Premium Tier:</strong> Upgrading unlocks all 130+ DepEd Junior &amp; Senior High subjects, all 12 lesson modules, 24 verified quizzes per subject, unlimited Socratic AI hints, and offline PWA caching.</li>
+                    <li><strong>30-Day Free Trial:</strong> New student accounts receive an all-access 30-day trial with unrestricted access to all 130+ DepEd Junior &amp; Senior High subjects, lesson modules, practice quizzes, and Socratic AI guidance.</li>
+                    <li><strong>Premium Tier:</strong> Upgrading to a Monthly or Annual pass maintains unlimited access to all subjects, lesson summaries, verified quizzes, and DepEd DO 015 gradebook evaluations following the trial period.</li>
                     <li><strong>Subscription Billing:</strong> Premium subscriptions are billed on a recurring or one-time basis as specified at checkout. Subscriptions may be cancelled at any time through your dashboard settings.</li>
                   </ul>
                 </div>
