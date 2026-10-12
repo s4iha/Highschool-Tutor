@@ -5,6 +5,7 @@ export interface PublicConfig {
   maxFreeLessons: number;
   targetLessonsPerSubject: number;
   trialDurationDays: number;
+  availableQuestionCounts: string;
   gcashReceiverNumber: string;
   gcashAccountName: string;
   mayaReceiverNumber: string;
@@ -15,11 +16,12 @@ export interface PublicConfig {
 
 export const DEFAULT_PUBLIC_CONFIG: PublicConfig = {
   monthlyPricePhp: 299,
-  annualPricePhp: 1499,
+  annualPricePhp: 2999,
   maxTrialSubjects: 3,
   maxFreeLessons: 3,
   targetLessonsPerSubject: 8,
   trialDurationDays: 30,
+  availableQuestionCounts: "5, 10, 15, 20",
   gcashReceiverNumber: "0917-888-4321",
   gcashAccountName: "HIGHSCHOOL TUTOR PH",
   mayaReceiverNumber: "0918-999-8765",

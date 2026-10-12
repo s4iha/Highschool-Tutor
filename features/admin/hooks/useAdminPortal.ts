@@ -51,6 +51,7 @@ export interface AdminSettingsData {
   maxFreeLessons: number;
   targetLessonsPerSubject: number;
   trialDurationDays: number;
+  availableQuestionCounts: string;
   gcashReceiverNumber: string;
   gcashAccountName: string;
   mayaReceiverNumber: string;

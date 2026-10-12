@@ -44,10 +44,8 @@ export function UpgradeModal() {
   }
 
   // Dynamic configuration from admin settings
-  const monthlyPrice = config?.monthlyPricePhp ?? 300;
-  const annualPrice = config?.annualPricePhp ?? 2600;
-  const maxTrialSubjects = config?.maxTrialSubjects ?? 3;
-  const maxFreeLessons = config?.maxFreeLessons ?? 3;
+  const monthlyPrice = config?.monthlyPricePhp ?? 299;
+  const annualPrice = config?.annualPricePhp ?? 2999;
   const gcashReceiverNumber = config?.gcashReceiverNumber ?? "0917-888-4321";
   const gcashAccountName = config?.gcashAccountName ?? "HIGHSCHOOL TUTOR PH";
   const mayaReceiverNumber = config?.mayaReceiverNumber ?? "0918-999-8765";
@@ -57,7 +55,7 @@ export function UpgradeModal() {
   const planTitle =
     planType === "annual"
       ? isExistingSubscriber
-        ? "Annual Pass Upgrade (Save ₱1,000)"
+        ? "Annual Pass Upgrade (Save ₱589)"
         : "Annual Unlimited Pass"
       : "Monthly Access Pass";
 
@@ -143,7 +141,7 @@ export function UpgradeModal() {
                 }`}
               >
                 <Badge className="absolute -top-2.5 right-3 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 shadow-xs">
-                  SAVE ₱1,000
+                  SAVE ₱589
                 </Badge>
                 <div className="space-y-1">
                   <span className="text-xs font-semibold text-primary uppercase flex items-center gap-1">
@@ -156,11 +154,11 @@ export function UpgradeModal() {
                   <p className="text-[11px] text-muted-foreground pt-0.5">
                     {isExistingSubscriber
                       ? "Special upgrade price for existing subscribers: 365 days of unlimited access."
-                      : "Full 365-day access to all DepEd subjects (save ₱1,000 compared to 12 months)."}
+                      : "Full 365-day access to all DepEd subjects (save ₱589 compared to 12 months at ₱299/mo)."}
                   </p>
                 </div>
                 <div className="mt-3 pt-2 border-t border-border/40 text-[10px] font-semibold text-primary/90 flex items-center gap-1">
-                  <span>Best value • ₱216/month equivalent</span>
+                  <span>Best value • ₱250/month equivalent</span>
                 </div>
               </div>
             </div>
@@ -209,7 +207,7 @@ export function UpgradeModal() {
                 onClick={handleClose}
                 className="w-full h-8 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
               >
-                Continue with Free Tier ({maxTrialSubjects} Subjects / {maxFreeLessons} Lessons)
+                Continue with 30-Day Free Trial
               </Button>
             </div>
           </>

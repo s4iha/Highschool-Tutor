@@ -82,7 +82,7 @@ export async function GET() {
             id: "pay-1",
             userName: "Juan Dela Cruz",
             userEmail: "juan.delacruz@deped.gov.ph",
-            amountPhp: 1499,
+            amountPhp: 2999,
             method: "gcash",
             referenceNo: "GC-982103491",
             status: "VERIFIED",
@@ -106,7 +106,7 @@ export async function GET() {
             userEmail: "juan.delacruz@deped.gov.ph",
             plan: "ANNUAL",
             status: "ACTIVE",
-            amountPhp: 1499,
+            amountPhp: 2999,
             date: new Date(Date.now() - 1000 * 60 * 15).toISOString(),
           },
           {

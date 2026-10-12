@@ -11,6 +11,7 @@ export const AdminConfigUpdateSchema = z.object({
   maxFreeLessons: z.number().int().min(1, "Must allow at least 1 free lesson").optional(),
   targetLessonsPerSubject: z.number().int().min(1, "Must allow at least 1 lesson per subject").max(30).optional(),
   trialDurationDays: z.number().int().min(1, "Trial duration must be at least 1 day").max(365).optional(),
+  availableQuestionCounts: z.string().min(1, "Question counts string required").optional(),
   gcashReceiverNumber: z.string().min(10, "Invalid GCash number format").optional(),
   gcashAccountName: z.string().min(2, "Account name required").optional(),
   mayaReceiverNumber: z.string().min(10, "Invalid Maya number format").optional(),
