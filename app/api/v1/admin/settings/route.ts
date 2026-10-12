@@ -8,6 +8,8 @@ const DEFAULT_CONFIG = {
   annualPricePhp: 1499,
   maxTrialSubjects: 3,
   maxFreeLessons: 3,
+  targetLessonsPerSubject: 8,
+  trialDurationDays: 30,
   gcashReceiverNumber: "0917-888-4321",
   gcashAccountName: "HIGHSCHOOL TUTOR PH",
   mayaReceiverNumber: "0918-999-8765",

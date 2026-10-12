@@ -9,6 +9,8 @@ export const AdminConfigUpdateSchema = z.object({
   annualPricePhp: z.number().int().min(0, "Annual price must be non-negative").optional(),
   maxTrialSubjects: z.number().int().min(1, "Must allow at least 1 trial subject").optional(),
   maxFreeLessons: z.number().int().min(1, "Must allow at least 1 free lesson").optional(),
+  targetLessonsPerSubject: z.number().int().min(1, "Must allow at least 1 lesson per subject").max(30).optional(),
+  trialDurationDays: z.number().int().min(1, "Trial duration must be at least 1 day").max(365).optional(),
   gcashReceiverNumber: z.string().min(10, "Invalid GCash number format").optional(),
   gcashAccountName: z.string().min(2, "Account name required").optional(),
   mayaReceiverNumber: z.string().min(10, "Invalid Maya number format").optional(),
@@ -18,6 +20,15 @@ export const AdminConfigUpdateSchema = z.object({
 });
 
 export type AdminConfigUpdateInput = z.infer<typeof AdminConfigUpdateSchema>;
+
+export const AdminEnrollStudentSchema = z.object({
+  email: z.string().email("Valid email is required"),
+  name: z.string().optional(),
+  plan: z.enum(["MONTHLY", "ANNUAL", "TRIAL_30"]).default("MONTHLY"),
+  gradeLevel: z.string().optional(),
+});
+
+export type AdminEnrollStudentInput = z.infer<typeof AdminEnrollStudentSchema>;
 
 // =============================================================================
 // Announcement Schemas

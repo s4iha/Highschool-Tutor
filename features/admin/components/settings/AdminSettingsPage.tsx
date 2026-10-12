@@ -36,6 +36,8 @@ export function AdminSettingsPage() {
       annualPricePhp: 1499,
       maxTrialSubjects: 3,
       maxFreeLessons: 3,
+      targetLessonsPerSubject: 8,
+      trialDurationDays: 30,
       gcashReceiverNumber: "0917-888-4321",
       gcashAccountName: "HIGHSCHOOL TUTOR PH",
       mayaReceiverNumber: "0918-999-8765",
@@ -225,6 +227,50 @@ export function AdminSettingsPage() {
                     />
                     <p className="text-[11px] text-muted-foreground">
                       Lessons 1–3 free; Lesson 4+ triggers GCash checkout modal.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Target Lessons Per Subject
+                    </label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={30}
+                      value={currentSettings.targetLessonsPerSubject ?? 8}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          targetLessonsPerSubject: parseInt(e.target.value, 10) || 8,
+                        }))
+                      }
+                      className="rounded-xl text-sm"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Standard number of lessons/topics configured per subject (default 8).
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Full-Access Free Trial Window (Days)
+                    </label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={365}
+                      value={currentSettings.trialDurationDays ?? 30}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          trialDurationDays: parseInt(e.target.value, 10) || 30,
+                        }))
+                      }
+                      className="rounded-xl text-sm"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Number of days newly registered students enjoy unrestricted all-access trial.
                     </p>
                   </div>
                 </div>

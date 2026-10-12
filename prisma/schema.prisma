@@ -379,6 +379,8 @@ model AdminConfig {
   annualPricePhp       Int      @default(2600)
   maxTrialSubjects     Int      @default(3)
   maxFreeLessons       Int      @default(3)
+  targetLessonsPerSubject Int   @default(8)
+  trialDurationDays    Int      @default(30)
   gcashReceiverNumber  String   @default("0917-888-4321")
   gcashAccountName     String   @default("HIGHSCHOOL TUTOR PH")
   mayaReceiverNumber   String   @default("0918-999-8765")
