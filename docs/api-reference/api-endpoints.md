@@ -7,7 +7,9 @@ This document outlines all Next.js App Router Route Handlers (`app/api/...`) and
 ## 1. Administrative Route Handlers (API v1)
 
 ### 1.1 `GET /api/v1/admin/metrics`
+
 Retrieves aggregated platform KPI metrics and student activity summary.
+
 - **Access**: `ADMIN` role
 - **Response**:
   ```json
@@ -26,7 +28,9 @@ Retrieves aggregated platform KPI metrics and student activity summary.
   ```
 
 ### 1.2 `GET /api/v1/admin/students`
+
 Fetches paginated student subscriber records with optional search and status filters.
+
 - **Query Parameters**:
   - `page` (number, default: 1)
   - `limit` (number, default: 10)
@@ -62,7 +66,9 @@ Fetches paginated student subscriber records with optional search and status fil
   ```
 
 ### 1.3 `PATCH /api/v1/admin/students`
+
 Updates a student's subscription status.
+
 - **Payload**:
   ```json
   {
@@ -80,11 +86,13 @@ Updates a student's subscription status.
   ```
 
 ### 1.4 `GET /api/v1/admin/settings` & `PATCH /api/v1/admin/settings`
+
 Reads or updates SaaS pricing and free tier guardrail limits.
+
 - **Payload (PATCH)**:
   ```json
   {
-    "monthlyPricePhp": 199,
+    "monthlyPricePhp": 299,
     "annualPricePhp": 1499,
     "maxTrialSubjects": 3,
     "maxFreeLessons": 3,
@@ -97,21 +105,21 @@ Reads or updates SaaS pricing and free tier guardrail limits.
 
 ## 2. Curriculum Server Actions (`curriculum.actions.ts`)
 
-| Action | Parameters | Description |
-|---|---|---|
-| `getLessonsAction(subjectSlug)` | `subjectSlug: string` | Fetches cached lesson outline or generates via Gemini AI fallback. |
-| `getQuizQuestionsAction(subjectSlug, lessonNumber)` | `subjectSlug: string, lessonNumber: number` | Fetches 4-option quiz questions with explanations. |
-| `getSubjectProgressAction(subjectSlug)` | `subjectSlug: string` | Aggregates learner attempt scores and passing mastery status. |
-| `recordQuizAttemptAction(input)` | `RecordAttemptInput` | Records score, total questions, and mode (`study` \| `exam`). |
-| `askGeminiTutorAction(input)` | `AskTutorInput` | Socratic AI tutor streaming / chat in English, Filipino, Taglish, Cebuano, etc. |
-| `translateExplanationAction(input)` | `TranslateInput` | Multi-dialect translation for lesson summaries and quiz explanations. |
+| Action                                              | Parameters                                  | Description                                                                     |
+| --------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------- |
+| `getLessonsAction(subjectSlug)`                     | `subjectSlug: string`                       | Fetches cached lesson outline or generates via Gemini AI fallback.              |
+| `getQuizQuestionsAction(subjectSlug, lessonNumber)` | `subjectSlug: string, lessonNumber: number` | Fetches 4-option quiz questions with explanations.                              |
+| `getSubjectProgressAction(subjectSlug)`             | `subjectSlug: string`                       | Aggregates learner attempt scores and passing mastery status.                   |
+| `recordQuizAttemptAction(input)`                    | `RecordAttemptInput`                        | Records score, total questions, and mode (`study` \| `exam`).                   |
+| `askGeminiTutorAction(input)`                       | `AskTutorInput`                             | Socratic AI tutor streaming / chat in English, Filipino, Taglish, Cebuano, etc. |
+| `translateExplanationAction(input)`                 | `TranslateInput`                            | Multi-dialect translation for lesson summaries and quiz explanations.           |
 
 ---
 
 ## 3. Tier Guardrail Rules & Enforcements
 
-| Rule | Free Tier Limit | Premium Tier |
-|---|---|---|
-| Trial Subjects | Up to 3 subjects (`TrialSubject` table) | Unlimited 130+ subjects |
-| Lesson Access | Lessons 1, 2, and 3 | All lessons (1 through 12) |
-| Locked Interception | Triggers `UpgradeModal` + Sonner warning toast | Direct access granted |
+| Rule                | Free Tier Limit                                | Premium Tier               |
+| ------------------- | ---------------------------------------------- | -------------------------- |
+| Trial Subjects      | Up to 3 subjects (`TrialSubject` table)        | Unlimited 130+ subjects    |
+| Lesson Access       | Lessons 1, 2, and 3                            | All lessons (1 through 12) |
+| Locked Interception | Triggers `UpgradeModal` + Sonner warning toast | Direct access granted      |
