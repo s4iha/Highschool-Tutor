@@ -24,6 +24,7 @@ import {
 } from "../utils/ai-credits";
 import {
   canAccessSubject,
+  getTrialStatus,
   FREE_TIER_MAX_TRIAL_SUBJECTS,
 } from "../utils/tier-guardrails";
 import type {
@@ -118,14 +119,22 @@ export async function ensureSubjectEnrolledAction(subjectSlug: string): Promise<
     });
     const enrolledSlugs = enrolled.map((e) => e.subjectSlug);
 
+    const user = prisma.user
+      ? await prisma.user.findUnique({
+          where: { id: sessionUser.id },
+          select: { createdAt: true },
+        })
+      : null;
+
     const adminConfig = await prisma.adminConfig.findFirst();
     const maxTrialSubjects = adminConfig?.maxTrialSubjects ?? FREE_TIER_MAX_TRIAL_SUBJECTS;
+    const trialStatus = getTrialStatus(user?.createdAt, adminConfig?.trialDurationDays ?? 30);
 
-    if (!canAccessSubject(enrolledSlugs, subjectSlug, isSubscribed, maxTrialSubjects)) {
+    if (!canAccessSubject(enrolledSlugs, subjectSlug, isSubscribed, maxTrialSubjects, trialStatus.isTrialActive)) {
       return {
         success: false,
         enrolled: false,
-        error: `Free tier limit reached (${maxTrialSubjects} trial subjects). Upgrade to HighSchool Tutor Pass to unlock all subjects.`,
+        error: `Free tier limit reached: Your 30-day free trial has ended or you have reached the maximum allowed trial subjects (${maxTrialSubjects}). Upgrade to HighSchool Tutor Pass to unlock all subjects.`,
       };
     }
 
@@ -486,8 +495,15 @@ export async function getSubjectProgressAction(subjectSlug: string): Promise<{
         transmuted = Math.round(60 + (percentage / 60) * 14);
       }
 
-      // In DepEd DO 015, passing grade is >= 75% transmuted
-      const isMastered = transmuted >= 75;
+      // In DepEd DO 015, passing grade is >= 75% transmuted.
+      // Full Competency Mastery requires at least 10 questions.
+      const isPassing = transmuted >= 75;
+      const isMastered = isPassing && a.total >= 10;
+      const status: LessonProgressStatus = isMastered
+        ? "Mastered"
+        : isPassing
+        ? "Practice Passed"
+        : "Needs Review";
 
       if (!lessonScores[a.lessonNumber]) {
         lessonScores[a.lessonNumber] = {
@@ -495,7 +511,7 @@ export async function getSubjectProgressAction(subjectSlug: string): Promise<{
           rawScore: a.score,
           totalQuestions: a.total,
           transmutedGrade: transmuted,
-          status: isMastered ? "Mastered" : "Needs Review",
+          status,
           attemptsCount: 1,
         };
       } else {
@@ -505,7 +521,7 @@ export async function getSubjectProgressAction(subjectSlug: string): Promise<{
           lessonScores[a.lessonNumber].rawScore = a.score;
           lessonScores[a.lessonNumber].totalQuestions = a.total;
           lessonScores[a.lessonNumber].transmutedGrade = transmuted;
-          lessonScores[a.lessonNumber].status = isMastered ? "Mastered" : "Needs Review";
+          lessonScores[a.lessonNumber].status = status;
         }
       }
     }

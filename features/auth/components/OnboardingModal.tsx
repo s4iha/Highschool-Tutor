@@ -32,7 +32,7 @@ function OnboardingForm({ user, onClose }: OnboardingFormProps) {
     user?.profile?.track?.trim() || "STEM Strand"
   );
   const [termPreference, setTermPreference] = useState(
-    user?.profile?.termPreference?.trim() || "Trimester 1"
+    user?.profile?.termPreference?.trim() || "Quarter 1"
   );
 
   const mutation = useMutation({
@@ -76,8 +76,8 @@ function OnboardingForm({ user, onClose }: OnboardingFormProps) {
       }
     } else {
       setTrack("JHS Core");
-      if (!termPreference.startsWith("Trimester")) {
-        setTermPreference("Trimester 1");
+      if (!termPreference.startsWith("Quarter")) {
+        setTermPreference("Quarter 1");
       }
     }
   };
@@ -132,7 +132,7 @@ function OnboardingForm({ user, onClose }: OnboardingFormProps) {
 
       <div className="space-y-1.5">
         <label className="text-xs font-semibold text-foreground">
-          {isSeniorHigh ? "Current Semester" : "Current Trimester / Grading Period"}
+          {isSeniorHigh ? "Current Semester" : "Current Grading Period (Quarter)"}
         </label>
         <select
           value={termPreference}
@@ -146,9 +146,10 @@ function OnboardingForm({ user, onClose }: OnboardingFormProps) {
             </>
           ) : (
             <>
-              <option value="Trimester 1">Trimester 1 (First Grading Period)</option>
-              <option value="Trimester 2">Trimester 2 (Second Grading Period)</option>
-              <option value="Trimester 3">Trimester 3 (Third Grading Period)</option>
+              <option value="Quarter 1">Quarter 1 (1st Grading Period)</option>
+              <option value="Quarter 2">Quarter 2 (2nd Grading Period)</option>
+              <option value="Quarter 3">Quarter 3 (3rd Grading Period)</option>
+              <option value="Quarter 4">Quarter 4 (4th Grading Period)</option>
             </>
           )}
         </select>

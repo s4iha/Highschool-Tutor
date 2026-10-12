@@ -15,47 +15,52 @@ describe("Curriculum Deduplication & Distinct Subjects Utilities", () => {
       expect(JHS_GRADES).toContain("Grade 7");
       expect(JHS_GRADES).toContain("Grade 10");
 
-      expect(JHS_TERMS).toHaveLength(3);
-      expect(JHS_TERMS).toContain("Trimester 1");
-      expect(JHS_TERMS).toContain("Trimester 3");
+      expect(JHS_TERMS).toHaveLength(4);
+      expect(JHS_TERMS).toContain("Quarter 1");
+      expect(JHS_TERMS).toContain("Quarter 4");
     });
   });
 
   describe("buildJhsSlug", () => {
     it("should build valid JHS slug with default values", () => {
       const slug = buildJhsSlug("MATH");
-      expect(slug).toBe("g7-t1-math");
+      expect(slug).toBe("g7-q1-math");
     });
 
     it("should build valid JHS slug with custom grade and term", () => {
-      expect(buildJhsSlug("MATH", "Grade 8", "Trimester 2")).toBe("g8-t2-math");
-      expect(buildJhsSlug("SCI", "Grade 10", "Trimester 3")).toBe("g10-t3-sci");
-      expect(buildJhsSlug("ENG", "Grade 9", "Trimester 1")).toBe("g9-t1-eng");
+      expect(buildJhsSlug("MATH", "Grade 8", "Quarter 2")).toBe("g8-q2-math");
+      expect(buildJhsSlug("SCI", "Grade 10", "Quarter 3")).toBe("g10-q3-sci");
+      expect(buildJhsSlug("ENG", "Grade 9", "Quarter 1")).toBe("g9-q1-eng");
     });
 
     it("should handle raw numbers in grade and term strings", () => {
-      expect(buildJhsSlug("ap", "8", "2")).toBe("g8-t2-ap");
+      expect(buildJhsSlug("ap", "8", "2")).toBe("g8-q2-ap");
     });
   });
 
   describe("parseJhsSlug", () => {
-    it("should correctly parse valid JHS slugs", () => {
-      const parsed = parseJhsSlug("g8-t2-math");
-      expect(parsed.isJhs).toBe(true);
-      expect(parsed.grade).toBe("Grade 8");
-      expect(parsed.term).toBe("Trimester 2");
-      expect(parsed.abbr).toBe("MATH");
-      expect(parsed.name).toBe("Mathematics");
+    it("should correctly parse valid JHS slugs (both Quarter and legacy Trimester)", () => {
+      const parsedQuarter = parseJhsSlug("g8-q2-math");
+      expect(parsedQuarter.isJhs).toBe(true);
+      expect(parsedQuarter.grade).toBe("Grade 8");
+      expect(parsedQuarter.term).toBe("Quarter 2");
+      expect(parsedQuarter.abbr).toBe("MATH");
+      expect(parsedQuarter.name).toBe("Mathematics");
+
+      const parsedLegacy = parseJhsSlug("g8-t2-math");
+      expect(parsedLegacy.isJhs).toBe(true);
+      expect(parsedLegacy.grade).toBe("Grade 8");
+      expect(parsedLegacy.term).toBe("Quarter 2");
     });
 
     it("should parse other JHS core subjects", () => {
-      const parsedSci = parseJhsSlug("g10-t3-sci");
+      const parsedSci = parseJhsSlug("g10-q3-sci");
       expect(parsedSci.isJhs).toBe(true);
       expect(parsedSci.grade).toBe("Grade 10");
-      expect(parsedSci.term).toBe("Trimester 3");
+      expect(parsedSci.term).toBe("Quarter 3");
       expect(parsedSci.name).toBe("Science");
 
-      const parsedMapeh = parseJhsSlug("g7-t1-mapeh");
+      const parsedMapeh = parseJhsSlug("g7-q1-mapeh");
       expect(parsedMapeh.isJhs).toBe(true);
       expect(parsedMapeh.abbr).toBe("MAPEH");
     });
@@ -69,7 +74,7 @@ describe("Curriculum Deduplication & Distinct Subjects Utilities", () => {
 
   describe("getDistinctJhsSubjects", () => {
     it("should return exactly 8 unique core JHS subjects", () => {
-      const subjects = getDistinctJhsSubjects("Grade 8", "Trimester 2");
+      const subjects = getDistinctJhsSubjects("Grade 8", "Quarter 2");
       expect(subjects).toHaveLength(8);
       expect(subjects).toHaveLength(JHS_SUBJECTS.length);
 
@@ -85,40 +90,42 @@ describe("Curriculum Deduplication & Distinct Subjects Utilities", () => {
     });
 
     it("should set defaultSlug matching the student's grade and term", () => {
-      const subjects = getDistinctJhsSubjects("Grade 9", "Trimester 3");
+      const subjects = getDistinctJhsSubjects("Grade 9", "Quarter 3");
       const math = subjects.find((s) => s.abbr === "MATH");
-      expect(math?.defaultSlug).toBe("g9-t3-math");
+      expect(math?.defaultSlug).toBe("g9-q3-math");
       expect(math?.level).toBe("Junior High School");
       expect(math?.isJhsCore).toBe(true);
     });
 
-    it("should fallback to Grade 7 Trimester 1 if given invalid parameters", () => {
+    it("should fallback to Grade 7 Quarter 1 if given invalid parameters", () => {
       const subjects = getDistinctJhsSubjects("Grade 99", "Invalid Term");
       const math = subjects.find((s) => s.abbr === "MATH");
-      expect(math?.defaultSlug).toBe("g7-t1-math");
+      expect(math?.defaultSlug).toBe("g7-q1-math");
     });
   });
 
   describe("getDistinctShsSubjects", () => {
-    it("should return exactly 34 unique SHS subjects", () => {
+    it("should return all 70 unique SHS subject offerings across tracks and strands", () => {
       const shs = getDistinctShsSubjects();
-      expect(shs).toHaveLength(34);
+      expect(shs).toHaveLength(70);
 
       shs.forEach((s) => {
         expect(s.level).toBe("Senior High School");
         expect(s.grade).toMatch(/Grade 11|Grade 12/);
         expect(s.term).toMatch(/Semester 1|Semester 2/);
         expect(s.defaultSlug).toBeTruthy();
+        expect(s.strand).toBeTruthy();
       });
     });
 
-    it("should reduce catalog card volume from 130 to 42 items", () => {
+    it("should correctly calculate distinct catalog card volume", () => {
       const jhsCount = getDistinctJhsSubjects().length;
       const shsCount = getDistinctShsSubjects().length;
       const totalCatalogCards = jhsCount + shsCount;
 
-      expect(totalCatalogCards).toBe(42);
-      expect(totalCatalogCards).toBeLessThan(130);
+      expect(jhsCount).toBe(8);
+      expect(shsCount).toBe(70);
+      expect(totalCatalogCards).toBe(78);
     });
   });
 });
