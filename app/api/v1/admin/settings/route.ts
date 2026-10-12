@@ -4,7 +4,7 @@ import { AdminConfigUpdateSchema } from "@/features/admin/schemas/adminSchemas";
 
 const DEFAULT_CONFIG = {
   id: "default_config",
-  monthlyPricePhp: 199,
+  monthlyPricePhp: 299,
   annualPricePhp: 1499,
   maxTrialSubjects: 3,
   maxFreeLessons: 3,

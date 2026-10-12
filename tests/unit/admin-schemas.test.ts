@@ -11,7 +11,7 @@ describe("Admin Portal Zod Schemas Validation", () => {
   describe("AdminConfigUpdateSchema", () => {
     it("should validate a valid settings update payload", () => {
       const validPayload = {
-        monthlyPricePhp: 199,
+        monthlyPricePhp: 299,
         annualPricePhp: 1499,
         maxTrialSubjects: 3,
         maxFreeLessons: 3,

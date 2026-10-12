@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export const revalidate = 60;
 
 const DEFAULT_PUBLIC_CONFIG = {
-  monthlyPricePhp: 199,
+  monthlyPricePhp: 299,
   annualPricePhp: 1499,
   maxTrialSubjects: 3,
   maxFreeLessons: 3,

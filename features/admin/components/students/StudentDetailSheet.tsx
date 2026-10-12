@@ -40,7 +40,7 @@ export function StudentDetailSheet({
   const updateSubscription = useUpdateSubscriptionMutation();
   const { data: settings } = useAdminSettingsQuery();
   const annualPrice = settings?.annualPricePhp ?? 1499;
-  const monthlyPrice = settings?.monthlyPricePhp ?? 199;
+  const monthlyPrice = settings?.monthlyPricePhp ?? 299;
 
   if (!student) return null;
 

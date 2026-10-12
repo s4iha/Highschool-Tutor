@@ -19,7 +19,7 @@ END $$;
 -- 2. Create Table: admin_config
 CREATE TABLE IF NOT EXISTS "admin_config" (
     "id" TEXT NOT NULL,
-    "monthlyPricePhp" INTEGER NOT NULL DEFAULT 199,
+    "monthlyPricePhp" INTEGER NOT NULL DEFAULT 299,
     "annualPricePhp" INTEGER NOT NULL DEFAULT 1499,
     "maxTrialSubjects" INTEGER NOT NULL DEFAULT 3,
     "maxFreeLessons" INTEGER NOT NULL DEFAULT 3,
@@ -70,7 +70,7 @@ INSERT INTO "admin_config" (
 )
 VALUES (
     'default_config',
-    199,
+    299,
     1499,
     3,
     3,

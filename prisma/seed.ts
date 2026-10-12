@@ -171,7 +171,7 @@ async function main() {
         track: "Junior High",
         status: SubStatus.PENDING,
         plan: SubPlan.MONTHLY,
-        amount: 199,
+        amount: 299,
         paymentRef: "MY-339180211",
         method: "maya",
         paymentStatus: PaymentStatus.PENDING,
