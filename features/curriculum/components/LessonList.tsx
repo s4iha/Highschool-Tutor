@@ -20,7 +20,8 @@ import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Subject, Lesson } from "../types/curriculum.types";
 import { getLessonsAction, getSubjectProgressAction } from "../actions/curriculum.actions";
-import { canAccessLesson } from "../utils/tier-guardrails";
+import { canAccessLesson, getTrialStatus } from "../utils/tier-guardrails";
+import { useUser } from "@/features/auth/hooks/useUser";
 import { usePublicConfigQuery } from "@/features/settings";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 import { cn } from "@/lib/utils";
@@ -58,14 +59,38 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
   const [refreshing, setRefreshing] = React.useState(false);
   const [selectedLessonForMode, setSelectedLessonForMode] = React.useState<Lesson | null>(null);
   const [selectedLessonForReading, setSelectedLessonForReading] = React.useState<Lesson | null>(null);
-  const [selectedCount, setSelectedCount] = React.useState<number>(10);
+  const [userSelectedCount, setUserSelectedCount] = React.useState<number | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
 
 
   const { openUpgradeModal } = useUpgradeModalStore();
+  const { user } = useUser();
   const { data: config } = usePublicConfigQuery();
   const maxFreeLessons = config?.maxFreeLessons ?? 3;
+  const trialDurationDays = config?.trialDurationDays ?? 30;
+  const targetLessonsPerSubject = config?.targetLessonsPerSubject ?? 8;
+
+  const trialStatus = React.useMemo(() => {
+    return getTrialStatus(user?.createdAt, trialDurationDays);
+  }, [user?.createdAt, trialDurationDays]);
+
+  const isTrialActive = trialStatus.isTrialActive;
+
+  const questionCountOptions = React.useMemo(() => {
+    const raw = config?.availableQuestionCounts || "5, 10, 15, 20";
+    const parsed = raw
+      .split(",")
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => !isNaN(n) && n > 0);
+    return parsed.length > 0 ? parsed : [5, 10, 15, 20];
+  }, [config?.availableQuestionCounts]);
+
+  const selectedCount =
+    userSelectedCount !== null && questionCountOptions.includes(userSelectedCount)
+      ? userSelectedCount
+      : (questionCountOptions[0] ?? 10);
+  const setSelectedCount = setUserSelectedCount;
 
   const { data: lessons = [], isLoading: loadingLessons } = useQuery({
     queryKey: ["lessons", subject.slug],
@@ -126,11 +151,11 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
     e.preventDefault();
     openUpgradeModal({
       featureName: lesson.title,
-      reason: `Unlock all 12 lessons & full DepEd competencies for ${subject.name}.`,
+      reason: `Unlock all lessons & full DepEd competencies for ${subject.name}.`,
     });
   };
 
-  const totalLessonsCount = lessons.length > 0 ? lessons.length : 12;
+  const totalLessonsCount = lessons.length > 0 ? lessons.length : targetLessonsPerSubject;
   const attemptedCount = progress.totalAttempted || 0;
   const masteredCount = progress.totalMastered || 0;
 
@@ -182,10 +207,17 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
               {!isSubscribed && (
                 <Badge
                   variant="outline"
-                  className="text-xs border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 gap-1"
+                  className={cn(
+                    "text-xs gap-1 font-bold",
+                    isTrialActive
+                      ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                      : "border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10"
+                  )}
                 >
                   <Sparkles className="size-3" />
-                  Free Tier ({maxFreeLessons} Lessons Free)
+                  {isTrialActive
+                    ? `30-Day Free Trial (${trialStatus.daysRemaining}d Left • All Lessons Unlocked)`
+                    : "Trial Expired (Upgrade to Unlock)"}
                 </Badge>
               )}
             </div>
@@ -281,8 +313,10 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
             <span>Curriculum Lessons ({lessons.length})</span>
           </h2>
           {!isSubscribed && (
-            <span className="text-xs text-muted-foreground">
-              Lessons 1–{maxFreeLessons} Unlocked • {maxFreeLessons + 1}+ Require Premium
+            <span className="text-xs text-muted-foreground font-medium">
+              {isTrialActive
+                ? "All Lessons Unlocked during 30-Day Free Trial"
+                : "Free Trial Expired • Upgrade to Access All Lessons"}
             </span>
           )}
         </div>
@@ -309,7 +343,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
               const stat = progress.lessonScores[lesson.number];
               const isMastered = stat?.status === "Mastered";
               const isNeedsReview = stat?.status === "Needs Review";
-              const isAccessible = canAccessLesson(lesson.number, isSubscribed, maxFreeLessons);
+              const isAccessible = canAccessLesson(lesson.number, isSubscribed, maxFreeLessons, isTrialActive);
 
               return (
                 <Card
@@ -359,6 +393,11 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                           <Badge variant="default" className="gap-1 text-xs bg-success text-success-foreground hover:bg-success">
                             <CheckCircle2 className="size-3" />
                             <span>Mastered ({stat.transmutedGrade}%)</span>
+                          </Badge>
+                        ) : stat?.status === "Practice Passed" ? (
+                          <Badge variant="secondary" className="gap-1 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                            <CheckCircle2 className="size-3" />
+                            <span>Practice Passed ({stat.transmutedGrade}%)</span>
                           </Badge>
                         ) : isNeedsReview ? (
                           <Badge variant="secondary" className="gap-1 text-xs bg-warning/20 text-warning-foreground">
@@ -475,8 +514,17 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                 </span>
               </div>
 
-              <div className="grid grid-cols-5 gap-2">
-                {[5, 10, 15, 20].map((count) => {
+              <div
+                className={cn(
+                  "grid gap-2",
+                  questionCountOptions.length <= 4
+                    ? "grid-cols-4"
+                    : questionCountOptions.length === 5
+                    ? "grid-cols-5"
+                    : "grid-cols-3 sm:grid-cols-6"
+                )}
+              >
+                {questionCountOptions.map((count) => {
                   const isSelected = selectedCount === count;
                   return (
                     <button
@@ -495,20 +543,6 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                     </button>
                   );
                 })}
-                {/* All 24 Questions */}
-                <button
-                  type="button"
-                  onClick={() => setSelectedCount(24)}
-                  className={cn(
-                    "py-2 px-1 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center",
-                    selectedCount === 24
-                      ? "border-primary bg-primary/10 text-primary font-bold shadow-xs scale-102 ring-1 ring-primary"
-                      : "border-border/60 text-muted-foreground hover:text-foreground hover:border-border hover:bg-muted/40"
-                  )}
-                >
-                  <span className="text-sm font-extrabold font-mono">All</span>
-                  <span className="text-[9px] uppercase tracking-wider font-semibold">24 Qs</span>
-                </button>
               </div>
             </div>
 
