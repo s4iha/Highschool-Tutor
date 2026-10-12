@@ -33,11 +33,12 @@ export function AdminSettingsPage() {
   const currentSettings = React.useMemo<Partial<AdminSettingsData>>(() => {
     return {
       monthlyPricePhp: 299,
-      annualPricePhp: 1499,
+      annualPricePhp: 2999,
       maxTrialSubjects: 3,
       maxFreeLessons: 3,
       targetLessonsPerSubject: 8,
       trialDurationDays: 30,
+      availableQuestionCounts: "5, 10, 15, 20",
       gcashReceiverNumber: "0917-888-4321",
       gcashAccountName: "HIGHSCHOOL TUTOR PH",
       mayaReceiverNumber: "0918-999-8765",
@@ -130,7 +131,7 @@ export function AdminSettingsPage() {
                     </label>
                     <Input
                       type="number"
-                      value={currentSettings.annualPricePhp ?? 2600}
+                      value={currentSettings.annualPricePhp ?? 2999}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
@@ -140,7 +141,7 @@ export function AdminSettingsPage() {
                       className="rounded-xl text-sm"
                     />
                     <p className="text-[11px] text-muted-foreground">
-                      Full school year access (Save ₱1,000 compared to 12 months).
+                      Full school year access (Save ₱589 compared to 12 months at ₱299/mo).
                     </p>
                   </div>
                 </div>
@@ -271,6 +272,27 @@ export function AdminSettingsPage() {
                     />
                     <p className="text-[11px] text-muted-foreground">
                       Number of days newly registered students enjoy unrestricted all-access trial.
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Available Quiz Question Counts
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="5, 10, 15, 20"
+                      value={currentSettings.availableQuestionCounts ?? "5, 10, 15, 20"}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          availableQuestionCounts: e.target.value,
+                        }))
+                      }
+                      className="rounded-xl text-sm"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Comma-separated list of question counts available to students (e.g. 5, 10, 15, 20). 10+ questions count toward Lesson Mastery.
                     </p>
                   </div>
                 </div>
