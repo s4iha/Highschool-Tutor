@@ -1,5 +1,46 @@
 # Project Backlog & Change Log
 
+## [2026-10-12]
+
+### Task 024 - Curriculum Enhancements, 30-Day Free Trial Rehaul, JHS Quarters & Super Admin Enrollment
+
+- **Frontend Curriculum Card Enhancement (Responsive Desktop & Widescreen)**:
+  - Overhauled `SubjectCatalog.tsx` curriculum cards: decoupled cramped single-line badges into multi-layer responsive metadata tags (Quarter/Semester, Strand, Configurable Lesson Scope, and Exam Format).
+  - Added line-clamping and standardized minimum heights to eliminate card misalignment on viewports from 1024px to 1920px+.
+  - Dynamically displays real/configured lesson count (`targetLessonsPerSubject`) from public admin config rather than hardcoded 12.
+- **Admin Settings for Lesson Scope & Trial Duration**:
+  - Added `targetLessonsPerSubject Int @default(8)` and `trialDurationDays Int @default(30)` to `AdminConfig` in `prisma/schema.prisma`.
+  - Pushed database schema migration to PostgreSQL Docker instance.
+  - Updated `AdminSettingsPage.tsx`, `adminSchemas.ts`, `app/api/v1/admin/settings/route.ts`, and `app/api/v1/config/route.ts`.
+- **Senior High School Curriculum & Semester Mapping**:
+  - Restructured SHS catalog in `curriculum-data.ts` to strictly map subjects per track/strand and semester (`Semester 1` vs `Semester 2`).
+  - Integrated the complete DepEd SHS subject list from `docs/resources/shs-subjects.md` across Core, Applied, STEM, ABM, HUMSS, GAS, and TVL (70 distinct SHS course offerings).
+  - Added interactive Strand filter pills (`All`, `Core`, `Applied`, `STEM`, `ABM`, `HUMSS`, `GAS`, `TVL`) and Semester selector on the catalog.
+- **Junior High School DepEd 4 Quarters Standardization**:
+  - Removed Trimester/Semester selectors for Junior High School learners (Grades 7–10).
+  - Standardized on DepEd's 4 Quarters (`Quarter 1` to `Quarter 4`) in `OnboardingModal.tsx`, `GradeTermPicker.tsx`, and `curriculum-data.ts`.
+  - Maintained backwards-compatible routing for legacy trimester slugs (`g7-t1-math` -> `Quarter 1`).
+- **Super Admin Manual Student Enrollment**:
+  - Implemented `POST /api/v1/admin/students/enroll` endpoint supporting auto-provisioning of unregistered student emails with password hashing and immediate subscription granting (`MONTHLY`, `ANNUAL`, or `TRIAL_30`).
+  - Created `AdminEnrollStudentModal.tsx` in `features/admin/components/students/` and integrated into `AdminStudentsPage.tsx` with refetch and toast notifications.
+  - Added `useEnrollStudentMutation` to TanStack Query hooks.
+- **30-Day Full-Access Free Trial Rehaul**:
+  - Replaced the restrictive 3-lesson/3-subject limitation with an unrestricted 30-day all-access trial covering all 130+ subjects and lessons.
+  - Implemented `getTrialStatus` in `tier-guardrails.ts` to compute remaining trial days, hours, and percentage.
+  - Enforced trial access guardrails in `curriculum.actions.ts` (`ensureSubjectEnrolledAction`) and `tier-guardrails.ts`.
+- **Student Dashboard Trial Countdown Widget**:
+  - Built `TrialCountdownWidget.tsx` in `features/dashboard/components/` with visual days-remaining countdown, progress bar, expiration banners, and upgrade modal trigger.
+  - Mounted directly above the student dashboard header in `StudentDashboardView.tsx`.
+- **Landing Page In-Depth Instructions & Free Trial Notice Sections**:
+  - Built `HowToUseAppSection.tsx` with a 4-step workflow guide tailored for high schoolers (Grade/Track setup, 8-lesson modules, Socratic AI with "Bakit Mali Ito?", and DO 015 transmuted grades / offline PWA).
+  - Built `TrialNoticeSection.tsx` highlighting the 30-day all-access free trial with zero payment required upfront and ₱299/mo transparent pricing.
+  - Mounted both sections into `app/page.tsx` and exported via `features/landing/components/index.ts`.
+- **Verification Results**:
+  - Zero TypeScript compiler errors (`npx tsc --noEmit`).
+  - Zero ESLint errors or warnings (`npm run lint`).
+  - All 105 unit tests passed across 14 test suites (`npm test`).
+  - Next.js production build succeeded with Turbopack across all 32 routes (`npm run build`).
+
 ## [2026-09-17]
 
 ### Task 022 - Pricing Updates, AI Chatbot Removal, Pre-configured Prompt Modal, Lesson Directory & Mobile Subject Cards
@@ -309,3 +350,8 @@
 - **Migration Hardening for Production**: Updated `20260921070730_sync_schema/migration.sql` with defensive and idempotent PostgreSQL statements (`IF NOT EXISTS`, `IF EXISTS`, constraint checks, and null-safe user updates) to prevent `P3009` errors when applying against pre-existing production schemas.
 - **Server Action Mismatch Handling**: Confirmed with the user that the Next.js Server Action ID mismatch error (`Error: The Server Reference ID did not match the expected format`) will be resolved by clearing the `.next` build cache in their deployment environment during the next release.
 - **Verification Results**: Verified Prisma schema validation, successful migration generation, and clean build/tests.
+
+## [2026-10-12]
+
+### Task 024 - Curriculum Enhancements, 30-Day Free Trial Rehaul, JHS Quarters & Super Admin Enrollment
+- In progress: Implementing responsive curriculum card layouts, 30-day all-access free trial model, dashboard trial countdown, JHS 4 Quarters alignment, full SHS track subjects, and super admin manual student enrollment.
