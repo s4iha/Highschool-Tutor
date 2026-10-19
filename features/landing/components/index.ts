@@ -6,6 +6,8 @@ export { PopularSubjectsSection } from "./PopularSubjectsSection";
 export { AcademicWorkflowDemo } from "./AcademicWorkflowDemo";
 export { CtaBanner } from "./CtaBanner";
 export { HowItWorks } from "./HowItWorks";
+export { HowToUseAppSection } from "./HowToUseAppSection";
+export { TrialNoticeSection } from "./TrialNoticeSection";
 export { PrivacyPolicy } from "./PrivacyPolicy";
 export { TermsOfService } from "./TermsOfService";
 export { TrackDetail, TRACKS_DATA } from "./TrackDetail";

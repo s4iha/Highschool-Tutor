@@ -4,10 +4,13 @@ import { prisma } from "@/lib/prisma";
 export const revalidate = 60;
 
 const DEFAULT_PUBLIC_CONFIG = {
-  monthlyPricePhp: 199,
-  annualPricePhp: 1499,
+  monthlyPricePhp: 299,
+  annualPricePhp: 2999,
   maxTrialSubjects: 3,
   maxFreeLessons: 3,
+  targetLessonsPerSubject: 8,
+  trialDurationDays: 30,
+  availableQuestionCounts: "5, 10, 15, 20",
   gcashReceiverNumber: "0917-888-4321",
   gcashAccountName: "HIGHSCHOOL TUTOR PH",
   mayaReceiverNumber: "0918-999-8765",
@@ -36,6 +39,9 @@ export async function GET() {
         annualPricePhp: config.annualPricePhp,
         maxTrialSubjects: config.maxTrialSubjects,
         maxFreeLessons: config.maxFreeLessons,
+        targetLessonsPerSubject: config.targetLessonsPerSubject,
+        trialDurationDays: config.trialDurationDays,
+        availableQuestionCounts: config.availableQuestionCounts ?? "5, 10, 15, 20",
         gcashReceiverNumber: config.gcashReceiverNumber,
         gcashAccountName: config.gcashAccountName,
         mayaReceiverNumber: config.mayaReceiverNumber,

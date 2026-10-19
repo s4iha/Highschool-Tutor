@@ -4,6 +4,9 @@ import { getCurrentUser } from "@/features/auth/lib/session";
 
 jest.mock("@/lib/prisma", () => ({
   prisma: {
+    user: {
+      findUnique: jest.fn(),
+    },
     trialSubject: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
@@ -56,6 +59,9 @@ describe("Auto-Enrollment & Subject Tier Limit Actions", () => {
     (prisma.trialSubject.findMany as jest.Mock).mockResolvedValue([
       { subjectSlug: "g7-t1-eng" },
     ]);
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+      createdAt: new Date(),
+    });
     (prisma.adminConfig.findFirst as jest.Mock).mockResolvedValue({ maxTrialSubjects: 3 });
     (prisma.trialSubject.create as jest.Mock).mockResolvedValue({
       id: "trial-2",
@@ -75,10 +81,13 @@ describe("Auto-Enrollment & Subject Tier Limit Actions", () => {
     });
   });
 
-  it("should block enrollment when a free user has reached the 3 trial subjects limit", async () => {
+  it("should block enrollment when a free user has reached the 3 trial subjects limit and trial expired", async () => {
     (getCurrentUser as jest.Mock).mockResolvedValue({ id: "user-123" });
     (prisma.trialSubject.findUnique as jest.Mock).mockResolvedValue(null);
     (prisma.subscription.findFirst as jest.Mock).mockResolvedValue(null);
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+      createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000), // expired trial
+    });
     (prisma.trialSubject.findMany as jest.Mock).mockResolvedValue([
       { subjectSlug: "g7-t1-eng" },
       { subjectSlug: "g7-t1-sci" },
@@ -100,6 +109,9 @@ describe("Auto-Enrollment & Subject Tier Limit Actions", () => {
       id: "sub-1",
       userId: "user-premium",
       status: "ACTIVE",
+    });
+    (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+      createdAt: new Date(Date.now() - 40 * 24 * 60 * 60 * 1000),
     });
     (prisma.trialSubject.findMany as jest.Mock).mockResolvedValue([
       { subjectSlug: "g7-t1-eng" },

@@ -137,8 +137,8 @@ export async function PATCH(req: NextRequest) {
         });
       } else {
         const config = await prisma.adminConfig.findFirst({ orderBy: { updatedAt: "desc" } });
-        const annualPrice = config?.annualPricePhp ?? 1499;
-        const monthlyPrice = config?.monthlyPricePhp ?? 199;
+        const annualPrice = config?.annualPricePhp ?? 2999;
+        const monthlyPrice = config?.monthlyPricePhp ?? 299;
 
         await prisma.subscription.create({
           data: {

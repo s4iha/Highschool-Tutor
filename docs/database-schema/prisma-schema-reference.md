@@ -28,7 +28,9 @@ This document provides complete architectural specifications for all Prisma ORM 
 ## 2. Authentication & Core User Models
 
 ### 2.1 `User` (`users`)
+
 Core user identity compatible with NextAuth.js v5.
+
 - `id` (String, CUID, Primary Key)
 - `name` (String, nullable)
 - `email` (String, unique, nullable)
@@ -38,7 +40,9 @@ Core user identity compatible with NextAuth.js v5.
 - `updatedAt` (DateTime, auto-updated)
 
 ### 2.2 `UserRole` (`user_roles`)
+
 Role assignment (`ADMIN`, `STUDENT`).
+
 - `id` (String, CUID, Primary Key)
 - `userId` (String, Foreign Key -> `users.id` on delete Cascade)
 - `role` (`AppRole` enum: `ADMIN` | `STUDENT`, default `STUDENT`)
@@ -46,7 +50,9 @@ Role assignment (`ADMIN`, `STUDENT`).
 - `@@unique([userId, role])`
 
 ### 2.3 `Profile` (`profiles`)
+
 Extended Philippine student profile.
+
 - `id` (String, Primary Key -> `users.id` on delete Cascade)
 - `fullName` (String, default `""`)
 - `email` (String, default `""`)
@@ -61,18 +67,22 @@ Extended Philippine student profile.
 ## 3. Subscriptions & Payments
 
 ### 3.1 `Subscription` (`subscriptions`)
+
 Tracks recurring or annual SaaS plan status.
+
 - `id` (String, CUID, Primary Key)
 - `userId` (String, Foreign Key -> `users.id` on delete Cascade)
 - `plan` (`SubPlan` enum: `MONTHLY` | `ANNUAL`)
 - `status` (`SubStatus` enum: `TRIAL` | `PENDING` | `ACTIVE` | `EXPIRED`, default `PENDING`)
-- `amountPhp` (Int, e.g. 199 or 1499)
+- `amountPhp` (Int, e.g. 299 or 1499)
 - `startedAt` (DateTime, nullable)
 - `expiresAt` (DateTime, nullable)
 - `@@index([userId])`
 
 ### 3.2 `Payment` (`payments`)
+
 Payment receipts and GCash / Maya reference matching.
+
 - `id` (String, CUID, Primary Key)
 - `userId` (String, Foreign Key -> `users.id` on delete Cascade)
 - `subscriptionId` (String, nullable, Foreign Key -> `subscriptions.id` on delete SetNull)
@@ -91,7 +101,9 @@ Payment receipts and GCash / Maya reference matching.
 ## 4. Curriculum, Caching & Quiz Engine
 
 ### 4.1 `TrialSubject` (`trial_subjects`)
+
 Enforces the Free Tier guardrail constraint (Max 3 trial subjects).
+
 - `id` (String, CUID, Primary Key)
 - `userId` (String, Foreign Key -> `users.id` on delete Cascade)
 - `subjectSlug` (String)
@@ -101,7 +113,9 @@ Enforces the Free Tier guardrail constraint (Max 3 trial subjects).
 - `@@index([userId])`
 
 ### 4.2 `CachedLesson` (`cached_lessons`)
+
 Caches structured lesson outlines to minimize Google Gemini API token usage.
+
 - `id` (String, CUID, Primary Key)
 - `subjectSlug` (String, unique)
 - `subjectLabel` (String)
@@ -109,7 +123,9 @@ Caches structured lesson outlines to minimize Google Gemini API token usage.
 - `createdAt` (DateTime, default `now()`)
 
 ### 4.3 `CachedQuiz` (`cached_quizzes`)
+
 Caches generated multiple-choice quiz questions per subject and lesson.
+
 - `id` (String, CUID, Primary Key)
 - `subjectSlug` (String)
 - `lessonNumber` (Int)
@@ -119,7 +135,9 @@ Caches generated multiple-choice quiz questions per subject and lesson.
 - `@@unique([subjectSlug, lessonNumber])`
 
 ### 4.4 `QuizAttempt` (`quiz_attempts`)
+
 Persistent learner drill attempt and score records.
+
 - `id` (String, CUID, Primary Key)
 - `userId` (String, nullable, Foreign Key -> `users.id` on delete Cascade)
 - `subjectSlug` (String)

@@ -116,12 +116,15 @@ export async function getDashboardDataAction(): Promise<{
       orderBy: { createdAt: "desc" },
     });
 
+    const adminConfig = await prisma.adminConfig?.findFirst?.({ orderBy: { updatedAt: "desc" } });
+    const targetLessons = adminConfig?.targetLessonsPerSubject ?? 8;
+
     // 3. Calculate Enrolled Subject Data & Progress
     const enrolledSubjects: EnrolledSubjectItem[] = trialSubjects.map((ts) => {
       const subject = SUBJECT_BY_SLUG.get(ts.subjectSlug);
       const subAttempts = attempts.filter((a) => a.subjectSlug === ts.subjectSlug);
       const completedLessons = new Set(subAttempts.map((a) => a.lessonNumber)).size;
-      const totalLessons = 12; // DepEd curriculum standard
+      const totalLessons = targetLessons;
       const progressPercent = Math.min(100, Math.round((completedLessons / totalLessons) * 100));
 
       const lastAttempt = subAttempts[0];
@@ -161,8 +164,8 @@ export async function getDashboardDataAction(): Promise<{
     const transmutedAverage =
       countedAttempts > 0 ? Math.round((totalTransmutedScore / countedAttempts) * 10) / 10 : null;
 
-    // 5. Total available quizzes across enrolled subjects (or default 48 if at max 4 subjects, 12 per subject)
-    const totalQuizzesCount = Math.max(trialSubjects.length * 12, 12);
+    // 5. Total available quizzes across enrolled subjects
+    const totalQuizzesCount = Math.max(trialSubjects.length * targetLessons, targetLessons);
 
     // 6. Calculate Remaining AI Credits for the Day
     const todayStart = new Date();

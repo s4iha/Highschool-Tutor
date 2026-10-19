@@ -375,10 +375,13 @@ enum AudienceType {
 
 model AdminConfig {
   id                   String   @id @default(cuid())
-  monthlyPricePhp      Int      @default(300)
-  annualPricePhp       Int      @default(2600)
+  monthlyPricePhp      Int      @default(299)
+  annualPricePhp       Int      @default(2999)
   maxTrialSubjects     Int      @default(3)
   maxFreeLessons       Int      @default(3)
+  targetLessonsPerSubject Int   @default(8)
+  trialDurationDays    Int      @default(30)
+  availableQuestionCounts String @default("5, 10, 15, 20")
   gcashReceiverNumber  String   @default("0917-888-4321")
   gcashAccountName     String   @default("HIGHSCHOOL TUTOR PH")
   mayaReceiverNumber   String   @default("0918-999-8765")

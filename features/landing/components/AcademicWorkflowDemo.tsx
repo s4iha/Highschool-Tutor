@@ -21,10 +21,10 @@ export function AcademicWorkflowDemo() {
 
   // High School Subjects for Demo
   const demoSubjects = [
-    { name: "General Mathematics", grade: "Grade 11 • Core", lessons: 12, quizzes: 24 },
-    { name: "Earth and Life Science", grade: "Grade 11 • Core", lessons: 12, quizzes: 24 },
-    { name: "Pre-Calculus", grade: "Grade 11 • STEM", lessons: 12, quizzes: 24 },
-    { name: "Grade 10 Science", grade: "Grade 10 • Junior High", lessons: 12, quizzes: 24 },
+    { name: "General Mathematics", grade: "Grade 11 • Core", lessons: 8, quizzes: 24 },
+    { name: "Earth and Life Science", grade: "Grade 11 • Core", lessons: 8, quizzes: 24 },
+    { name: "Pre-Calculus", grade: "Grade 11 • STEM", lessons: 8, quizzes: 24 },
+    { name: "Grade 10 Science", grade: "Grade 10 • Junior High", lessons: 8, quizzes: 24 },
   ];
 
   // High School Sample Questions

@@ -36,15 +36,15 @@ export function HowItWorks() {
     },
     {
       step: "02",
-      title: "Master the 12-Lesson Modules",
+      title: "Master the 8-Lesson Modules",
       badge: "Step 2: Structured Learning",
       description:
-        "Each high school subject is structured into 12 core lesson modules, supported by 24 interactive practice quizzes per lesson to reinforce concept mastery.",
+        "Each high school subject is structured into 8 core lesson modules, supported by 24 interactive practice quizzes per lesson to reinforce concept mastery.",
       icon: Layers,
       color: "bg-indigo-600 text-white",
       accent: "text-indigo-600 dark:text-indigo-400",
       points: [
-        "12 structured lessons covering all competencies, formulas, and key summaries",
+        "8 structured lessons covering all competencies, formulas, and key summaries",
         "24 practice quizzes with verified DepEd-aligned answer keys",
         "PostgreSQL cache-first persistence for blazing-fast instant loading",
       ],
@@ -66,17 +66,17 @@ export function HowItWorks() {
     },
     {
       step: "04",
-      title: "Study Anywhere with Offline PWA",
+      title: "Study Anywhere Across Devices",
       badge: "Step 4: Flexibility",
       description:
-        "Download lessons, quizzes, and AI response summaries to your device so you can keep studying without consuming heavy mobile data or needing a constant internet connection.",
+        "Access structured lessons, practice quizzes, and Socratic AI hints on your smartphone, tablet, or PC with fast loading and mobile-first design.",
       icon: Download,
       color: "bg-emerald-600 text-white",
       accent: "text-emerald-600 dark:text-emerald-400",
       points: [
-        "Progressive Web App (PWA) with fast offline local caching",
-        "Save lesson notes and quiz feedback for exam review",
-        "Study continuously anywhere across the Philippines",
+        "Optimized for smooth performance on smartphones and tablets",
+        "Instant cloud sync of your quiz scores and progress",
+        "Accessible on any modern web browser",
       ],
     },
   ];
@@ -87,15 +87,15 @@ export function HowItWorks() {
       questions: [
         {
           q: "What is HighSchool Tutor?",
-          a: "HighSchool Tutor is an AI-powered classroom study companion and Progressive Web App (PWA) designed for Philippine Junior and Senior High School students (Grades 7 to 12). It provides 130+ DepEd K-12 MATATAG aligned subjects with 12 structured lessons, 24 verified quizzes per subject, and real-time Socratic AI guidance.",
+          a: "HighSchool Tutor is an AI-powered classroom study companion designed for Philippine Junior and Senior High School students (Grades 7 to 12). It provides 130+ DepEd K-12 MATATAG aligned subjects with structured lesson modules, verified practice quizzes, and real-time Socratic AI guidance.",
         },
         {
           q: "Is HighSchool Tutor aligned with the new DepEd MATATAG curriculum?",
           a: "Yes. All curriculum codes, learning competencies, and grading calculations strictly follow the Philippine Department of Education (DepEd) K-12 MATATAG guidelines and DepEd Order No. 015, s. 2026.",
         },
         {
-          q: "Can I use HighSchool Tutor offline?",
-          a: "Yes. As a Progressive Web App (PWA), you can install HighSchool Tutor on your smartphone or PC and download lessons and quizzes for offline study with low data requirements.",
+          q: "What devices can I use HighSchool Tutor on?",
+          a: "You can use HighSchool Tutor on any smartphone, tablet, laptop, or desktop computer with an internet connection. The app is fully responsive and optimized for mobile web browsers.",
         },
       ],
     },
@@ -133,7 +133,7 @@ export function HowItWorks() {
           </h1>
 
           <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto font-normal leading-relaxed">
-            From selecting your Junior or Senior High track to mastering competencies with Socratic AI guidance, DepEd DO 015 transmutation, and offline study tools.
+            From selecting your Junior or Senior High track to mastering competencies with Socratic AI guidance, DepEd DO 015 transmutation, and comprehensive study tools.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -301,12 +301,12 @@ export function HowItWorks() {
                   <ShieldAlert className="w-5 h-5" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground font-heading">
-                  3. Offline Learning &amp; Privacy Protection
+                  3. Cross-Device Learning &amp; Privacy Protection
                 </h3>
               </div>
               <div className="space-y-4 pl-13">
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                  <strong className="text-foreground">Study Offline:</strong> Download lesson modules and practice quizzes to your device for offline study without worrying about intermittent Wi-Fi or high data costs.
+                  <strong className="text-foreground">Study Anywhere:</strong> Access structured lesson modules, practice quizzes, and AI tutor feedback seamlessly across your smartphone, tablet, and PC.
                 </p>
                 <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                   <strong className="text-foreground">Data Privacy:</strong> Your student scores and AI chat queries are protected under Republic Act No. 10173 (Data Privacy Act of 2012) and PostgreSQL Row Level Security.

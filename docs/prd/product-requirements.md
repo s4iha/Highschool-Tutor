@@ -19,7 +19,7 @@ The implementation of the Philippine Department of Education's **MATATAG K-12 Cu
 1. **130+ DepEd-Aligned Subjects** categorized across Junior High School and Senior High School STEM tracks.
 2. **Google Gemini Socratic AI Tutor** delivering on-demand step-by-step hints and multi-dialect translations (English, Filipino, Taglish, Cebuano, Ilocano, and more).
 3. **Interactive Study & Exam Mode Quizzes** with automatic attempt recording and passing grade (≥ 75%) mastery tracking.
-4. **Free Tier Guardrails & Premium Subscriptions** allowing students to trial 3 subjects and lessons 1–3 freely before upgrading to unlimited access (₱199/month or ₱1,499/year via GCash/Maya).
+4. **Free Tier Guardrails & Premium Subscriptions** allowing students to trial 3 subjects and lessons 1–3 freely before upgrading to unlimited access (₱299/month or ₱1,499/year via GCash/Maya).
 5. **Administrative Control Plane** (`/admin`) for student tracking, active subscription analytics, and SaaS pricing configuration.
 
 ---
@@ -62,7 +62,7 @@ The implementation of the Philippine Department of Education's **MATATAG K-12 Cu
   - Accessible lessons per subject: Lessons 1 to 3.
   - Attempting to access lesson 4+ or a 4th subject triggers an `UpgradeModal` with GCash / Maya checkout.
 - **Premium Tier**:
-  - Monthly Pass: ₱199/month.
+  - Monthly Pass: ₱299/month.
   - Annual Pass: ₱1,499/year (37% savings for full school year).
 
 ### 3.5 Administrative Portal (`/admin`)

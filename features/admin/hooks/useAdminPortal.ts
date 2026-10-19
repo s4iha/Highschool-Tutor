@@ -49,6 +49,9 @@ export interface AdminSettingsData {
   annualPricePhp: number;
   maxTrialSubjects: number;
   maxFreeLessons: number;
+  targetLessonsPerSubject: number;
+  trialDurationDays: number;
+  availableQuestionCounts: string;
   gcashReceiverNumber: string;
   gcashAccountName: string;
   mayaReceiverNumber: string;
@@ -227,6 +230,40 @@ export function useUpdateSubscriptionMutation() {
     },
     onError: (err: Error) => {
       toast.error("Update Failed", {
+        description: err.message,
+      });
+    },
+  });
+}
+
+export function useEnrollStudentMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      email: string;
+      name?: string;
+      plan: "MONTHLY" | "ANNUAL" | "TRIAL_30";
+      gradeLevel?: string;
+    }) => {
+      const res = await fetch("/api/v1/admin/students/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to enroll student");
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "students"] });
+      queryClient.invalidateQueries({ queryKey: ["admin", "metrics"] });
+      toast.success("Student Enrolled Successfully", {
+        description: data.message || "Student subscription has been activated.",
+      });
+    },
+    onError: (err: Error) => {
+      toast.error("Enrollment Failed", {
         description: err.message,
       });
     },

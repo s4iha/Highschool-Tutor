@@ -61,8 +61,8 @@ export function AdminDashboard() {
 
   const currentSettings = React.useMemo<Partial<AdminSettingsData>>(() => {
     return {
-      monthlyPricePhp: 199,
-      annualPricePhp: 1499,
+      monthlyPricePhp: 299,
+      annualPricePhp: 2999,
       maxTrialSubjects: 3,
       maxFreeLessons: 3,
       gcashReceiverNumber: "0917-888-4321",
@@ -471,7 +471,7 @@ export function AdminDashboard() {
                     </label>
                     <Input
                       type="number"
-                      value={currentSettings.annualPricePhp || 2600}
+                      value={currentSettings.annualPricePhp || 2999}
                       onChange={(e) =>
                         setLocalFormData((prev) => ({
                           ...prev,
@@ -480,7 +480,7 @@ export function AdminDashboard() {
                       }
                       className="rounded-xl text-sm"
                     />
-                    <p className="text-[11px] text-muted-foreground">Full academic school year access (Save ₱1,000).</p>
+                    <p className="text-[11px] text-muted-foreground">Full academic school year access (Save ₱589).</p>
                   </div>
                 </div>
 

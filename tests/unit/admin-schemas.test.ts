@@ -1,5 +1,6 @@
 import {
   AdminConfigUpdateSchema,
+  AdminEnrollStudentSchema,
   AnnouncementCreateSchema,
   AnnouncementUpdateSchema,
   QuizQuestionSchema,
@@ -9,12 +10,14 @@ import {
 
 describe("Admin Portal Zod Schemas Validation", () => {
   describe("AdminConfigUpdateSchema", () => {
-    it("should validate a valid settings update payload", () => {
+    it("should validate a valid settings update payload with targetLessonsPerSubject and trialDurationDays", () => {
       const validPayload = {
-        monthlyPricePhp: 199,
+        monthlyPricePhp: 299,
         annualPricePhp: 1499,
         maxTrialSubjects: 3,
         maxFreeLessons: 3,
+        targetLessonsPerSubject: 8,
+        trialDurationDays: 30,
         gcashReceiverNumber: "0917-888-4321",
         gcashAccountName: "HIGHSCHOOL TUTOR PH",
         mayaReceiverNumber: "0918-999-8765",
@@ -25,11 +28,17 @@ describe("Admin Portal Zod Schemas Validation", () => {
 
       const result = AdminConfigUpdateSchema.safeParse(validPayload);
       expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.targetLessonsPerSubject).toBe(8);
+        expect(result.data.trialDurationDays).toBe(30);
+      }
     });
 
-    it("should reject negative prices and invalid percentages", () => {
+    it("should reject negative prices, invalid lessons count, and invalid percentages", () => {
       const invalidPayload = {
         monthlyPricePhp: -50,
+        targetLessonsPerSubject: 0,
+        trialDurationDays: -5,
         promoDiscountPercent: 150,
       };
 
@@ -140,6 +149,58 @@ describe("Admin Portal Zod Schemas Validation", () => {
 
       const result = StudentSubscriptionUpdateSchema.safeParse(validSubUpdate);
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe("AdminEnrollStudentSchema", () => {
+    it("should validate valid student enrollment with email and plan", () => {
+      const validPayload = {
+        email: "student@deped.gov.ph",
+        name: "Maria Dela Cruz",
+        gradeLevel: "Grade 11",
+        school: "Manila Science High School",
+        plan: "MONTHLY",
+        status: "ACTIVE",
+      };
+
+      const result = AdminEnrollStudentSchema.safeParse(validPayload);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.email).toBe("student@deped.gov.ph");
+        expect(result.data.plan).toBe("MONTHLY");
+      }
+    });
+
+    it("should validate enrollment with defaults and explicit plan", () => {
+      const minimalPayload = {
+        email: "juan@example.com",
+      };
+
+      const result = AdminEnrollStudentSchema.safeParse(minimalPayload);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.plan).toBe("MONTHLY");
+      }
+
+      const trialPayload = {
+        email: "trial.student@example.com",
+        plan: "TRIAL_30",
+      };
+      const trialResult = AdminEnrollStudentSchema.safeParse(trialPayload);
+      expect(trialResult.success).toBe(true);
+      if (trialResult.success) {
+        expect(trialResult.data.plan).toBe("TRIAL_30");
+      }
+    });
+
+    it("should reject invalid email addresses", () => {
+      const invalidPayload = {
+        email: "not-an-email",
+        plan: "MONTHLY",
+      };
+
+      const result = AdminEnrollStudentSchema.safeParse(invalidPayload);
+      expect(result.success).toBe(false);
     });
   });
 });

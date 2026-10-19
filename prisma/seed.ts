@@ -1,6 +1,18 @@
-import { prisma } from "../lib/prisma";
-import { AppRole, AnnouncementType, AudienceType, SubPlan, SubStatus, PaymentStatus } from "@prisma/client";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
+import { PrismaClient, AppRole, AnnouncementType, AudienceType, SubPlan, SubStatus, PaymentStatus } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import bcrypt from "bcryptjs";
+
+const connectionString =
+  process.env.DATABASE_URL ||
+  "postgresql://postgres:postgres@localhost:5432/highschool_tutor_local?schema=public";
+
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 Starting HighSchool Tutor database seeding...");
@@ -82,13 +94,30 @@ async function main() {
   // 2. Seed Default Admin Configuration (Pricing & Guardrails)
   const config = await prisma.adminConfig.upsert({
     where: { id: "default_config" },
-    update: {},
-    create: {
-      id: "default_config",
-      monthlyPricePhp: 300,
-      annualPricePhp: 2600,
+    update: {
+      monthlyPricePhp: 299,
+      annualPricePhp: 2999,
       maxTrialSubjects: 3,
       maxFreeLessons: 3,
+      targetLessonsPerSubject: 8,
+      trialDurationDays: 30,
+      availableQuestionCounts: "5, 10, 15, 20",
+      gcashReceiverNumber: "0917-888-4321",
+      gcashAccountName: "HIGHSCHOOL TUTOR PH",
+      mayaReceiverNumber: "0918-999-8765",
+      mayaAccountName: "HIGHSCHOOL TUTOR PH",
+      enableAiTutorTrial: true,
+      promoDiscountPercent: 20,
+    },
+    create: {
+      id: "default_config",
+      monthlyPricePhp: 299,
+      annualPricePhp: 2999,
+      maxTrialSubjects: 3,
+      maxFreeLessons: 3,
+      targetLessonsPerSubject: 8,
+      trialDurationDays: 30,
+      availableQuestionCounts: "5, 10, 15, 20",
       gcashReceiverNumber: "0917-888-4321",
       gcashAccountName: "HIGHSCHOOL TUTOR PH",
       mayaReceiverNumber: "0918-999-8765",
@@ -110,8 +139,8 @@ async function main() {
       publishedAt: new Date(),
     },
     {
-      title: "Special Upgrade Promo: Save ₱1,000 on Annual Pass",
-      body: "Upgrade your learning access today for only ₱2,600 for the entire academic school year via GCash and Maya (save ₱1,000 compared to monthly).",
+      title: "Special Upgrade Promo: Save ₱589 on Annual Pass",
+      body: "Upgrade your learning access today for only ₱2,999 for the entire academic school year via GCash and Maya (save ₱589 compared to monthly).",
       type: AnnouncementType.PROMO,
       targetAudience: AudienceType.TRIAL,
       isActive: true,
@@ -158,7 +187,7 @@ async function main() {
         track: "STEM",
         status: SubStatus.ACTIVE,
         plan: SubPlan.ANNUAL,
-        amount: 1499,
+        amount: 2999,
         paymentRef: "GC-982103491",
         method: "gcash",
         paymentStatus: PaymentStatus.VERIFIED,
@@ -171,7 +200,7 @@ async function main() {
         track: "Junior High",
         status: SubStatus.PENDING,
         plan: SubPlan.MONTHLY,
-        amount: 199,
+        amount: 299,
         paymentRef: "MY-339180211",
         method: "maya",
         paymentStatus: PaymentStatus.PENDING,

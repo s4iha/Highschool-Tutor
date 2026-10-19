@@ -33,7 +33,6 @@ import {
 } from "../actions/quiz-session.actions";
 import { MarkdownRenderer } from "@/shared/components/ui/MarkdownRenderer";
 import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
-import { AiPromptsFab } from "@/shared/components/ui/AiPromptsFab";
 import { TranslationControls } from "./TranslationControls";
 import { sampleQuizQuestions } from "../utils/quiz-sampler";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/shared/components/ui/card";
@@ -80,6 +79,15 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
     options?: Record<string, string>;
     explanation?: string;
   }>({});
+
+  const explanationRef = React.useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to explanation feedback box when an answer is selected in Study Mode
+  React.useEffect(() => {
+    if (mode === "study" && userAnswers[currentIndex] && explanationRef.current) {
+      explanationRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [mode, userAnswers, currentIndex]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -348,14 +356,29 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
             <div className="py-2">
               <span className="text-5xl font-black text-foreground">{finalScore}</span>
               <span className="text-base font-semibold text-muted-foreground">
-                / {questions.length} (Raw: {percent}% • Transmuted: {transmuted}%)
+                / {questions.length}
               </span>
             </div>
 
             <div className="pt-2">
-              <Badge variant={isMastered ? "secondary" : "destructive"} className="text-sm px-3.5 py-1 font-bold">
-                {isMastered ? `Mastered Competency (${transmuted}%)` : `Needs Review (${transmuted}% < 75%)`}
-              </Badge>
+              {questions.length >= 10 && isMastered ? (
+                <Badge variant="secondary" className="text-sm px-3.5 py-1 font-bold bg-success text-success-foreground">
+                  Mastered Competency ({transmuted}%)
+                </Badge>
+              ) : isMastered ? (
+                <div className="flex flex-col items-center gap-1.5">
+                  <Badge variant="secondary" className="text-sm px-3.5 py-1 font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                    Practice Passed ({transmuted}%)
+                  </Badge>
+                  <p className="text-[11px] text-muted-foreground">
+                    Answer 10+ questions to qualify for official DepEd Competency Mastery.
+                  </p>
+                </div>
+              ) : (
+                <Badge variant="destructive" className="text-sm px-3.5 py-1 font-bold">
+                  Needs Review ({transmuted}% &lt; 75%)
+                </Badge>
+              )}
             </div>
           </div>
 
@@ -529,7 +552,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
 
           {/* Study Mode Instant Feedback Box */}
           {mode === "study" && isAnswered && (
-            <div className="mt-3 space-y-2.5 pt-1">
+            <div ref={explanationRef} className="mt-3 space-y-2.5 pt-1">
               <Alert variant={selectedAnswer === currentQ.answer ? "default" : "destructive"} className="rounded-2xl">
                 <div className="flex items-center gap-2">
                   {selectedAnswer === currentQ.answer ? (
@@ -586,9 +609,8 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
         </CardFooter>
       </Card>
 
-      {/* Pre-configured AI Study Prompts Modal & FAB (Study mode only) */}
+      {/* Pre-configured AI Study Prompts Modal */}
       <AiPromptsHelpModal />
-      {mode === "study" && <AiPromptsFab topic={lessonTitle || subject.name} />}
     </div>
   );
 }

@@ -19,6 +19,9 @@ jest.mock("@/lib/prisma", () => ({
     aiCreditUsage: {
       aggregate: jest.fn(),
     },
+    adminConfig: {
+      findFirst: jest.fn(),
+    },
   },
   runWithUser: jest.fn(),
 }));

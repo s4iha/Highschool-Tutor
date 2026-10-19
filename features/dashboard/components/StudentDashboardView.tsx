@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BookOpen,
   Award,
@@ -39,6 +40,7 @@ import { getUserQuizAttemptsAction } from "@/features/curriculum/actions/curricu
 import { useAiPromptsModalStore } from "@/shared/hooks/useAiPromptsModalStore";
 import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
 import { AiPromptsFab } from "@/shared/components/ui/AiPromptsFab";
+import { TrialCountdownWidget } from "./TrialCountdownWidget";
 
 interface StudentDashboardViewProps {
   activeTab?: DashboardTab;
@@ -176,6 +178,9 @@ export default function StudentDashboardView({
               )}
             </div>
           </div>
+
+          {/* 30-Day Free Trial Countdown Widget */}
+          <TrialCountdownWidget />
 
           {/* Quick Metrics Grid */}
           <div data-tour="metrics-grid" className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -618,7 +623,10 @@ export default function StudentDashboardView({
 
       {/* Student Settings Tab */}
       {activeTab === "settings" && (
-        <StudentSettingsTab key={user?.id || "guest"} user={user} />
+        <StudentSettingsTab
+          key={`${user?.id || "guest"}-${user?.profile?.fullName || ""}-${user?.profile?.gradeLevel || ""}-${user?.profile?.track || ""}-${user?.profile?.tutoringPersona || ""}`}
+          user={user}
+        />
       )}
 
       {/* Pre-configured AI Study Prompts Help Modal & Floating Action Button */}
@@ -645,6 +653,7 @@ interface StudentUserProps {
 
 function StudentSettingsTab({ user }: { user: StudentUserProps | null | undefined }) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [studentFullName, setStudentFullName] = useState(
     user?.profile?.fullName?.trim() || user?.name?.trim() || ""
   );
@@ -683,6 +692,11 @@ function StudentSettingsTab({ user }: { user: StudentUserProps | null | undefine
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["student", "dashboard-data"] });
+      queryClient.invalidateQueries({ queryKey: ["user-quiz-attempts"] });
+      queryClient.invalidateQueries({ queryKey: ["lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["subject-progress"] });
+      router.refresh();
       toast.success("Preferences Saved Successfully!", {
         description: "Your student profile and AI preferences have been updated.",
       });

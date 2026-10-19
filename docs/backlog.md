@@ -1,7 +1,50 @@
 # Project Backlog & Change Log
 
+## [2026-10-12]
+
+### Task 024 - Curriculum Enhancements, 30-Day Free Trial Rehaul, JHS Quarters & Super Admin Enrollment
+
+- **Frontend Curriculum Card Enhancement (Responsive Desktop & Widescreen)**:
+  - Overhauled `SubjectCatalog.tsx` curriculum cards: decoupled cramped single-line badges into multi-layer responsive metadata tags (Quarter/Semester, Strand, Configurable Lesson Scope, and Exam Format).
+  - Added line-clamping and standardized minimum heights to eliminate card misalignment on viewports from 1024px to 1920px+.
+  - Dynamically displays real/configured lesson count (`targetLessonsPerSubject`) from public admin config rather than hardcoded 12.
+- **Admin Settings for Lesson Scope & Trial Duration**:
+  - Added `targetLessonsPerSubject Int @default(8)` and `trialDurationDays Int @default(30)` to `AdminConfig` in `prisma/schema.prisma`.
+  - Pushed database schema migration to PostgreSQL Docker instance.
+  - Updated `AdminSettingsPage.tsx`, `adminSchemas.ts`, `app/api/v1/admin/settings/route.ts`, and `app/api/v1/config/route.ts`.
+- **Senior High School Curriculum & Semester Mapping**:
+  - Restructured SHS catalog in `curriculum-data.ts` to strictly map subjects per track/strand and semester (`Semester 1` vs `Semester 2`).
+  - Integrated the complete DepEd SHS subject list from `docs/resources/shs-subjects.md` across Core, Applied, STEM, ABM, HUMSS, GAS, and TVL (70 distinct SHS course offerings).
+  - Added interactive Strand filter pills (`All`, `Core`, `Applied`, `STEM`, `ABM`, `HUMSS`, `GAS`, `TVL`) and Semester selector on the catalog.
+- **Junior High School DepEd 4 Quarters Standardization**:
+  - Removed Trimester/Semester selectors for Junior High School learners (Grades 7–10).
+  - Standardized on DepEd's 4 Quarters (`Quarter 1` to `Quarter 4`) in `OnboardingModal.tsx`, `GradeTermPicker.tsx`, and `curriculum-data.ts`.
+  - Maintained backwards-compatible routing for legacy trimester slugs (`g7-t1-math` -> `Quarter 1`).
+- **Super Admin Manual Student Enrollment**:
+  - Implemented `POST /api/v1/admin/students/enroll` endpoint supporting auto-provisioning of unregistered student emails with password hashing and immediate subscription granting (`MONTHLY`, `ANNUAL`, or `TRIAL_30`).
+  - Created `AdminEnrollStudentModal.tsx` in `features/admin/components/students/` and integrated into `AdminStudentsPage.tsx` with refetch and toast notifications.
+  - Added `useEnrollStudentMutation` to TanStack Query hooks.
+- **30-Day Full-Access Free Trial Rehaul**:
+  - Replaced the restrictive 3-lesson/3-subject limitation with an unrestricted 30-day all-access trial covering all 130+ subjects and lessons.
+  - Implemented `getTrialStatus` in `tier-guardrails.ts` to compute remaining trial days, hours, and percentage.
+  - Enforced trial access guardrails in `curriculum.actions.ts` (`ensureSubjectEnrolledAction`) and `tier-guardrails.ts`.
+- **Student Dashboard Trial Countdown Widget**:
+  - Built `TrialCountdownWidget.tsx` in `features/dashboard/components/` with visual days-remaining countdown, progress bar, expiration banners, and upgrade modal trigger.
+  - Mounted directly above the student dashboard header in `StudentDashboardView.tsx`.
+- **Landing Page In-Depth Instructions & Free Trial Notice Sections**:
+  - Built `HowToUseAppSection.tsx` with a 4-step workflow guide tailored for high schoolers (Grade/Track setup, 8-lesson modules, Socratic AI with "Bakit Mali Ito?", and DO 015 transmuted grades / offline PWA).
+  - Built `TrialNoticeSection.tsx` highlighting the 30-day all-access free trial with zero payment required upfront and ₱299/mo transparent pricing.
+  - Mounted both sections into `app/page.tsx` and exported via `features/landing/components/index.ts`.
+- **Verification Results**:
+  - Zero TypeScript compiler errors (`npx tsc --noEmit`).
+  - Zero ESLint errors or warnings (`npm run lint`).
+  - All 105 unit tests passed across 14 test suites (`npm test`).
+  - Next.js production build succeeded with Turbopack across all 32 routes (`npm run build`).
+
 ## [2026-09-17]
+
 ### Task 022 - Pricing Updates, AI Chatbot Removal, Pre-configured Prompt Modal, Lesson Directory & Mobile Subject Cards
+
 - **Subscription Pricing Overhaul (₱300/mo & ₱2,600/yr Upgrade)**:
   - Updated `AdminConfig` defaults in `prisma/schema.prisma` (`monthlyPricePhp` = 300, `annualPricePhp` = 2600) and updated database seed (`prisma/seed.ts`). Ran database sync and seed.
   - Overhauled `UpgradeModal.tsx`: dynamic billing logic presenting the Monthly plan (₱300/month) for new students and the Annual Upgrade option (₱2,600/year, saving ₱1,000/yr compared to 12 months) for existing/active subscribers. Removed legacy grade-level multi-selects and chatbot references.
@@ -45,7 +88,9 @@
   - Next.js 16 production build succeeded with Turbopack across all 31 routes including `/admin/lessons` (`npm run build`).
 
 ## [2026-09-15]
+
 ### Task 021 - AI Chatbot Hardening, UX Fixes, and Quiz Security
+
 - **LaTeX & Markdown Math Rendering**: Installed `react-markdown`, `remark-math`, `rehype-katex`, and `katex`. Created `shared/components/ui/MarkdownRenderer.tsx` with KaTeX math rendering (`$...$`, `$$...$$`) and rich markdown styling. Integrated across `AITutorDrawer`, `StudentDashboardView` (AI messages), and `QuizRunner` (questions, options, and explanations).
 - **Curriculum Page Padding Reduction**: Reduced excessive vertical padding on `/curriculum` (`app/(dashboard)/curriculum/page.tsx`) from `py-6 sm:py-8` to `py-2 sm:py-3` for tighter alignment and reduced scroll distance.
 - **Chatbot Guardrails & Prompt Hardening**: Expanded prompt injection regexes in `features/curriculum/utils/ai-credits.ts` (blocking DAN mode, developer mode, system prompt reveal, rule override, instruction clearing). Added `validateEducationalQuery` guardrail to filter non-educational queries without consuming AI credits. Hardened Gemini system prompt against persona override and system prompt extraction.
@@ -66,7 +111,9 @@
 - **Verification Results**: Verified 0 TypeScript compiler errors (`npx tsc --noEmit`), 0 ESLint errors and warnings (`npm run lint`), all 97 unit tests passing across 14 test suites (`npm test`), and Next.js 16 production build pass with Turbopack (`npm run build`).
 
 ## [2026-09-14]
+
 ### Task 020 - Curriculum Deduplication and Grade Level Auto-Enrollment
+
 - **Curriculum Catalog Deduplication (130 → 42 Cards)**: Refactored `features/curriculum/utils/curriculum-data.ts` and `SubjectCatalog.tsx` to de-duplicate Junior High School curriculum cross-products (96 repeating trimester cards compressed into 8 distinct core subject cards). Maintained 34 distinct Senior High School STEM subjects grouped across Grade 11 and Grade 12 semesters, reducing visual noise by 68%.
 - **Term & Semester Filter Chips**: Replaced the redundant grade select dropdown with responsive term chips (`All Periods`, `Trimester 1 / Sem 1`, `Trimester 2 / Sem 2`, `Trimester 3`), providing quick filtering across trimesters and semesters.
 - **Grade-Level Personalization & Prioritization**: Connected `SubjectCatalog.tsx` to `useUser()`. Automatically detects the student's configured grade level and displays a highlighted "Your Grade" badge (`Grade 7–10` or `Grade 11–12`), re-ordering catalog sections so the student's active educational tier appears first.
@@ -77,6 +124,7 @@
 - **Verification Results**: Verified 0 TypeScript errors (`npx tsc --noEmit`), 0 ESLint errors and 0 warnings (`npm run lint`), all 74 unit tests passing across 11 test suites (`npm test`), and Next.js 16 production build pass with Turbopack for all 30 routes (`npm run build`).
 
 ### Task 019 - Student Dashboard & Quiz UX Overhaul, AI Credits, Onboarding Tour
+
 - **Track Detail 404 Resolution & Directory Indexing**: Added complete structured curriculum data records for General Academic Strand (`gas-strand`) and Technical-Vocational-Livelihood Track (`tvl-track`) to `TRACKS_DATA` in `features/landing/components/TrackDetail.tsx`. Created `/tracks` index page (`app/tracks/page.tsx`) showcasing all DepEd MATATAG tracks, and mapped `/curriculum` (`app/(dashboard)/curriculum/page.tsx`) with `SubjectCatalog` and `CurriculumGuard`.
 - **Driver.js Onboarding Tour**: Installed `driver.js@1.8.0`, designed an interactive walkthrough highlighting the student dashboard metrics, practice quiz launcher, Socratic AI tutor, and sidebar navigation items. Created `hasCompletedTour` on `Profile` model with `completeTourAction()` persisting status in PostgreSQL.
 - **Real-Time Student Dashboard & Mock Data Purge**: Removed all hardcoded mock metrics ("Resume General Mathematics", "6", "34/48", "94.2%", "18", hardcoded active learning card, mock AI chat) from `StudentDashboardView.tsx`. Sourced all metrics dynamically from database queries via `getDashboardDataAction()` and TanStack Query (`useDashboardData.ts`). Added clean empty states for both recent practice test transmutations and enrolled subjects when no attempts exist.
@@ -89,6 +137,7 @@
 - **Verification Results**: Verified 0 TypeScript compiler errors (`npx tsc --noEmit`), 0 ESLint errors and 0 warnings (`npm run lint`), all 57 unit tests passing across 9 test suites (`npm test`), and Next.js 16 production build pass with Turbopack for all 30 routes (`npm run build`).
 
 ### Task 018 - OAuth User Profile Auto-Provisioning & Name Synchronization
+
 - **Server-Side Profile & Role Auto-Provisioning**: Updated `app/api/user/me/route.ts` to automatically detect missing `Profile` records for authenticated users (such as Google OAuth users created by Better Auth) and provision them immediately with `fullName: user.name`, `email: user.email`, and `hasOnboarded: false`. Automatically provisions the `STUDENT` role in `user_roles` if the user has no role assigned. Added bidirectional synchronization so any existing non-empty `user.name` updates an empty `profile.fullName` and vice versa.
 - **Better Auth Lifecycle Hooks & Sign-In Override**: Configured `databaseHooks.user.create.after` in `features/auth/lib/auth.ts` to automatically upsert `Profile` and `UserRole` records immediately upon Better Auth user creation. Enabled `overrideUserInfoOnSignIn: true` for the Google social provider to ensure Google account profile name updates synchronize on sign-in.
 - **Onboarding Modal React 19 Architecture**: Refactored `features/auth/components/OnboardingModal.tsx` to use a key-driven inner `OnboardingForm` (`key={user?.id || "guest"}`), eliminating `setState-in-effect` anti-patterns while pre-filling `fullName` with the Google user's name. Added TanStack Query cache invalidation (`["currentUser"]`) upon profile completion for instant UI reflection.
@@ -97,6 +146,7 @@
 - **Verification Results**: Verified 0 TypeScript errors (`npx tsc --noEmit`), 0 ESLint errors and 0 warnings (`npm run lint`), all 35 unit tests passing across 6 suites (`npm test`), and Next.js 16 production build pass with Turbopack for all 28 routes (`npm run build`).
 
 ### Task 017 - Admin Settings Reflection, Modern Notifications, Sidebar, Payment & UI Polish
+
 - **Dynamic Admin Settings Reflection**: Created public configuration endpoint `GET /api/v1/config` reading directly from PostgreSQL table `admin_config`. Created TanStack Query hook `usePublicConfigQuery()` in `features/settings`. Updated `tier-guardrails.ts`, `LessonList.tsx`, `UpgradeModal.tsx`, `StudentDetailSheet.tsx`, and `app/api/v1/admin/students/route.ts` to consume live admin settings (`annualPricePhp`, `monthlyPricePhp`, `maxTrialSubjects`, `maxFreeLessons`, GCash/Maya details) instead of hardcoded constants.
 - **Modern Notification & Confirmation UI**: Created public announcements endpoint `GET /api/v1/announcements` and hook `useAnnouncementsQuery()`. Created `NotificationBell.tsx` with Shadcn Popover, category badges, relative timestamps, empty state, and SSR-safe `localStorage` unread tracking via `useSyncExternalStore`. Replaced legacy native `alert()` calls in `DashboardHeader.tsx` and `AdminHeader.tsx`. Created `ConfirmDialog.tsx` wrapping Shadcn `AlertDialog` to replace browser `confirm()` calls.
 - **Global Logo & Container Standardization**: Replaced legacy `bg-primary/10 border-primary/20` containers and inconsistent squared logo assets across `AdminSidebar.tsx`, `DashboardSidebar.tsx`, `Navbar.tsx`, and `AuthPage.tsx` with the unified standard: `size-9 rounded-xl overflow-hidden shrink-0 shadow-xs flex items-center justify-center bg-card border border-border/60` displaying `/logo/highschool-tutor-logo-favicon-rounded.png` (`w-full h-full object-cover`).
@@ -108,11 +158,14 @@
 - **Verification Results**: Verified 0 TypeScript errors (`npx tsc --noEmit`), 0 ESLint errors and 0 warnings (`npm run lint`), all 35 unit tests passing across 6 suites (`npm test`), and Next.js 16 production build pass with Turbopack for all 28 routes (`npm run build`).
 
 ## [2026-09-11]
+
 ### Task 016 - Constrain Question List Height in Admin Editor
+
 - **Fixed Height Question List**: Added `max-h-[600px] overflow-y-auto pr-2 scrollbar-thin` classes to the container of the `localQuestions` map in `AdminQuizConfigPage.tsx` (`QuizBankEditor` component). This constrains the height of the question list, matching the behavior of the curriculum lessons list on the left side, and effectively makes the editor action header sticky without requiring page-level scrolling.
 - **Verification Results**: Verified 0 TypeScript errors (`npx tsc --noEmit`), 0 ESLint errors or warnings (`npm run lint`), all 35 unit tests passing across 6 test suites (`npm test`), and Next.js 16 standalone production build pass with Turbopack for all 27 routes (`npm run build`).
 
 ### Task 015 - Quiz Setup Modal Flow and Admin Quiz Curriculum Filtering
+
 - **Student Quiz Setup Dialog Modal**: Refactored the quiz configuration experience from a separate screen into an integrated dialog modal on `LessonList.tsx`. The entire lesson card is now hoverable and clickable (`cursor-pointer`) with subtle transition animations. Clicking an accessible card opens the modal; locked lessons seamlessly route to the upgrade modal.
 - **Embedded Question Count Selector**: In the quiz launch modal, students can choose their question count via interactive chips (`5`, `10`, `15`, `20`, `All (24)`, defaulting to `10`) along with estimated duration calculation. Clicking either "Start Study" or "Start Exam" routes directly to `/curriculum/[slug]/quiz/[lessonNumber]?mode=[study|exam]&count=[selectedCount]`.
 - **Streamlined QuizRunner & Immediate Practice**: Removed the intermediate `phase` ("setup" vs "quiz") from `QuizRunner.tsx` and removed the obsolete `QuizSetup.tsx` component. The runner immediately parses `count` from URL parameters, samples questions via Fisher-Yates, and begins question 1. The "Retake Quiz" action immediately restarts with the same count, and "Change Options" routes back to the lesson list.
@@ -121,6 +174,7 @@
 - **Verification Results**: Verified 0 TypeScript errors (`npx tsc --noEmit`), 0 ESLint errors or warnings (`npm run lint`), all 35 unit tests passing across 6 test suites (`npm test`), and Next.js 16 standalone production build pass with Turbopack for all 27 routes (`npm run build`).
 
 ### Task 014 - Admin Header, Sidebar Dedup, and Student Quiz Setup Screen
+
 - **Admin Header & Consistent Shell Navigation**: Created `AdminHeader.tsx` mirroring the student dashboard header structure, featuring dynamic section breadcrumbs (`Admin Console / {Section}`), `next-themes` dark mode toggle with hydration protection, administrative alert notifications, mobile drawer trigger, and a quick-switch link button to the "Student Portal" (`/dashboard`). Integrated `AdminHeader` into `AdminSidebarLayout.tsx` replacing the previous mobile-only header.
 - **Admin Console Switcher Deduplication**: Cleaned up `DashboardSidebar.tsx` by removing the secondary "Admin Console" link from the student sidebar nav items area. The primary "Admin Console" switcher button is now consistently located in the top-right header of `DashboardHeader.tsx`, symmetrical with the "Student Portal" button in `AdminHeader.tsx`.
 - **Student Quiz Setup Configuration Screen**: Created `QuizSetup.tsx` mounted inside `QuizRunner.tsx` prior to quiz launch. Students can confirm or toggle their practice mode (`Study Mode` vs `Exam Mode`), review lesson metadata and estimated time, and select their preferred question count (presets: `5`, `10`, `15`, `20`, or `All`, defaulting to `10`).
@@ -129,17 +183,19 @@
 - **Verification Results**: Verified 0 TypeScript errors (`npx tsc --noEmit`), 0 ESLint errors or warnings (`npm run lint`), all 35 unit tests passing across 6 test suites (`npm test`), and Next.js 16 standalone production build pass with Turbopack for all 27 routes (`npm run build`).
 
 ### Task 013 - Admin Portal Full Configuration and Multi-Page Control Plane
+
 - **Multi-Page Administrative Control Plane**: Decomposed the legacy monolithic `AdminDashboard.tsx` into 5 dedicated pages and domain components under Feature-Driven Architecture (FDA): Executive Dashboard (`/admin`), Student Directory & Subscriptions (`/admin/students`), Curriculum Quiz Bank Editor (`/admin/quiz-config`), Notifications & Broadcasts (`/admin/announcements`), and Monetization Pricing & Guardrails (`/admin/settings`).
 - **Collapsible Admin Sidebar & Shell Layout**: Created `AdminSidebarLayout.tsx` and `AdminSidebar.tsx` mounted via `app/(admin)/layout.tsx`. Integrated Zustand `useAdminSidebarStore` with `localStorage` persistence for desktop sidebar collapse (240px ↔ 72px icon mode) and mobile slide-over drawer with backdrop.
 - **Database Schema & Production Migration**: Added `AdminConfig` and `Announcement` models alongside `AnnouncementType` and `AudienceType` enums to `prisma/schema.prisma`. Created standard production migration file `prisma/migrations/20260911142000_admin_portal_models/migration.sql` with PostgreSQL Row Level Security (RLS) policies (`is_admin()` and public read policies) and default config record seeding. Successfully applied via Prisma.
 - **Curriculum Quiz Bank Editor**: Implemented `AdminQuizConfigPage.tsx` and `QuizQuestionForm.tsx` supporting interactive authoring, editing, and deletion of multiple-choice quiz questions (options A–D, correct answer, DepEd rationale/explanation) across all 130+ DepEd subjects and 12 lesson modules, backed by `/api/v1/admin/quiz-config`.
 - **System Announcements System**: Built `AdminAnnouncementsPage.tsx` and `AnnouncementModal.tsx` allowing administrators to author, filter, publish, and toggle active/draft status for in-app broadcasts (INFO, WARNING, PROMO, MAINTENANCE) targeted by student audience (ALL, PREMIUM, TRIAL).
-- **Persistent Pricing & Free Tier Guardrails**: Replaced volatile in-memory pricing state with PostgreSQL-persisted `AdminConfig` via `/api/v1/admin/settings`, enabling real-time configuration of Monthly (₱199) and Annual (₱1,499) passes, free trial subject limits, free lesson thresholds, and GCash/Maya merchant numbers.
+- **Persistent Pricing & Free Tier Guardrails**: Replaced volatile in-memory pricing state with PostgreSQL-persisted `AdminConfig` via `/api/v1/admin/settings`, enabling real-time configuration of Monthly (₱299) and Annual (₱1,499) passes, free trial subject limits, free lesson thresholds, and GCash/Maya merchant numbers.
 - **Student Directory Enhancements**: Created `AdminStudentsPage.tsx` with search, subscription status filtering, multi-column sorting (Name, Registration Date, Grade Level), and interactive `StudentDetailSheet.tsx` drawer for granular student profile inspection and one-click tier granting/revocation.
 - **Database Seed & Admin Credentials**: Overhauled `prisma/seed.ts` with Bcrypt password hashing (`ADMIN_PASSWORD || "Admin2026!"`), creating/updating a fully-verified administrator user (`admin@highschooltutor.ph`) with `AppRole.ADMIN` and completed profile. Seeded default `AdminConfig`, starter platform announcements, and demo students (`Juan Dela Cruz`, `Maria Clara Santos`, `Gabriel Silang`) with active subscriptions and test attempts. Added `ADMIN_PASSWORD` to `example.env` documentation.
 - **Verification Results**: Verified zero TypeScript errors (`npx tsc --noEmit`), zero ESLint errors or warnings (`npm run lint`), all 29 unit tests passing (`npm test`), and Next.js 16 standalone production build pass with Turbopack for all 27 routes (`npm run build`).
 
 ### Task 012 - Real-Time Subject Mastery Progress and Quiz Synchronization
+
 - **TanStack Query Invalidation & Real-Time Reactivity**: Migrated `LessonList.tsx` from raw `useEffect` to TanStack Query (`useQuery`). Optimized query caching with a 2-minute `staleTime` and disabled window focus refetching (`refetchOnWindowFocus: false`) to prevent server overload and database query spam during student tab switching. Connected `QuizRunner.tsx` on submit and retake navigation to invalidate `["subject-progress", subject.slug]` and `["user-quiz-attempts"]`, guaranteeing event-driven, instant real-time progress updates without redundant background requests.
 - **DepEd DO 015 s. 2026 Transmutation Scaling**: Refactored `getSubjectProgressAction` in `curriculum.actions.ts` to transmute raw quiz percentages to official DepEd grades (where 60% raw maps to 75% passing mark). Mastered status is now correctly awarded when transmuted grade reaches 75%+. Returned comprehensive metrics: `totalAttempted`, `totalMastered`, `bestScore`, `rawScore`, `totalQuestions`, and `transmutedGrade`.
 - **Subject Mastery Progress Card Polish**: Updated the Progress Card in `LessonList.tsx` to display curriculum completion percentage alongside mastery percentage, accompanied by a dynamic badge (e.g. "X Mastered • Y Needs Review"). Lesson cards now explicitly display transmuted score badges (`Mastered (96%)` / `Needs Review (68%)`).
@@ -147,6 +203,7 @@
 - **Dashboard UX Refinements (Bug Fixes)**: Resolved Lesson Studio navigation lock by explicitly pushing `router.push('/dashboard')` when clicking sidebar tabs while inside `/curriculum`. Removed redundant user profile avatar from `DashboardHeader.tsx` as it already exists in the sticky sidebar footer. Simplified the Enrolled Subjects list view UI by removing redundant subject code and grade level badges from the Subject column to prevent text overflow. Removed the standalone "Practice Tests" and "Scorecards" tabs, merging the Recent Activity view seamlessly into the main Dashboard overview.
 
 ### Task 011 - Lesson Studio Layout Restoration, Enrolled Subjects View Toggle, Quiz DB Saves, and Sidebar Height
+
 - **Lesson Studio Layout Restoration & Navbar Leak Fix**: Created `app/(dashboard)/layout.tsx` wrapping all dashboard and curriculum pages in `DashboardShell`. Relocated `/curriculum` to `app/(dashboard)/curriculum` so the persistent sidebar, breadcrumbs, user avatar, and studio navigation display properly on all lesson and quiz pages. Updated `Navbar.tsx` and `Footer.tsx` to hide marketing links on `/curriculum` routes.
 - **Enrolled Subjects View Toggle (Cards vs. List)**: Added `subjectsViewMode` state to `useDashboardStore.ts` using Zustand's `persist` middleware (`highschool-tutor-dashboard-store`), remembering student preference per device in `localStorage`. Integrated interactive Cards vs. List view toggle buttons and created a high-density, responsive list table in `StudentDashboardView.tsx`.
 - **Quiz Attempt Database Linking & Verification**: Updated `recordQuizAttemptAction` in `curriculum.actions.ts` to retrieve the authenticated user session via `getCurrentUser()` and link `userId` to every `QuizAttempt` row in PostgreSQL. Filtered student progress by `userId` in `getSubjectProgressAction`. Created `getUserQuizAttemptsAction` and connected it via TanStack Query (`useQuery`) to dynamically display actual student test attempts, transmuted grades, and DepEd performance descriptors.
@@ -154,6 +211,7 @@
 - **Verification Results**: Verified zero ESLint errors or warnings (`npm run lint`), all unit tests passing (17/17 tests passing, `npm test`), and Next.js 16 standalone production build pass with Turbopack and static route generation (`npm run build`).
 
 ### Task 010 - User Preferences, Pricing, Landing Enhancements, and Session Management
+
 - **Subscription & Pricing Overhaul**: Extended `SubPlan` enum in `prisma/schema.prisma` with `GRADE_7` through `GRADE_12` and `ALL_LEVELS`. Updated `UpgradeModal.tsx` to support single grade-level purchases (₱499/school year with grade selector) and the All Levels (7–12) pass (₱1,499/school year).
 - **Track Exploration Pages**: Created dynamic route `app/tracks/[id]/page.tsx` with `generateStaticParams` and component `features/landing/components/TrackDetail.tsx` displaying DepEd MATATAG curriculum overviews, core competencies, career pathways, and Gemini Socratic AI capabilities for Junior High, STEM, ABM, HUMSS, GAS, and TVL. Converted track cards in `CategorySection.tsx` into active Next.js links.
 - **Complete Session Invalidation & Logout**: Enhanced `/api/auth/logout` to delete Better Auth session records from PostgreSQL and clear all session cookies (`auth_token`, `better-auth.session_token`, `__Secure-better-auth.session_token`, `better-auth.session_data`). Updated dashboard header and sidebar logout buttons to invoke Better Auth client `signOut()` and `/api/auth/logout`.
@@ -169,13 +227,16 @@
 - **Verification Results**: Verified clean Prisma database push and client generation (`prisma db push`, `prisma generate`), zero ESLint errors or warnings (`npm run lint`), full unit test pass (17/17 tests passing, `npm test`), and Next.js 16 standalone production build pass (`npm run build`).
 
 ### Task 009 - Upgrade Better Auth to 1.7.4 and Fix Google OAuth Database Adapter
+
 - **Prisma Adapter Configuration**: Added `prismaAdapter(prisma, { provider: "postgresql" })` to Better Auth configuration in `features/auth/lib/auth.ts` and set resilient `baseURL` fallback (`NEXTAUTH_URL` || `BETTER_AUTH_URL` || `http://localhost:3000`).
 - **Better Auth 1.7.4 Upgrade**: Upgraded `better-auth` from `1.7.2` to `1.7.4` to eliminate the breaking `issuer` query requirement that caused `PrismaClientValidationError` during Google OAuth callbacks.
 - **Database Schema Synchronization**: Added nullable `issuer` field to the `Account` model in `prisma/schema.prisma` for backwards compatibility, pushed schema via `prisma db push`, and regenerated Prisma Client via `prisma generate`.
 - **Verification Results**: Verified successful initialization of Better Auth handler, zero runtime crashes, and clean Prisma client compilation.
 
 ## [2026-09-02]
+
 ### Task 008 - Migrate Landing Navigation, Privacy Policy, Terms of Service, and How It Works Pages
+
 - **Privacy Policy Page (`/privacy`)**: Built comprehensive privacy policy component in `features/landing/components/PrivacyPolicy.tsx` and App Router route `app/privacy/page.tsx` adhering to Republic Act No. 10173 (Data Privacy Act of 2012), detailing zero student data sales, encrypted Google Gemini inference, local offline storage, and student data rights.
 - **Terms of Service Page (`/terms`)**: Implemented exhaustive terms of service component in `features/landing/components/TermsOfService.tsx` and route `app/terms/page.tsx` covering Philippine DepEd K-12 MATATAG educational scope, student eligibility, academic integrity & anti-plagiarism guidelines, DepEd DO 015 s. 2026 transmutation simulations, Free Tier guardrails vs. Premium subscriptions, and AI fallibility disclaimers.
 - **How It Works Page (`/how-it-works`)**: Created 4-step workflow and DepEd FAQ component in `features/landing/components/HowItWorks.tsx` and route `app/how-it-works/page.tsx` explaining curriculum selection across Grades 7–12, 12-lesson MATATAG module mastery, 24 verified quizzes, Socratic AI hints ("Bakit Mali Ito?"), dialect translations, and offline PWA caching.
@@ -184,6 +245,7 @@
 - **Verification Results**: Verified zero TypeScript compilation errors (`npx tsc --noEmit`), full test pass (`npm test`, 17/17 tests passing), clean ESLint check (`npm run lint`), and successful Next.js 16 standalone production build with static generation for all 20 routes (`npm run build`).
 
 ### Task 007 - Security RLS, Admin Access Protection, Dashboard & Sidebar Optimizations, and Auth Refactoring
+
 - **PostgreSQL Strict Row Level Security (RLS)**: Created SQL migration `prisma/migrations/20260902120000_enable_strict_rls/migration.sql` implementing session functions `current_user_id()` & `is_admin()`, enabling RLS on all 11 domain tables (`users`, `profiles`, `user_roles`, `subscriptions`, `payments`, `trial_subjects`, `quiz_attempts`, `notification_settings`, `reminder_notices`, `cached_lessons`, `cached_quizzes`), and integrated transaction runners `runWithUser(userId, fn)` and `runAsAdmin(fn)` in `lib/prisma.ts`.
 - **Admin Access Route Protection**: Enforced strict role checking in Next.js 16 `proxy.ts` middleware. Any user without the `ADMIN` role attempting to access `/admin/:path*` is automatically redirected to `/dashboard`. Injected `role` into JWT authentication tokens across login, registration, Google OAuth callback, and profile endpoints.
 - **Lesson Mode Selection Modal**: Replaced inline dual buttons in `LessonList.tsx` with a single "Start Lesson" action that opens a clean modal dialog to let students choose between Study Mode (Socratic AI hints) and Exam Mode (DepEd DO 015 graded test).
@@ -197,6 +259,7 @@
 - **Verification Results**: Verified zero TypeScript compilation errors (`npx tsc --noEmit`), full test pass (`npm test`, 17/17 tests passing), ESLint check pass (`npm run lint`), and clean Next.js 16 standalone production build (`npm run build`).
 
 ### Task 006 - Authentication, JWT Middleware Route Protection, and UI Fixes
+
 - Removed redundant toast message when clicking 'Unlock Lesson' in `LessonList.tsx`.
 - Moved sidebar collapse button in `DashboardSidebar.tsx` to the absolute right edge (`-right-3`) on the border to avoid overlapping with the logo.
 - Polished `AuthPage.tsx` with complete overflow and scrollbar prevention across all zoom levels, removed the sparkle icon, and added 'See Password' toggle functionality.
@@ -208,7 +271,9 @@
 - Verified zero TypeScript compilation errors, full unit test suite pass (`npm test`, 17/17 tests passing), and clean Next.js 16 standalone production build (`npm run build`).
 
 ## [2026-09-01]
+
 ### Task 005 - Migrate Landing Page and Dashboard Components from College Tutor
+
 - Migrated and adapted landing page components from College Tutor (`HeroSection`, `StatsBar`, `AboutSection`, `CategorySection`, `PopularSubjectsSection`, `AcademicWorkflowDemo`, `CtaBanner`) into `features/landing/components/`.
 - Refactored all components to follow Highschool Tutor's Feature-Driven Architecture (FDA) and Shadcn UI primitives (`Button`, `Badge`, `Card`, `Input`), supporting both light and dark mode tokens.
 - Adapted academic curriculum, grade levels, and tracks from university majors to Philippine DepEd K-12 MATATAG standards (Junior High Core Grades 7–10, STEM, ABM, HUMSS, and SHS Core).
@@ -217,6 +282,7 @@
 - Verified zero TypeScript compilation errors (`npx tsc --noEmit`), full test suite pass (`npm test`, 17/17 tests passing), and clean Next.js production build (`npm run build`).
 
 ### Task 004 - Toast Integration, Tier Guardrails, Auth System Alignment, Admin Portal, Testing & Documentation
+
 - Configured Sonner toast system with OKLCH status tokens (`--success`, `--warning`, `--info`, `--destructive`) across light and dark modes in `app/globals.css` and mounted `<Toaster />` globally.
 - Aligned `AuthPage` design system with global theme tokens (`bg-primary`, `text-primary-foreground`) and integrated official logo (`/logo/highschool-tutor-bg-removed.png`).
 - Reorganized `SubjectCatalog` with structured category headings for Junior High School (Grades 7–10) and Senior High School STEM (Grades 11–12) with grade level filter tabs.
@@ -227,6 +293,7 @@
 - Verified TypeScript compilation (`npx tsc --noEmit`), ESLint linting (`npm run lint`), Jest tests (`npm run test`), and Next.js production build (`npm run build`) pass with 0 errors.
 
 ### Task 003 - Pagination, Auth UI, Hybrid Lessons, and Dark Mode
+
 - Added `next-themes` and `ThemeToggle` for dark mode support.
 - Refactored `AITutorDrawer` trigger into a Floating Action Button in `QuizRunner`.
 - Built split-screen `AuthPage` for `/login` and `/register` based on premium design.
@@ -236,6 +303,7 @@
 - Verified Hybrid Lesson population strategy in `curriculum.actions.ts`.
 
 ### Task 002 - Transfer Curriculum, Lesson Viewer, and AI Quiz Engine
+
 - Transferred DepEd Philippine K-12 and MATATAG curriculum metadata, course codes, and schemas for Junior High School (Grades 7–10) and Senior High School STEM (Grades 11–12) into `features/curriculum/`.
 - Integrated Google Gemini 2.5 AI REST service (`gemini-service.ts`) for on-demand quiz question generation, lesson outlines, real-time Socratic AI tutoring, and multi-dialect translation (English, Filipino, Taglish, Cebuano, Ilocano).
 - Built Next.js Server Actions (`curriculum.actions.ts`) with PostgreSQL Prisma caching layer (`cached_lessons` and `cached_quizzes`) and persistent attempt recording (`quiz_attempts`).
@@ -245,7 +313,9 @@
 - Verified TypeScript compilation (`npx tsc --noEmit`), ESLint linting (`npm run lint`), and Next.js production build (`npm run build`) pass cleanly with 0 errors.
 
 ## [2026-08-28]
+
 ### Task 001 - Scaffold Feature-Driven Architecture, CI/CD, and Prisma Schema
+
 - Scaffolded strict Feature-Driven Architecture directory structure (`features/` and `shared/`) modeled after `educore-app`.
 - Adapted and integrated Docker containerization and CI/CD pipelines from `vms-sdc` (`Dockerfile`, `docker-compose.yml`, `docker-compose.prod.yml`, `.dockerignore`, `.env.example`, `.github/workflows/ci.yml`, and `.github/workflows/cd.yml`).
 - Initialized a brand new, unified `prisma/schema.prisma` with NextAuth v5 models and full domain entities ported from the legacy Supabase migrations (profiles, user roles, subscriptions, payments, trial subjects, cached lessons/quizzes, reminder notices, notification settings, webhook events).
@@ -254,7 +324,6 @@
 - Configured database scripts and seed execution in `package.json` and created `prisma/seed.ts`.
 - Initialized workspace documentation standard folders under `docs/`.
 - Verified TypeScript compilation (`npx tsc --noEmit`), ESLint linting (`npm run lint`), and Next.js standalone build (`npm run build`) pass cleanly with zero errors and zero warnings.
-
 
 ## [2026-09-15]
 
@@ -267,14 +336,22 @@
 - Verification passed cleanly.
 
 ### Task 022 Bug Fixes - AI Prompts & Quiz Configuration Flow
+
 - Removed redundant AiPromptsFab across all pages to reduce UI clutter, keeping the sidebar and Quiz header buttons as primary entry points.
 - Updated AiPromptsHelpModal instruction text to suggest visiting free AI providers online instead of downloading/installing them.
 - Ensured the 'AI Study Prompts' button in QuizRunner is hidden during 'Exam Mode', while preserving explanation feedback for 'Study Mode'.
 - Fixed the 'Change Options' button routing in QuizRunner by appending a ?reconfigure={lessonId} query parameter, automatically triggering the configuration modal in LessonList upon return.
 
 ## [2026-09-21]
+
 ### Task 023 - Fix Google Sign-in Internal Server Error
+
 - **Database Schema Sync**: Generated the missing Prisma migration (`20260921070730_sync_schema`) for the `account.type` column that was added to `schema.prisma` but not pushed to the production database, preventing Google OAuth sign-ins from completing.
 - **Migration Hardening for Production**: Updated `20260921070730_sync_schema/migration.sql` with defensive and idempotent PostgreSQL statements (`IF NOT EXISTS`, `IF EXISTS`, constraint checks, and null-safe user updates) to prevent `P3009` errors when applying against pre-existing production schemas.
 - **Server Action Mismatch Handling**: Confirmed with the user that the Next.js Server Action ID mismatch error (`Error: The Server Reference ID did not match the expected format`) will be resolved by clearing the `.next` build cache in their deployment environment during the next release.
 - **Verification Results**: Verified Prisma schema validation, successful migration generation, and clean build/tests.
+
+## [2026-10-12]
+
+### Task 024 - Curriculum Enhancements, 30-Day Free Trial Rehaul, JHS Quarters & Super Admin Enrollment
+- In progress: Implementing responsive curriculum card layouts, 30-day all-access free trial model, dashboard trial countdown, JHS 4 Quarters alignment, full SHS track subjects, and super admin manual student enrollment.

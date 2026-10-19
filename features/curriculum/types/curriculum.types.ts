@@ -5,6 +5,8 @@ export type Subject = {
   grade: string;
   term: string;
   level: "Junior High School" | "Senior High School";
+  strand?: string;
+  track?: string;
 };
 
 export type DistinctSubject = {
@@ -17,6 +19,8 @@ export type DistinctSubject = {
   defaultSlug: string;
   isJhsCore?: boolean;
   abbr?: string;
+  strand?: string;
+  track?: string;
 };
 
 export type Lesson = {
@@ -42,6 +46,7 @@ export type LessonProgressStatus =
   | "Not Started"
   | "In Progress"
   | "Needs Review"
+  | "Practice Passed"
   | "Mastered";
 
 export type StudentAttempt = {

@@ -10,6 +10,7 @@ import {
   Eye,
   RefreshCw,
   ArrowUpDown,
+  UserPlus,
 } from "lucide-react";
 import {
   useAdminStudentsQuery,
@@ -17,6 +18,7 @@ import {
   StudentItem,
 } from "../../hooks/useAdminPortal";
 import { StudentDetailSheet } from "./StudentDetailSheet";
+import { AdminEnrollStudentModal } from "./AdminEnrollStudentModal";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -32,6 +34,7 @@ export function AdminStudentsPage() {
   // Selected student for detail sheet
   const [selectedStudent, setSelectedStudent] = React.useState<StudentItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = React.useState(false);
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = React.useState(false);
 
   const {
     data: studentsData,
@@ -94,6 +97,15 @@ export function AdminStudentsPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            onClick={() => setIsEnrollModalOpen(true)}
+            className="gap-1.5 rounded-xl text-xs font-semibold shadow-xs"
+          >
+            <UserPlus className="size-3.5" />
+            <span>Enroll Student</span>
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -363,6 +375,12 @@ export function AdminStudentsPage() {
         student={selectedStudent}
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
+      />
+
+      {/* Admin Manual Enrollment Modal */}
+      <AdminEnrollStudentModal
+        isOpen={isEnrollModalOpen}
+        onClose={() => setIsEnrollModalOpen(false)}
       />
     </div>
   );

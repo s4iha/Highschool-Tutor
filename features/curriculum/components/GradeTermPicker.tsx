@@ -38,7 +38,7 @@ export function GradeTermPicker({ subject }: GradeTermPickerProps) {
           </div>
           <div>
             <h3 className="text-sm font-semibold text-foreground">
-              Grade Level &amp; Trimester Selector
+              Grade Level &amp; Quarter Selector
             </h3>
             <p className="text-xs text-muted-foreground">
               Switch competencies for {subject.name} across Junior High School
@@ -78,13 +78,13 @@ export function GradeTermPicker({ subject }: GradeTermPickerProps) {
           </div>
         </div>
 
-        {/* Trimester Selector */}
+        {/* Quarter Selector */}
         <div className="space-y-1.5">
           <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
             <Calendar className="size-3.5" />
-            <span>Grading Period</span>
+            <span>Grading Period (Quarter)</span>
           </label>
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="grid grid-cols-4 gap-1.5">
             {JHS_TERMS.map((t) => {
               const isSelected = t === currentTerm;
               return (
@@ -99,7 +99,7 @@ export function GradeTermPicker({ subject }: GradeTermPickerProps) {
                       : "bg-background/80 text-muted-foreground border-border/60 hover:text-foreground hover:bg-muted/80"
                   )}
                 >
-                  {t.replace("Trimester ", "Tri ")}
+                  {t.replace("Quarter ", "Q")}
                 </button>
               );
             })}
