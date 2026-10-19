@@ -1,6 +1,18 @@
-import { prisma } from "../lib/prisma";
-import { AppRole, AnnouncementType, AudienceType, SubPlan, SubStatus, PaymentStatus } from "@prisma/client";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config();
+import { PrismaClient, AppRole, AnnouncementType, AudienceType, SubPlan, SubStatus, PaymentStatus } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import bcrypt from "bcryptjs";
+
+const connectionString =
+  process.env.DATABASE_URL ||
+  "postgresql://postgres:postgres@localhost:5432/highschool_tutor_local?schema=public";
+
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("🌱 Starting HighSchool Tutor database seeding...");
