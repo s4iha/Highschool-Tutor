@@ -93,7 +93,7 @@ Reads or updates SaaS pricing and free tier guardrail limits.
   ```json
   {
     "monthlyPricePhp": 299,
-    "annualPricePhp": 1499,
+    "annualPricePhp": 2499,
     "maxTrialSubjects": 3,
     "maxFreeLessons": 3,
     "gcashReceiverNumber": "0917-888-4321",
@@ -123,3 +123,94 @@ Reads or updates SaaS pricing and free tier guardrail limits.
 | Trial Subjects      | Up to 3 subjects (`TrialSubject` table)        | Unlimited 130+ subjects    |
 | Lesson Access       | Lessons 1, 2, and 3                            | All lessons (1 through 12) |
 | Locked Interception | Triggers `UpgradeModal` + Sonner warning toast | Direct access granted      |
+
+---
+
+## 4. Billing, Checkout & Partner Referral Route Handlers (API v1)
+
+### 4.1 `POST /api/v1/billing/checkout/create-session`
+
+Creates an automated PayMongo Hosted Checkout Session (`/v2/checkout_sessions`) with server-calculated integer centavos pricing.
+
+- **Access**: Authenticated Student/Parent (`getCurrentUser()`)
+- **Request Body**:
+  ```json
+  {
+    "planId": "MONTHLY" | "ANNUAL",
+    "referralCode": "SGWS-A001"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "checkoutUrl": "https://checkout.paymongo.com/cs_...",
+    "sessionId": "cs_...",
+    "referenceNumber": "SGWS-highschool-tutor-SGWS-A001-1729340000000",
+    "amountCentavos": 249900,
+    "planId": "ANNUAL",
+    "referralCode": "SGWS-A001"
+  }
+  ```
+
+### 4.2 `GET /api/v1/billing/checkout/verify-session`
+
+Reconciles status of a checkout session and verifies active subscription status.
+
+- **Query Parameters**: `session_id` (string, required)
+- **Access**: Authenticated Student owner or `ADMIN`
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "sessionId": "cs_...",
+    "status": "PAID",
+    "referenceNumber": "HST-DIRECT-1729340000000",
+    "plan": "ANNUAL",
+    "amountPhp": 2499,
+    "paidAt": "2026-10-26T03:00:00.000Z",
+    "subscriptionActive": true,
+    "subscriptionExpiresAt": "2027-10-26T03:00:00.000Z"
+  }
+  ```
+
+### 4.3 `POST /api/v1/referrals/validate`
+
+Public proxy endpoint validating inbound affiliate codes against the SGWS Affiliates Portal with an `AbortController` 2,500ms timeout guardrail.
+
+- **Access**: Public
+- **Request Body**:
+  ```json
+  {
+    "referralCode": "SGWS-A001",
+    "productSlug": "highschool-tutor"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "valid": true,
+    "affiliate": {
+      "code": "SGWS-A001",
+      "name": "Teacher Ana Santos",
+      "type": "educator"
+    },
+    "reason": null
+  }
+  ```
+
+### 4.4 `POST /api/v1/webhooks/paymongo`
+
+Public cryptographic webhook receiver verifying HMAC-SHA256 signatures with 300-second replay window protection, performing atomic fulfillment, and stacking subscription periods.
+
+- **Access**: Public / PayMongo Webhook Service
+- **Headers**: `paymongo-signature: t=timestamp,te=test_hash,li=live_hash`
+- **Response**:
+  ```json
+  {
+    "received": true,
+    "alreadyFulfilled": false,
+    "transactionId": "tx_..."
+  }
+  ```
+

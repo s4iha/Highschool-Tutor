@@ -1,5 +1,50 @@
 # Project Backlog & Change Log
 
+## [2026-10-26]
+
+### Task 025 - PayMongo Hosted Checkout Gateway & SGWS Affiliate Integration
+
+- **PayMongo Hosted Checkout Session Creation (`/v2/checkout_sessions`)**:
+  - Implemented authoritative server-side integer centavos pricing converter (`toCentavos`) in `features/billing/utils/pricing.ts` preventing floating-point inaccuracies:
+    - Monthly Access Pass: ₱299.00 (`29900` centavos, 30 days access).
+    - Annual Unlimited Pass: ₱2,499.00 (`249900` centavos, 365 days access, highlighting ₱1,089 savings vs. monthly payments).
+  - Built typed client `lib/paymongo/client.ts` with Basic Auth, payment method types (`card`, `gcash`, `paymaya`, `grab_pay`, `dob`, `dob_ubp`, `qrph`), and line item builders.
+  - Implemented `POST /api/v1/billing/checkout/create-session` and `GET /api/v1/billing/checkout/verify-session`.
+  - Added Prisma model `PaymentTransaction` with relation to `User` and `Subscription` and updated `PaymentStatus` enum.
+- **SGWS Affiliate Referral Tracking & Resilient Validation (`sgws-affiliates.sgws.tech`)**:
+  - Standardized collision-free reference numbers: `SGWS-highschool-tutor-{code}-{timestamp}` for affiliate attribution and `HST-DIRECT-{timestamp}` for direct checkouts.
+  - Implemented upstream proxy service in `lib/affiliate/sgwsService.ts` with `AbortController` 2,500ms timeout guardrail and graceful fallback to direct checkout if the upstream service is slow or unreachable.
+  - Implemented proxy route `POST /api/v1/referrals/validate` with rate-limiting tolerance.
+  - Implemented hybrid referral tracking:
+    - Edge/Proxy capture: `proxy.ts` inspects `?ref=` and `?referral=` queries and sets 30-day `sgws_ref` cookie.
+    - SPA client observer: `ReferralTracker.tsx` mounted in root layout preserving cookies across client-side page transitions.
+- **Automated Webhook Fulfillment, Idempotent Provisioning & Resilience Hardening**:
+  - Implemented `lib/paymongo/webhook.ts` verifying HMAC-SHA256 signatures (`t`, `te`, `li`) using `crypto.timingSafeEqual` and enforcing a 300-second replay window tolerance.
+  - Hardened `app/api/v1/webhooks/paymongo/route.ts` against PayMongo's exponential retry storm and automatic endpoint disablement, following the battle-tested architecture from `sgws-affiliates` (TASK-019):
+    - Guarantees immediate HTTP 200 acknowledgment (<500ms) for all received webhooks.
+    - Missing `PAYMONGO_WEBHOOK_SECRET` returns HTTP 200 `{ received: true, error: "..." }` while logging internally, preventing PayMongo from disabling the endpoint before configuration.
+    - Safely skips unhandled event types (`payment.failed`, `refund.created`, `source.chargeable`) with HTTP 200 (`skipped: true`).
+    - Environment/livemode guard: skips mismatched test/live events with HTTP 200.
+    - Malformed JSON payloads return HTTP 200 (`skipped: true`).
+    - Top-level try/catch captures unexpected database errors and returns HTTP 200 while logging for reconciliation, eliminating 500 status codes.
+  - Built idempotent fulfillment pipeline in `lib/services/paymentFulfillmentService.ts` wrapped in atomic `prisma.$transaction`.
+  - Implemented subscription period stacking: active unexpired subscribers upgrading from Monthly to Annual stack their existing time (`expiresAt = (active && expiresAt > now ? expiresAt : now) + planDurationDays`).
+  - Added in-memory mutex session locks keyed by session ID to guarantee zero double-crediting under concurrent webhook deliveries.
+  - Added architectural documentation in `docs/resources/paymongo-webhooks-retry-logic.md` and `docs/resources/paymongo-webhooks-bestpractices.md`.
+- **Subscription UI & Manual GCash Deprecation**:
+  - Completely overhauled `UpgradeModal.tsx` and created modular `CheckoutModal.tsx`:
+    - Eliminated legacy manual GCash/Maya phone numbers, screenshot upload prompts, and 24-hour verification delay text.
+    - Interactive plan selector with prominent ₱1,089 Annual savings badge.
+    - Live debounced referral code input with verified partner badge (`useValidateReferralCode`).
+    - Domestic Philippine payment rail badges (QR Ph, GCash, Maya, Cards, GrabPay, Online Banking).
+  - Built `PaymentCelebrationDialog.tsx` triggering upon return to `/dashboard?payment=success&session_id=...` with automatic query param cleanup.
+  - Modernized `AdminSettingsPage.tsx` with PayMongo integration status cards (API Mode, Webhook URL, SGWS product slug) replacing manual payment receiver inputs.
+- **Verification Results**:
+  - Zero TypeScript compiler errors (`npx tsc --noEmit`).
+  - Zero ESLint errors or warnings (`npm run lint`).
+  - All 20 test suites and 137 unit & contract tests passed (`npm test`).
+  - Production build compiled successfully across all 36 routes (`npm run build`).
+
 ## [2026-10-12]
 
 ### Task 024 - Curriculum Enhancements, 30-Day Free Trial Rehaul, JHS Quarters & Super Admin Enrollment
@@ -350,6 +395,51 @@
 - **Migration Hardening for Production**: Updated `20260921070730_sync_schema/migration.sql` with defensive and idempotent PostgreSQL statements (`IF NOT EXISTS`, `IF EXISTS`, constraint checks, and null-safe user updates) to prevent `P3009` errors when applying against pre-existing production schemas.
 - **Server Action Mismatch Handling**: Confirmed with the user that the Next.js Server Action ID mismatch error (`Error: The Server Reference ID did not match the expected format`) will be resolved by clearing the `.next` build cache in their deployment environment during the next release.
 - **Verification Results**: Verified Prisma schema validation, successful migration generation, and clean build/tests.
+
+## [2026-10-26]
+
+### Task 025 - PayMongo Hosted Checkout Gateway & SGWS Affiliate Integration
+
+- **PayMongo Hosted Checkout Session Creation (`/v2/checkout_sessions`)**:
+  - Implemented authoritative server-side integer centavos pricing converter (`toCentavos`) in `features/billing/utils/pricing.ts` preventing floating-point inaccuracies:
+    - Monthly Access Pass: ₱299.00 (`29900` centavos, 30 days access).
+    - Annual Unlimited Pass: ₱2,499.00 (`249900` centavos, 365 days access, highlighting ₱1,089 savings vs. monthly payments).
+  - Built typed client `lib/paymongo/client.ts` with Basic Auth, payment method types (`card`, `gcash`, `paymaya`, `grab_pay`, `dob`, `dob_ubp`, `qrph`), and line item builders.
+  - Implemented `POST /api/v1/billing/checkout/create-session` and `GET /api/v1/billing/checkout/verify-session`.
+  - Added Prisma model `PaymentTransaction` with relation to `User` and `Subscription` and updated `PaymentStatus` enum.
+- **SGWS Affiliate Referral Tracking & Resilient Validation (`sgws-affiliates.sgws.tech`)**:
+  - Standardized collision-free reference numbers: `SGWS-highschool-tutor-{code}-{timestamp}` for affiliate attribution and `HST-DIRECT-{timestamp}` for direct checkouts.
+  - Implemented upstream proxy service in `lib/affiliate/sgwsService.ts` with `AbortController` 2,500ms timeout guardrail and graceful fallback to direct checkout if the upstream service is slow or unreachable.
+  - Implemented proxy route `POST /api/v1/referrals/validate` with rate-limiting tolerance.
+  - Implemented hybrid referral tracking:
+    - Edge/Proxy capture: `proxy.ts` inspects `?ref=` and `?referral=` queries and sets 30-day `sgws_ref` cookie.
+    - SPA client observer: `ReferralTracker.tsx` mounted in root layout preserving cookies across client-side page transitions.
+- **Automated Webhook Fulfillment, Idempotent Provisioning & Resilience Hardening**:
+  - Implemented `lib/paymongo/webhook.ts` verifying HMAC-SHA256 signatures (`t`, `te`, `li`) using `crypto.timingSafeEqual` and enforcing a 300-second replay window tolerance.
+  - Hardened `app/api/v1/webhooks/paymongo/route.ts` against PayMongo's exponential retry storm and automatic endpoint disablement, following the battle-tested architecture from `sgws-affiliates` (TASK-019):
+    - Guarantees immediate HTTP 200 acknowledgment (<500ms) for all received webhooks.
+    - Missing `PAYMONGO_WEBHOOK_SECRET` returns HTTP 200 `{ received: true, error: "..." }` while logging internally, preventing PayMongo from disabling the endpoint before configuration.
+    - Safely skips unhandled event types (`payment.failed`, `refund.created`, `source.chargeable`) with HTTP 200 (`skipped: true`).
+    - Environment/livemode guard: skips mismatched test/live events with HTTP 200.
+    - Malformed JSON payloads return HTTP 200 (`skipped: true`).
+    - Top-level try/catch captures unexpected database errors and returns HTTP 200 while logging for reconciliation, eliminating 500 status codes.
+  - Built idempotent fulfillment pipeline in `lib/services/paymentFulfillmentService.ts` wrapped in atomic `prisma.$transaction`.
+  - Implemented subscription period stacking: active unexpired subscribers upgrading from Monthly to Annual stack their existing time (`expiresAt = (active && expiresAt > now ? expiresAt : now) + planDurationDays`).
+  - Added in-memory mutex session locks keyed by session ID to guarantee zero double-crediting under concurrent webhook deliveries.
+  - Added architectural documentation in `docs/resources/paymongo-webhooks-retry-logic.md` and `docs/resources/paymongo-webhooks-bestpractices.md`.
+- **Subscription UI & Manual GCash Deprecation**:
+  - Completely overhauled `UpgradeModal.tsx` and created modular `CheckoutModal.tsx`:
+    - Eliminated legacy manual GCash/Maya phone numbers, screenshot upload prompts, and 24-hour verification delay text.
+    - Interactive plan selector with prominent ₱1,089 Annual savings badge.
+    - Live debounced referral code input with verified partner badge (`useValidateReferralCode`).
+    - Domestic Philippine payment rail badges (QR Ph, GCash, Maya, Cards, GrabPay, Online Banking).
+  - Built `PaymentCelebrationDialog.tsx` triggering upon return to `/dashboard?payment=success&session_id=...` with automatic query param cleanup.
+  - Modernized `AdminSettingsPage.tsx` with PayMongo integration status cards (API Mode, Webhook URL, SGWS product slug) replacing manual payment receiver inputs.
+- **Verification Results**:
+  - Zero TypeScript compiler errors (`npx tsc --noEmit`).
+  - Zero ESLint errors or warnings (`npm run lint`).
+  - All 20 test suites and 137 unit & contract tests passed (`npm test`).
+  - Production build compiled successfully across all 36 routes (`npm run build`).
 
 ## [2026-10-12]
 
