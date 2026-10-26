@@ -4,9 +4,11 @@ import * as React from "react";
 import {
   DollarSign,
   ShieldCheck,
-  Smartphone,
   Save,
   RefreshCw,
+  CreditCard,
+  CheckCircle2,
+  Tag,
 } from "lucide-react";
 import {
   useAdminSettingsQuery,
@@ -33,7 +35,7 @@ export function AdminSettingsPage() {
   const currentSettings = React.useMemo<Partial<AdminSettingsData>>(() => {
     return {
       monthlyPricePhp: 299,
-      annualPricePhp: 2999,
+      annualPricePhp: 2499,
       maxTrialSubjects: 3,
       maxFreeLessons: 3,
       targetLessonsPerSubject: 8,
@@ -141,7 +143,7 @@ export function AdminSettingsPage() {
                       className="rounded-xl text-sm"
                     />
                     <p className="text-[11px] text-muted-foreground">
-                      Full school year access (Save ₱589 compared to 12 months at ₱299/mo).
+                      Full school year access (Save ₱1,089 compared to 12 months at ₱299/mo).
                     </p>
                   </div>
                 </div>
@@ -305,96 +307,72 @@ export function AdminSettingsPage() {
             <Card className="rounded-3xl border-border/60 bg-card shadow-xs">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <div className="size-8 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
-                    <Smartphone className="size-4" />
+                  <div className="size-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                    <CreditCard className="size-4" />
                   </div>
                   <div>
                     <CardTitle className="text-base font-bold font-heading">
-                      E-Wallet Merchant Numbers
+                      Payment Gateway Status
                     </CardTitle>
                     <CardDescription className="text-xs">
-                      Displayed on GCash & Maya checkout modals.
+                      Automated PayMongo Hosted Checkout v2
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* GCash */}
-                <div className="space-y-3 p-3 rounded-2xl bg-blue-500/5 border border-blue-500/20">
-                  <div className="text-xs font-bold text-blue-600 dark:text-blue-400">
-                    GCash Receiver
+                {/* Gateway Integration Status */}
+                <div className="space-y-3 p-3.5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                      <CheckCircle2 className="size-3.5" />
+                      <span>PayMongo Gateway</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
+                      ACTIVE
+                    </span>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-muted-foreground">
-                      Mobile Number
-                    </label>
-                    <Input
-                      value={currentSettings.gcashReceiverNumber || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          gcashReceiverNumber: e.target.value,
-                        }))
-                      }
-                      placeholder="0917-888-4321"
-                      className="rounded-xl text-xs font-mono"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-muted-foreground">
-                      Account Name
-                    </label>
-                    <Input
-                      value={currentSettings.gcashAccountName || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          gcashAccountName: e.target.value,
-                        }))
-                      }
-                      placeholder="HIGHSCHOOL TUTOR PH"
-                      className="rounded-xl text-xs"
-                    />
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    <div className="flex justify-between">
+                      <span>Checkout Mode</span>
+                      <span className="font-medium text-foreground">Hosted Sessions v2</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Domestic Rails</span>
+                      <span className="font-medium text-foreground">QR Ph, GCash, Maya, Cards</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Maya */}
-                <div className="space-y-3 p-3 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
-                  <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                    Maya Receiver
+                {/* Webhook Endpoint */}
+                <div className="space-y-2 p-3 rounded-2xl bg-muted/30 border border-border/40 text-xs">
+                  <div className="font-semibold text-foreground flex items-center gap-1.5">
+                    <ShieldCheck className="size-3.5 text-primary" />
+                    <span>Webhook Verification</span>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-muted-foreground">
-                      Mobile Number
-                    </label>
-                    <Input
-                      value={currentSettings.mayaReceiverNumber || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          mayaReceiverNumber: e.target.value,
-                        }))
-                      }
-                      placeholder="0918-999-8765"
-                      className="rounded-xl text-xs font-mono"
-                    />
+                  <div className="font-mono text-[11px] bg-background p-2 rounded-xl border border-border/60 break-all text-muted-foreground">
+                    /api/v1/webhooks/paymongo
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-semibold text-muted-foreground">
-                      Account Name
-                    </label>
-                    <Input
-                      value={currentSettings.mayaAccountName || ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          mayaAccountName: e.target.value,
-                        }))
-                      }
-                      placeholder="HIGHSCHOOL TUTOR PH"
-                      className="rounded-xl text-xs"
-                    />
+                  <p className="text-[11px] text-muted-foreground">
+                    Secured with HMAC-SHA256 signature verification & 300s replay window.
+                  </p>
+                </div>
+
+                {/* SGWS Affiliate Portal */}
+                <div className="space-y-2 p-3 rounded-2xl bg-muted/30 border border-border/40 text-xs">
+                  <div className="font-semibold text-foreground flex items-center gap-1.5">
+                    <Tag className="size-3.5 text-primary" />
+                    <span>SGWS Affiliate Portal</span>
                   </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground text-[11px]">Product Slug</span>
+                    <span className="font-mono text-xs font-bold text-primary">
+                      highschool-tutor
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    30-day cookie attribution with 2,500ms timeout guardrail.
+                  </p>
                 </div>
               </CardContent>
               <CardFooter className="pt-2 border-t border-border/40">
