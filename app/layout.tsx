@@ -6,6 +6,8 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "@/shared/components/ui/sonner";
 import { UpgradeModal } from "@/shared/components/ui/UpgradeModal";
+import { PaymentCelebrationDialog } from "@/features/billing/components/PaymentCelebrationDialog";
+import { ReferralTracker } from "@/shared/components/marketing/ReferralTracker";
 import { OnboardingModal } from "@/features/auth/components/OnboardingModal";
 import "./globals.css";
 import "katex/dist/katex.min.css";
@@ -49,7 +51,9 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <QueryProvider>
             <Toaster position="bottom-right" closeButton />
+            <ReferralTracker />
             <UpgradeModal />
+            <PaymentCelebrationDialog />
             <OnboardingModal />
             <Navbar />
             <main className="flex-1">{children}</main>
