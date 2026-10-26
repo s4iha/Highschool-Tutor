@@ -34,6 +34,7 @@ model User {
   roles                UserRole[]
   subscriptions        Subscription[]
   payments             Payment[]
+  paymentTransactions  PaymentTransaction[]
   trialSubjects        TrialSubject[]
   quizAttempts         QuizAttempt[]
   notificationSettings NotificationSettings?
@@ -163,7 +164,8 @@ model Subscription {
   updatedAt DateTime @updatedAt
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  payments Payment[]
+  payments            Payment[]
+  paymentTransactions PaymentTransaction[]
 
   @@index([userId])
   @@map("subscriptions")
@@ -171,8 +173,42 @@ model Subscription {
 
 enum PaymentStatus {
   PENDING
+  PAID
+  FAILED
+  EXPIRED
+  REFUNDED
   VERIFIED
   REJECTED
+}
+
+model PaymentTransaction {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId    String?
+  subscription      Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  paymongoSessionId String        @unique
+  paymongoPaymentId String?
+  referenceNumber   String        @unique
+  referralCode      String?
+  productSlug       String        @default("highschool-tutor")
+  plan              SubPlan       @default(MONTHLY)
+  amountCentavos    Int
+  currency          String        @default("PHP")
+  status            PaymentStatus @default(PENDING)
+  paymentMethod     String?
+  rawWebhookPayload Json?
+  paidAt            DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([referenceNumber])
+  @@index([paymongoSessionId])
+  @@index([referralCode])
+  @@index([status])
+  @@map("payment_transactions")
 }
 
 model Payment {
@@ -376,7 +412,7 @@ enum AudienceType {
 model AdminConfig {
   id                   String   @id @default(cuid())
   monthlyPricePhp      Int      @default(299)
-  annualPricePhp       Int      @default(2999)
+  annualPricePhp       Int      @default(2499)
   maxTrialSubjects     Int      @default(3)
   maxFreeLessons       Int      @default(3)
   targetLessonsPerSubject Int   @default(8)
