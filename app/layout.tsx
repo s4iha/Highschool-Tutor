@@ -9,13 +9,19 @@ import { UpgradeModal } from "@/shared/components/ui/UpgradeModal";
 import { PaymentCelebrationDialog } from "@/features/billing/components/PaymentCelebrationDialog";
 import { ReferralTracker } from "@/shared/components/marketing/ReferralTracker";
 import { OnboardingModal } from "@/features/auth/components/OnboardingModal";
+import {
+  JsonLd,
+  buildOrganizationSchema,
+  buildWebSiteSchema,
+  getSiteUrl,
+} from "@/features/seo";
 import "./globals.css";
 import "katex/dist/katex.min.css";
 import { cn } from "@/lib/utils";
 
-const sourceSans3Heading = Source_Sans_3({subsets:['latin'],variable:'--font-heading'});
+const sourceSans3Heading = Source_Sans_3({ subsets: ["latin"], variable: "--font-heading" });
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,13 +33,44 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = getSiteUrl();
+
 export const metadata: Metadata = {
-  title: "HighSchool Tutor - DepEd K-12 AI Learning Platform",
-  description: "Master Junior and Senior High School subjects with DepEd-aligned quizzes and real-time Google Gemini Socratic tutoring.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "HighSchool Tutor - DepEd K-12 AI Learning Platform",
+    template: "%s • HighSchool Tutor",
+  },
+  description:
+    "Master Junior and Senior High School subjects with DepEd-aligned quizzes and real-time Google Gemini Socratic tutoring.",
   icons: {
     icon: "/logo/highschool-tutor-logo-favicon-squared.png",
     shortcut: "/logo/highschool-tutor-logo-favicon-squared.png",
     apple: "/logo/highschool-tutor-logo-favicon-squared.png",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "HighSchool Tutor",
+    locale: "en_PH",
+    url: siteUrl,
+    title: "HighSchool Tutor - DepEd K-12 AI Learning Platform",
+    description:
+      "Master Junior and Senior High School subjects with DepEd-aligned quizzes and real-time Google Gemini Socratic tutoring.",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "HighSchool Tutor DepEd K-12 AI Learning Platform",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HighSchool Tutor - DepEd K-12 AI Learning Platform",
+    description:
+      "Master Junior and Senior High School subjects with DepEd-aligned quizzes and real-time Google Gemini Socratic tutoring.",
+    images: ["/opengraph-image"],
   },
 };
 
@@ -42,11 +79,26 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const orgSchema = buildOrganizationSchema();
+  const websiteSchema = buildWebSiteSchema();
+
   return (
     <html
       lang="en"
-      className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable, sourceSans3Heading.variable)}
+      className={cn(
+        "h-full",
+        "antialiased",
+        geistSans.variable,
+        geistMono.variable,
+        "font-sans",
+        inter.variable,
+        sourceSans3Heading.variable
+      )}
     >
+      <head>
+        <JsonLd schema={orgSchema} />
+        <JsonLd schema={websiteSchema} />
+      </head>
       <body className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <QueryProvider>
