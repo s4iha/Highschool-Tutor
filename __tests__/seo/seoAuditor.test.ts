@@ -9,7 +9,6 @@ import {
   buildCourseSchema,
   buildBreadcrumbSchema,
   buildPageMetadata,
-  buildSocialCards,
   getSiteUrl,
 } from "@/features/seo";
 import { TRACKS_DATA } from "@/features/landing/components";
@@ -145,7 +144,7 @@ describe("SEO Comprehensive Diagnostic Auditor", () => {
         expect(meta.openGraph?.url).toBe(getSiteUrl() + (p === "/" ? "" : p));
         expect(meta.openGraph?.siteName).toBe("HighSchool Tutor");
         expect(meta.openGraph?.locale).toBe("en_PH");
-        expect(meta.openGraph?.type).toBe("website");
+        expect((meta.openGraph as { type?: string })?.type).toBe("website");
         expect(meta.openGraph?.images).toBeDefined();
 
         // Twitter checks
