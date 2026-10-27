@@ -9,6 +9,7 @@ export interface SessionUser {
   name: string;
   role: string;
   image?: string | null;
+  createdAt?: Date;
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
@@ -70,6 +71,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       name: user.name || "",
       role,
       image: user.image || null,
+      createdAt: user.createdAt,
     };
   } catch (error) {
     console.error("getCurrentUser error:", error);

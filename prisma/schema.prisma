@@ -316,7 +316,8 @@ model QuizSession {
   lessonNumber  Int
   lessonTitle   String    @default("")
   mode          String    @default("study")
-  questionCount Int       @default(10)
+  questionCount       Int       @default(10)
+  activeQuestionIndex Int       @default(0)
   questions     Json
   userAnswers   Json?
   score         Int?
@@ -327,6 +328,7 @@ model QuizSession {
   user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([userId, completedAt, createdAt])
   @@index([subjectSlug, lessonNumber])
   @@map("quiz_sessions")
 }
@@ -389,6 +391,7 @@ model ReminderNotice {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, kind, periodKey, channel])
+  @@index([userId, kind])
   @@map("reminder_notices")
 }
 
