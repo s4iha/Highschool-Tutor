@@ -9,14 +9,14 @@ import {
   GraduationCap,
   School,
   ChevronRight,
-  Filter,
   CheckCircle2,
+  X,
+  RotateCcw,
 } from "lucide-react";
 import {
   getDistinctJhsSubjects,
   getDistinctShsSubjects,
   buildJhsSlug,
-  JHS_QUARTERS,
 } from "../utils/curriculum-data";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { usePublicConfigQuery } from "@/features/settings";
@@ -31,7 +31,6 @@ import {
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 export function SubjectCatalog() {
@@ -88,6 +87,21 @@ export function SubjectCatalog() {
   }, []);
 
   const totalCatalogCount = allJhsSubjects.length + allShsSubjects.length;
+
+  const isFilterActive =
+    search.trim() !== "" ||
+    levelFilter !== "all" ||
+    jhsQuarterFilter !== "all" ||
+    shsSemesterFilter !== "all" ||
+    shsStrandFilter !== "all";
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setLevelFilter("all");
+    setJhsQuarterFilter("all");
+    setShsSemesterFilter("all");
+    setShsStrandFilter("all");
+  };
 
   // Filter JHS subjects
   const filteredJhsSubjects = React.useMemo(() => {
@@ -170,38 +184,47 @@ export function SubjectCatalog() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {/* Fluid Responsive Grid Container */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 max-w-[1600px] mx-auto">
           {filteredJhsSubjects.map((subject) => (
             <Card
               key={subject.id}
               className={cn(
-                "group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-card transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+                "group relative flex flex-col justify-between h-full overflow-hidden rounded-2xl border bg-card shadow-xs hover:shadow-md dark:hover:shadow-xl hover:border-primary/50 transition-all duration-200",
                 isStudentJHS ? "border-primary/30" : "border-border/60"
               )}
             >
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-primary/60 opacity-0 transition-opacity group-hover:opacity-100" />
 
-              <CardHeader className="p-5 pb-3 space-y-2">
+              <CardHeader className="p-5 pb-3 space-y-3">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
-                    {subject.code}
-                  </span>
-                  <Badge variant="secondary" className="text-[10px] rounded-md px-2 py-0.5 font-medium">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 font-mono text-xs font-bold">
+                      {subject.abbr || subject.code.slice(0, 3)}
+                    </div>
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary truncate">
+                      {subject.code}
+                    </span>
+                  </div>
+                  <Badge variant="secondary" className="text-[10px] rounded-md px-2 py-0.5 font-medium shrink-0">
                     {resolvedJhsQuarter}
                   </Badge>
                 </div>
-                <CardTitle className="text-sm sm:text-base font-bold group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]">
-                  {subject.name}
-                </CardTitle>
-                <CardDescription className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground">
-                  <span>{isStudentJHS ? studentGrade : "Grades 7–10"}</span>
-                  <span>•</span>
-                  <span>DepEd MATATAG</span>
-                </CardDescription>
+
+                <div className="space-y-1">
+                  <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[3rem]">
+                    {subject.name}
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>{isStudentJHS ? studentGrade : "Grades 7–10"}</span>
+                    <span>•</span>
+                    <span>DepEd MATATAG</span>
+                  </CardDescription>
+                </div>
               </CardHeader>
 
               <CardContent className="p-5 pt-0 pb-3">
-                <div className="rounded-xl bg-muted/40 p-2.5 text-xs text-muted-foreground border border-border/40 space-y-1.5">
+                <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground border border-border/40 space-y-1.5">
                   <div className="flex items-center justify-between text-foreground">
                     <span className="flex items-center gap-1.5 font-medium text-xs">
                       <BookOpen className="size-3.5 text-primary" />
@@ -289,45 +312,47 @@ export function SubjectCatalog() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {/* Fluid Responsive Grid Container */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 max-w-[1600px] mx-auto">
                   {gradeGroup.subjects.map((subject) => (
                     <Card
                       key={subject.id}
                       className={cn(
-                        "group relative flex flex-col justify-between overflow-hidden rounded-2xl border bg-card transition-all duration-200 hover:-translate-y-1 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+                        "group relative flex flex-col justify-between h-full overflow-hidden rounded-2xl border bg-card shadow-xs hover:shadow-md dark:hover:shadow-xl hover:border-primary/50 transition-all duration-200",
                         isUserGradeGroup ? "border-primary/30" : "border-border/60"
                       )}
                     >
                       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary to-primary/60 opacity-0 transition-opacity group-hover:opacity-100" />
 
-                      <CardHeader className="p-5 pb-3 space-y-2">
+                      <CardHeader className="p-5 pb-3 space-y-3">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
-                            {subject.code}
-                          </span>
-                          <div className="flex items-center gap-1.5">
-                            {subject.strand && subject.strand !== "Core" && (
-                              <Badge variant="outline" className="text-[10px] rounded-md px-1.5 py-0 border-border font-mono text-muted-foreground">
-                                {subject.strand}
-                              </Badge>
-                            )}
-                            <Badge variant="default" className="text-[10px] rounded-md px-2 py-0.5 font-medium">
-                              {subject.term}
-                            </Badge>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 font-mono text-xs font-bold">
+                              {subject.code.slice(0, 3)}
+                            </div>
+                            <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary truncate">
+                              {subject.code}
+                            </span>
                           </div>
+                          <Badge variant="secondary" className="text-[10px] rounded-md px-2 py-0.5 font-medium shrink-0">
+                            {subject.term}
+                          </Badge>
                         </div>
-                        <CardTitle className="text-sm sm:text-base font-bold group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]">
-                          {subject.name}
-                        </CardTitle>
-                        <CardDescription className="flex items-center gap-1.5 text-[11px] sm:text-xs text-muted-foreground">
-                          <span>{subject.grade}</span>
-                          <span>•</span>
-                          <span>DepEd MATATAG</span>
-                        </CardDescription>
+
+                        <div className="space-y-1">
+                          <CardTitle className="text-base font-bold text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[3rem]">
+                            {subject.name}
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <span>{subject.grade}</span>
+                            <span>•</span>
+                            <span>{subject.strand || "Core"}</span>
+                          </CardDescription>
+                        </div>
                       </CardHeader>
 
                       <CardContent className="p-5 pt-0 pb-3">
-                        <div className="rounded-xl bg-muted/40 p-2.5 text-xs text-muted-foreground border border-border/40 space-y-1.5">
+                        <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground border border-border/40 space-y-1.5">
                           <div className="flex items-center justify-between text-foreground">
                             <span className="flex items-center gap-1.5 font-medium text-xs">
                               <BookOpen className="size-3.5 text-primary" />
@@ -338,10 +363,8 @@ export function SubjectCatalog() {
                             </span>
                           </div>
                           <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span>Track &amp; Semester</span>
-                            <span className="font-medium text-foreground">
-                              {subject.strand || "Core"} • {subject.term}
-                            </span>
+                            <span>Academic Track</span>
+                            <span className="font-medium text-foreground">{subject.strand || "DepEd Core"}</span>
                           </div>
                         </div>
                       </CardContent>
@@ -376,15 +399,15 @@ export function SubjectCatalog() {
     : [renderJhsSection(), renderShsSection()];
 
   return (
-    <div className="space-y-10 py-6">
+    <div className="space-y-8 py-6">
       {/* Hero Header */}
-      <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-gradient-to-b from-primary/10 via-background to-background p-8 sm:p-12 shadow-xs">
-        <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary">
+      <div className="relative overflow-hidden rounded-3xl border border-border/40 bg-gradient-to-b from-primary/10 via-background to-background p-8 sm:p-10 shadow-xs">
+        <div className="relative z-10 max-w-3xl space-y-3">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
             <Sparkles className="size-3.5" />
             DepEd K-12 &amp; MATATAG Curriculum AI Tutor
           </div>
-          <h1 className="text-3xl font-extrabold tracking-tight sm:text-5xl text-foreground font-heading">
+          <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl text-foreground font-heading">
             Master Philippine High School Subjects with{" "}
             <span className="text-primary">AI Socratic Guidance</span>
           </h1>
@@ -394,140 +417,133 @@ export function SubjectCatalog() {
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="flex flex-col gap-4 sticky top-16 z-20 bg-background/80 backdrop-blur-md py-3 border-b border-border/40">
+      {/* Streamlined, Single-Row Sticky Filter & Search Toolbar */}
+      <div className="sticky top-16 z-20 bg-background/95 backdrop-blur-md py-3 border-b border-border/50">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          {/* Controls Cluster */}
           <div className="flex flex-wrap items-center gap-2">
-            <Tabs
-              value={levelFilter}
-              onValueChange={(val) => {
-                setLevelFilter(val as typeof levelFilter);
-              }}
-            >
-              <TabsList className="bg-muted/80">
-                <TabsTrigger value="all">
-                  All Subjects ({totalCatalogCount})
-                </TabsTrigger>
-                <TabsTrigger value="Junior High School">
-                  Junior High (Grades 7–10)
-                </TabsTrigger>
-                <TabsTrigger value="Senior High School">
-                  Senior High (Grades 11–12)
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            {/* Level Segmented Switch */}
+            <div className="inline-flex items-center rounded-xl bg-muted/70 p-1 border border-border/60 text-xs">
+              <button
+                type="button"
+                onClick={() => setLevelFilter("all")}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 font-medium transition-all cursor-pointer text-xs",
+                  levelFilter === "all"
+                    ? "bg-background text-foreground shadow-xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                All ({totalCatalogCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setLevelFilter("Junior High School")}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 font-medium transition-all cursor-pointer text-xs",
+                  levelFilter === "Junior High School"
+                    ? "bg-background text-foreground shadow-xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Junior High (7–10)
+              </button>
+              <button
+                type="button"
+                onClick={() => setLevelFilter("Senior High School")}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 font-medium transition-all cursor-pointer text-xs",
+                  levelFilter === "Senior High School"
+                    ? "bg-background text-foreground shadow-xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Senior High (11–12)
+              </button>
+            </div>
 
-            {/* JHS Quarter Filter Chips (Hidden if viewing only SHS) */}
+            {/* Contextual JHS Quarter Filter */}
             {levelFilter !== "Senior High School" && (
-              <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/50 text-xs">
-                <Filter className="size-3.5 text-muted-foreground ml-1 mr-0.5" />
-                <span className="text-[10px] font-bold text-muted-foreground px-1 uppercase tracking-wider">JHS:</span>
-                <button
-                  type="button"
-                  onClick={() => setJhsQuarterFilter("all")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
-                    jhsQuarterFilter === "all"
-                      ? "bg-card text-foreground shadow-xs font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+              <div className="flex items-center gap-1.5">
+                <select
+                  aria-label="Filter by JHS Quarter"
+                  value={jhsQuarterFilter}
+                  onChange={(e) => setJhsQuarterFilter(e.target.value as typeof jhsQuarterFilter)}
+                  className="bg-background border border-border/70 rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer h-9"
                 >
-                  All Quarters
-                </button>
-                {JHS_QUARTERS.map((q) => (
-                  <button
-                    key={q}
-                    type="button"
-                    onClick={() => setJhsQuarterFilter(q)}
-                    className={cn(
-                      "px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
-                      jhsQuarterFilter === q
-                        ? "bg-card text-foreground shadow-xs font-semibold"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {q.replace("Quarter ", "Q")}
-                  </button>
-                ))}
+                  <option value="all">All JHS Quarters</option>
+                  <option value="Quarter 1">Quarter 1</option>
+                  <option value="Quarter 2">Quarter 2</option>
+                  <option value="Quarter 3">Quarter 3</option>
+                  <option value="Quarter 4">Quarter 4</option>
+                </select>
               </div>
             )}
 
-            {/* SHS Semester Filter Chips (Hidden if viewing only JHS) */}
+            {/* Contextual SHS Semester Filter */}
             {levelFilter !== "Junior High School" && (
-              <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/50 text-xs">
-                <span className="text-[10px] font-bold text-muted-foreground px-1 uppercase tracking-wider">SHS:</span>
-                <button
-                  type="button"
-                  onClick={() => setShsSemesterFilter("all")}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
-                    shsSemesterFilter === "all"
-                      ? "bg-card text-foreground shadow-xs font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+              <div className="flex items-center gap-1.5">
+                <select
+                  aria-label="Filter by SHS Semester"
+                  value={shsSemesterFilter}
+                  onChange={(e) => setShsSemesterFilter(e.target.value as typeof shsSemesterFilter)}
+                  className="bg-background border border-border/70 rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer h-9"
                 >
-                  All Semesters
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShsSemesterFilter("Semester 1")}
-                  className={cn(
-                    "px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
-                    shsSemesterFilter === "Semester 1"
-                      ? "bg-card text-foreground shadow-xs font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+                  <option value="all">All Semesters</option>
+                  <option value="Semester 1">Semester 1</option>
+                  <option value="Semester 2">Semester 2</option>
+                </select>
+
+                <select
+                  aria-label="Filter by SHS Track/Strand"
+                  value={shsStrandFilter}
+                  onChange={(e) => setShsStrandFilter(e.target.value as typeof shsStrandFilter)}
+                  className="bg-background border border-border/70 rounded-xl px-2.5 py-1.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer h-9"
                 >
-                  Sem 1
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShsSemesterFilter("Semester 2")}
-                  className={cn(
-                    "px-2 py-1 rounded-lg text-xs font-medium transition-colors cursor-pointer",
-                    shsSemesterFilter === "Semester 2"
-                      ? "bg-card text-foreground shadow-xs font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  Sem 2
-                </button>
+                  <option value="all">All Tracks / Strands</option>
+                  <option value="STEM">STEM</option>
+                  <option value="ABM">ABM</option>
+                  <option value="HUMSS">HUMSS</option>
+                  <option value="GAS">GAS</option>
+                  <option value="TVL">TVL</option>
+                </select>
               </div>
+            )}
+
+            {/* Reset Filters Pill */}
+            {isFilterActive && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetFilters}
+                className="h-9 px-2 text-xs text-muted-foreground hover:text-foreground rounded-xl gap-1"
+              >
+                <RotateCcw className="size-3" />
+                <span>Reset</span>
+              </Button>
             )}
           </div>
 
+          {/* Search Input Box */}
           <div className="relative w-full lg:w-72">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search subjects..."
+              placeholder="Search subjects or codes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 text-sm rounded-xl h-9"
+              className="pl-9 pr-8 text-xs sm:text-sm rounded-xl h-9"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
           </div>
         </div>
-
-        {/* SHS Strand Filter Row (Shown if SHS is visible) */}
-        {levelFilter !== "Junior High School" && (
-          <div className="flex flex-wrap items-center gap-1.5 text-xs pt-1">
-            <span className="text-[11px] font-semibold text-muted-foreground mr-1">SHS Strands:</span>
-            {(["all", "STEM", "ABM", "HUMSS", "GAS", "TVL"] as const).map((strand) => (
-              <button
-                key={strand}
-                type="button"
-                onClick={() => setShsStrandFilter(strand)}
-                className={cn(
-                  "px-2.5 py-0.5 rounded-full text-xs font-medium transition-colors cursor-pointer border",
-                  shsStrandFilter === strand
-                    ? "bg-primary text-primary-foreground border-primary font-bold shadow-2xs"
-                    : "bg-muted/40 text-muted-foreground border-border/50 hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {strand === "all" ? "All Tracks" : strand}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Subject Sections */}
@@ -543,16 +559,10 @@ export function SubjectCatalog() {
           <Button
             variant="outline"
             size="sm"
-            className="mt-4"
-            onClick={() => {
-              setSearch("");
-              setLevelFilter("all");
-              setJhsQuarterFilter("all");
-              setShsSemesterFilter("all");
-              setShsStrandFilter("all");
-            }}
+            className="mt-4 rounded-xl"
+            onClick={handleResetFilters}
           >
-            Reset Filters
+            Reset All Filters
           </Button>
         </div>
       ) : (

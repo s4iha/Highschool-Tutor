@@ -4,7 +4,6 @@ import * as React from "react";
 import {
   Check,
   Crown,
-  Sparkles,
   ShieldCheck,
   CreditCard,
   QrCode,
@@ -158,7 +157,7 @@ export function CheckoutModal({
 
             <div>
               <div className="flex items-center gap-1.5 mb-1">
-                <Sparkles className="size-4 text-primary" />
+                <Crown className="size-4.5 text-amber-500 fill-amber-500/20" />
                 <span className="text-sm font-semibold text-foreground">Annual Unlimited</span>
               </div>
               <div className="flex items-baseline gap-1 my-2">
