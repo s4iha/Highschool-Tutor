@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/features/auth/lib/session";
 import { SUBJECT_BY_SLUG } from "../utils/curriculum-data";
 import { generateLessonContentWithGemini } from "../api/gemini-service";
 import { getLessonsAction } from "./curriculum.actions";
+import { canAccessLesson, getTrialStatus } from "../utils/tier-guardrails";
 
 export interface LessonMaterialData {
   id?: string;
@@ -39,6 +40,27 @@ export async function getLessonMaterialAction(
     const num = Number(lessonNumber);
     if (isNaN(num) || num < 1) {
       return { success: false, error: "Invalid lesson number" };
+    }
+
+    // 0. Enforce 30-Day Trial Hard Gate and Subscription Check
+    const sessionUser = await getCurrentUser();
+    if (sessionUser?.id && sessionUser.role !== "ADMIN") {
+      const activeSub = await prisma.subscription.findFirst({
+        where: {
+          userId: sessionUser.id,
+          status: "ACTIVE",
+          expiresAt: { gte: new Date() },
+        },
+      });
+      const isSubscribed = !!activeSub;
+      const trialStatus = getTrialStatus(sessionUser.createdAt);
+
+      if (!canAccessLesson(num, isSubscribed, 3, trialStatus.isTrialActive, trialStatus.isExpired)) {
+        return {
+          success: false,
+          error: trialStatus.isExpired ? "TRIAL_EXPIRED" : "LOCKED_LESSON",
+        };
+      }
     }
 
     // 1. Check PostgreSQL for saved/generated lesson material

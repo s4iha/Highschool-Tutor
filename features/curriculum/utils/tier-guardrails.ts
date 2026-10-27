@@ -1,12 +1,13 @@
 /**
  * Tier Guardrails & Entitlement Management
  * 
- * Free Tier Model (Task 024):
+ * Free Tier Model (Task 026 & Spec-Kit Feature 002):
  * - 30-Day Full-Access Free Trial covering all lessons and subjects.
  * - During the 30-day window from user registration (or admin trial grant),
  *   students have complete, unrestricted access to all lessons and quizzes.
  * - Once the 30-day trial expires, lesson/quiz access requires an active
- *   Monthly or Annual subscription pass.
+ *   Monthly or Annual subscription pass. Expired trialists are strictly hard-gated
+ *   from accessing lessons, quizzes, and AI tutoring.
  * 
  * Premium Tier Entitlements:
  * - Unlimited Subject Enrollments (all DepEd JHS & SHS subjects)
@@ -77,6 +78,16 @@ export function getTrialStatus(
   };
 }
 
+/**
+ * Helper to determine if a student's trial has definitively expired.
+ */
+export function isUserTrialExpired(
+  createdAt?: string | Date | null,
+  trialDays: number = DEFAULT_TRIAL_DURATION_DAYS
+): boolean {
+  return getTrialStatus(createdAt, trialDays).isExpired;
+}
+
 export interface TierEntitlements {
   isSubscribed: boolean;
   isTrialActive: boolean;
@@ -86,6 +97,7 @@ export interface TierEntitlements {
   canAccessAllLessons: boolean;
   canAccessAllSubjects: boolean;
   unlimitedAiTutor: boolean;
+  isHardLocked: boolean;
 }
 
 export function getTierEntitlements(
@@ -106,6 +118,7 @@ export function getTierEntitlements(
     : undefined;
 
   const isTrialActive = trialStatus?.isTrialActive ?? false;
+  const isTrialExpired = trialStatus?.isExpired ?? false;
   const hasFullAccess = isSubscribed || isTrialActive;
 
   if (hasFullAccess) {
@@ -118,18 +131,23 @@ export function getTierEntitlements(
       canAccessAllLessons: true,
       canAccessAllSubjects: true,
       unlimitedAiTutor: true,
+      isHardLocked: false,
     };
   }
+
+  // Hard locked when trial has expired and user is not subscribed
+  const isHardLocked = !isSubscribed && isTrialExpired;
 
   return {
     isSubscribed: false,
     isTrialActive: false,
     trialStatus,
-    maxTrialSubjects: limits?.maxTrialSubjects ?? FREE_TIER_MAX_TRIAL_SUBJECTS,
-    maxLessonsPerSubject: limits?.maxLessonsPerSubject ?? FREE_TIER_MAX_LESSONS_PER_SUBJECT,
+    maxTrialSubjects: isHardLocked ? 0 : (limits?.maxTrialSubjects ?? FREE_TIER_MAX_TRIAL_SUBJECTS),
+    maxLessonsPerSubject: isHardLocked ? 0 : (limits?.maxLessonsPerSubject ?? FREE_TIER_MAX_LESSONS_PER_SUBJECT),
     canAccessAllLessons: false,
     canAccessAllSubjects: false,
-    unlimitedAiTutor: limits?.enableAiTutorTrial ?? false,
+    unlimitedAiTutor: false,
+    isHardLocked,
   };
 }
 
@@ -137,9 +155,13 @@ export function canAccessLesson(
   lessonNumber: number,
   isSubscribed: boolean = false,
   maxFreeLessons: number = FREE_TIER_MAX_LESSONS_PER_SUBJECT,
-  isTrialActive: boolean = false
+  isTrialActive: boolean = false,
+  isTrialExpired: boolean = false
 ): boolean {
-  if (isSubscribed || isTrialActive) return true;
+  if (isSubscribed) return true;
+  if (isTrialActive) return true;
+  // If the 30-day trial is strictly expired and not subscribed, lock completely
+  if (isTrialExpired) return false;
   return lessonNumber <= maxFreeLessons;
 }
 
@@ -148,9 +170,12 @@ export function canAccessSubject(
   targetSubjectSlug: string,
   isSubscribed: boolean = false,
   maxTrialSubjects: number = FREE_TIER_MAX_TRIAL_SUBJECTS,
-  isTrialActive: boolean = false
+  isTrialActive: boolean = false,
+  isTrialExpired: boolean = false
 ): boolean {
-  if (isSubscribed || isTrialActive) return true;
+  if (isSubscribed) return true;
+  if (isTrialActive) return true;
+  if (isTrialExpired) return false;
   if (enrolledSubjectSlugs.includes(targetSubjectSlug)) return true;
   return enrolledSubjectSlugs.length < maxTrialSubjects;
 }
