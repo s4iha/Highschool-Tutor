@@ -15,7 +15,9 @@ import {
   translateInputSchema,
   batchTranslateQuizInputSchema,
   recordAttemptInputSchema,
+  targetedPracticeInputSchema,
 } from "../schemas/curriculum.schema";
+import { sampleQuizQuestions } from "../utils/quiz-sampler";
 import {
   checkAndConsumeAiCredit,
   getAiCreditBalance,
@@ -24,6 +26,7 @@ import {
 } from "../utils/ai-credits";
 import {
   canAccessSubject,
+  canAccessLesson,
   getTrialStatus,
   FREE_TIER_MAX_TRIAL_SUBJECTS,
 } from "../utils/tier-guardrails";
@@ -259,6 +262,25 @@ export async function askTutorAction(rawInput: unknown): Promise<{
     const input = askTutorInputSchema.parse(rawInput);
     const sessionUser = await getCurrentUser();
 
+    // Enforce 30-Day Trial Hard Gate for AI Tutoring
+    if (sessionUser?.id && sessionUser.role !== "ADMIN") {
+      const activeSub = await prisma.subscription.findFirst({
+        where: {
+          userId: sessionUser.id,
+          status: "ACTIVE",
+          expiresAt: { gte: new Date() },
+        },
+      });
+      const trialStatus = getTrialStatus(sessionUser.createdAt);
+      if (!activeSub && trialStatus.isExpired) {
+        return {
+          success: false,
+          error: "TRIAL_EXPIRED",
+        };
+      }
+    }
+    
+
     // Educational content and jailbreak moderation check
     const validation = validateEducationalQuery(input.message);
     if (!validation.allowed) {
@@ -294,6 +316,9 @@ export async function askTutorAction(rawInput: unknown): Promise<{
       history: input.history,
       message: sanitizedMessage,
       persona: input.persona,
+      questionIndex: input.questionIndex,
+      totalQuestions: input.totalQuestions,
+      userSelectedAnswer: input.userSelectedAnswer,
     });
 
     return {
@@ -625,5 +650,187 @@ export async function getUserQuizAttemptsAction(limit = 10): Promise<{
   } catch (err) {
     console.error("getUserQuizAttemptsAction error:", err);
     return { success: false, attempts: [] };
+  }
+}
+
+
+/**
+ * Diagnostic Weak Points: Identifies topics within a subject where the student's
+ * most recent quiz attempt falls below the DepEd DO 015 s. 2026 passing threshold (< 75%).
+ * Implements the Latest Attempt Rule.
+ */
+export async function getSubjectWeakPointsAction(subjectSlug: string): Promise<{
+  success: boolean;
+  subjectSlug: string;
+  weakPoints: Array<{
+    lessonNumber: number;
+    lessonTitle: string;
+    rawScore: number;
+    total: number;
+    transmutedScore: number;
+    status: "Needs Review";
+    keyConcepts: string[];
+    lastAttemptDate: Date;
+  }>;
+  totalWeakPoints: number;
+  passingThreshold: number;
+  error?: string;
+}> {
+  try {
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser?.id) {
+      return {
+        success: true,
+        subjectSlug,
+        weakPoints: [],
+        totalWeakPoints: 0,
+        passingThreshold: 75,
+      };
+    }
+
+    // Query attempts in reverse chronological order
+    const attempts = await prisma.quizAttempt.findMany({
+      where: {
+        subjectSlug,
+        userId: sessionUser.id,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // Latest Attempt Rule: First attempt seen per lessonNumber is the most recent
+    const latestAttemptByLesson = new Map<number, typeof attempts[0]>();
+    for (const att of attempts) {
+      if (!latestAttemptByLesson.has(att.lessonNumber)) {
+        latestAttemptByLesson.set(att.lessonNumber, att);
+      }
+    }
+
+    // Fetch curriculum lessons to resolve keyConcepts
+    const lessonsResult = await getLessonsAction(subjectSlug);
+    const lessonMap = new Map((lessonsResult.lessons || []).map((l) => [l.number, l]));
+
+    const weakPoints: Array<{
+      lessonNumber: number;
+      lessonTitle: string;
+      rawScore: number;
+      total: number;
+      transmutedScore: number;
+      status: "Needs Review";
+      keyConcepts: string[];
+      lastAttemptDate: Date;
+    }> = [];
+
+    for (const [lessonNum, att] of latestAttemptByLesson.entries()) {
+      const percentage = att.total > 0 ? (att.score / att.total) * 100 : 0;
+      let transmuted = 60;
+      if (percentage >= 100) {
+        transmuted = 100;
+      } else if (percentage >= 60) {
+        transmuted = Math.round(75 + ((percentage - 60) * 25) / 40);
+      } else {
+        transmuted = Math.round(60 + (percentage / 60) * 14);
+      }
+
+      // DepEd DO 015 Passing Threshold: Transmuted score < 75 is a weak point
+      if (transmuted < 75) {
+        const lesson = lessonMap.get(lessonNum);
+        weakPoints.push({
+          lessonNumber: lessonNum,
+          lessonTitle: att.lessonTitle || lesson?.title || `Lesson ${lessonNum}`,
+          rawScore: att.score,
+          total: att.total,
+          transmutedScore: transmuted,
+          status: "Needs Review",
+          keyConcepts: lesson?.keyConcepts || [],
+          lastAttemptDate: att.createdAt,
+        });
+      }
+    }
+
+    // Sort ascending by lesson number
+    weakPoints.sort((a, b) => a.lessonNumber - b.lessonNumber);
+
+    return {
+      success: true,
+      subjectSlug,
+      weakPoints,
+      totalWeakPoints: weakPoints.length,
+      passingThreshold: 75,
+    };
+  } catch (err) {
+    console.error("getSubjectWeakPointsAction error:", err);
+    return {
+      success: false,
+      subjectSlug,
+      weakPoints: [],
+      totalWeakPoints: 0,
+      passingThreshold: 75,
+      error: err instanceof Error ? err.message : "Failed to load weak points",
+    };
+  }
+}
+
+/**
+ * Creates a targeted practice quiz session for a diagnosed weak point topic.
+ */
+export async function createTargetedPracticeAction(rawInput: unknown): Promise<{
+  success: boolean;
+  sessionId?: string;
+  redirectUrl?: string;
+  error?: string;
+}> {
+  try {
+    const input = targetedPracticeInputSchema.parse(rawInput);
+    const sessionUser = await getCurrentUser();
+
+    // Check tier / trial access
+    let isSubscribed = false;
+    if (sessionUser?.id) {
+      const activeSub = await prisma.subscription.findFirst({
+        where: {
+          userId: sessionUser.id,
+          status: "ACTIVE",
+          expiresAt: { gte: new Date() },
+        },
+      });
+      isSubscribed = !!activeSub;
+    }
+    const trialStatus = getTrialStatus(sessionUser?.createdAt);
+    if (!canAccessLesson(input.lessonNumber, isSubscribed, 3, trialStatus.isTrialActive, trialStatus.isExpired)) {
+      return {
+        success: false,
+        error: trialStatus.isExpired ? "TRIAL_EXPIRED" : "Lesson locked. Upgrade to unlock all lessons.",
+      };
+    }
+
+    const quizResult = await getQuizAction(input.subjectSlug, input.lessonNumber);
+    if (!quizResult.success || !quizResult.questions || quizResult.questions.length === 0) {
+      return { success: false, error: "Failed to load questions for targeted practice" };
+    }
+
+    const sampled = sampleQuizQuestions(quizResult.questions, input.questionCount || 10);
+    const session = await prisma.quizSession.create({
+      data: {
+        userId: sessionUser?.id ?? null,
+        subjectSlug: input.subjectSlug,
+        lessonNumber: input.lessonNumber,
+        lessonTitle: quizResult.lessonTitle || input.lessonTitle || `Lesson ${input.lessonNumber}`,
+        mode: "study",
+        questionCount: sampled.length,
+        questions: sampled as unknown as object,
+      },
+    });
+
+    return {
+      success: true,
+      sessionId: session.id,
+      redirectUrl: `/curriculum/${input.subjectSlug}/quiz/${input.lessonNumber}?sessionId=${session.id}&mode=study`,
+    };
+  } catch (err) {
+    console.error("createTargetedPracticeAction error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to create targeted practice session",
+    };
   }
 }

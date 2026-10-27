@@ -42,6 +42,9 @@ export const askTutorInputSchema = z.object({
     .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() }))
     .max(20),
   message: z.string().min(1).max(2000),
+  questionIndex: z.number().int().optional(),
+  totalQuestions: z.number().int().optional(),
+  userSelectedAnswer: z.string().optional(),
 });
 
 export const translateInputSchema = z.object({
@@ -69,4 +72,41 @@ export const recordAttemptInputSchema = z.object({
   score: z.number().int().min(0),
   total: z.number().int().min(1),
   mode: z.enum(["study", "exam"]),
+});
+
+// -----------------------------------------------------------------------------
+// Session Persistence & Resumption Schemas
+// -----------------------------------------------------------------------------
+
+export const saveQuizProgressInputSchema = z.object({
+  sessionId: z.string().min(1),
+  activeQuestionIndex: z.number().int().min(0),
+  userAnswers: z.record(z.string(), z.enum(["A", "B", "C", "D"])),
+});
+
+// -----------------------------------------------------------------------------
+// Weak Points & Targeted Practice Schemas
+// -----------------------------------------------------------------------------
+
+export const weakPointsQuerySchema = z.object({
+  subjectSlug: z.string().min(1),
+});
+
+export const targetedPracticeInputSchema = z.object({
+  subjectSlug: z.string().min(1),
+  lessonNumber: z.number().int().min(1),
+  lessonTitle: z.string().optional(),
+  questionCount: z.number().int().min(5).max(24).default(10),
+});
+
+// -----------------------------------------------------------------------------
+// Catalog Filter Schemas
+// -----------------------------------------------------------------------------
+
+export const catalogFilterSchema = z.object({
+  level: z.enum(["all", "Junior High School", "Senior High School"]).default("all"),
+  jhsQuarter: z.enum(["all", "Quarter 1", "Quarter 2", "Quarter 3", "Quarter 4"]).default("all"),
+  shsSemester: z.enum(["all", "Semester 1", "Semester 2"]).default("all"),
+  shsStrand: z.enum(["all", "STEM", "ABM", "HUMSS", "GAS", "TVL"]).default("all"),
+  search: z.string().default(""),
 });

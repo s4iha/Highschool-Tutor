@@ -41,6 +41,7 @@ import { useAiPromptsModalStore } from "@/shared/hooks/useAiPromptsModalStore";
 import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
 import { AiPromptsFab } from "@/shared/components/ui/AiPromptsFab";
 import { TrialCountdownWidget } from "./TrialCountdownWidget";
+import { ActiveQuizResumptionCard } from "@/features/curriculum/components/ActiveQuizResumptionCard";
 
 interface StudentDashboardViewProps {
   activeTab?: DashboardTab;
@@ -240,6 +241,9 @@ export default function StudentDashboardView({
               </p>
             </div>
           </div>
+
+          {/* Active Quiz Resumption Card */}
+          <ActiveQuizResumptionCard />
 
           {/* Active Learning In-Progress Card */}
           {activeLearning ? (

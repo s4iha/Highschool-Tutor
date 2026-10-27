@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Send, Bot, User, Loader2, Lightbulb, HelpCircle, Sparkles, AlertCircle } from "lucide-react";
+import { Send, Bot, Loader2, Lightbulb, HelpCircle, Sparkles } from "lucide-react";
 import type { QuizQuestion, TutorMessage } from "../types/curriculum.types";
 import { askTutorAction, getAiCreditsStatusAction } from "../actions/curriculum.actions";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/shared/components/ui/sheet";
@@ -9,6 +9,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Badge } from "@/shared/components/ui/badge";
 import { MarkdownRenderer } from "@/shared/components/ui/MarkdownRenderer";
+import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 
 interface AITutorDrawerProps {
   isOpen: boolean;
@@ -19,6 +20,9 @@ interface AITutorDrawerProps {
   currentQuestion: QuizQuestion;
   language: string;
   persona?: "socratic" | "detailed" | "exam-prep";
+  questionIndex?: number;
+  totalQuestions?: number;
+  userSelectedAnswer?: string;
 }
 
 export function AITutorDrawer({
@@ -30,6 +34,9 @@ export function AITutorDrawer({
   currentQuestion,
   language,
   persona = "socratic",
+  questionIndex,
+  totalQuestions,
+  userSelectedAnswer,
 }: AITutorDrawerProps) {
   const [customPersona, setCustomPersona] = React.useState<"socratic" | "detailed" | "exam-prep" | null>(null);
   const [customLanguage, setCustomLanguage] = React.useState<string | null>(null);
@@ -43,6 +50,15 @@ export function AITutorDrawer({
   const [creditsRemaining, setCreditsRemaining] = React.useState<number | null>(null);
   const [isUnlimited, setIsUnlimited] = React.useState(false);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  const questionNumber = questionIndex !== undefined ? questionIndex + 1 : 1;
+
+  // Reset conversation when switching to a different question (React 19 pattern)
+  const [prevQuestion, setPrevQuestion] = React.useState(currentQuestion.question);
+  if (prevQuestion !== currentQuestion.question) {
+    setPrevQuestion(currentQuestion.question);
+    setConversation([]);
+  }
 
   const personaLabels: Record<"socratic" | "detailed" | "exam-prep", string> = {
     socratic: "Socratic Guide",
@@ -70,18 +86,18 @@ export function AITutorDrawer({
   const greeting = React.useMemo(() => {
     if (activePersona === "detailed") {
       return isTaglishOrFilipino
-        ? `Kumusta! Ako ang iyong AI Comprehensive Tutor para sa **${subjectName}**. Handa akong magbigay ng detalyadong step-by-step na paliwanag para sa **${lessonTitle}**!`
-        : `Hello! I am your AI Comprehensive Tutor for **${subjectName}**. I'm here to provide full step-by-step explanations and breakdowns for **${lessonTitle}**.`;
+        ? `Kumusta! Ako ang iyong AI Comprehensive Tutor para sa **Tanong #${questionNumber}** (${lessonTitle}). Handa akong magbigay ng detalyadong step-by-step breakdown sa formula at solusyon ng partikular na tanong na ito!`
+        : `Hello! I am your AI Comprehensive Tutor for **Question #${questionNumber}** (${lessonTitle}). I'm here to provide a full step-by-step breakdown of the formula and concept behind this specific question.`;
     }
     if (activePersona === "exam-prep") {
       return isTaglishOrFilipino
-        ? `Kumusta! Ako ang iyong AI Exam Reviewer para sa **${subjectName}**. Narito ako upang magbahagi ng mga periodic test strategies, option elimination tips, at exam pointers para sa **${lessonTitle}**!`
-        : `Hello! I am your AI Exam Reviewer for **${subjectName}**. I'm ready to share test-taking tactics, option elimination tips, and periodic exam pointers for **${lessonTitle}**.`;
+        ? `Kumusta! Ako ang iyong AI Exam Reviewer para sa **Tanong #${questionNumber}**. Pag-aralan natin ang elimination tactics at exam pointers para sa problemang ito!`
+        : `Hello! I am your AI Exam Reviewer for **Question #${questionNumber}**. Let's examine option elimination tactics and periodic test pointers for this specific problem.`;
     }
     return isTaglishOrFilipino
-      ? `Kumusta! Ako ang iyong AI Socratic Tutor para sa **${subjectName}**. Paano kita matutulungan sa pagsusuri ng tanong na ito gamit ang gabay at pahiwatig tungkol sa **${lessonTitle}**?`
-      : `Hello! I am your AI Socratic Tutor for **${subjectName}**. How can I help you understand this question about **${lessonTitle}**?`;
-  }, [activePersona, isTaglishOrFilipino, subjectName, lessonTitle]);
+      ? `Kumusta! Ako ang iyong AI Socratic Tutor para sa **Tanong #${questionNumber}**. Paano kita matutulungang masuri ang tanong na ito nang hindi agad ibinibigay ang sagot? Ano ang unang napapansin mo sa ibinigay na sitwasyon o equation?`
+      : `Hello! I am your AI Socratic Tutor for **Question #${questionNumber}**. How can I guide you through analyzing this problem without revealing the answer? What is your initial thought on the given conditions?`;
+  }, [activePersona, isTaglishOrFilipino, questionNumber, lessonTitle]);
 
   const allMessages: TutorMessage[] = React.useMemo(
     () => [{ role: "assistant", content: greeting }, ...conversation],
@@ -166,6 +182,9 @@ export function AITutorDrawer({
       persona: activePersona,
       history: historyForAi,
       message: messageText,
+      questionIndex,
+      totalQuestions,
+      userSelectedAnswer,
     });
 
     if (res.creditsRemaining !== undefined) {
@@ -178,6 +197,15 @@ export function AITutorDrawer({
     if (res.success && res.reply) {
       setConversation((prev) => [...prev, { role: "assistant", content: res.reply! }]);
     } else {
+      if (res.error === "TRIAL_EXPIRED") {
+        onOpenChange(false);
+        useUpgradeModalStore.getState().openUpgradeModal({
+          featureName: "AI Tutor",
+          reason: "Your 30-day free trial has expired. Upgrade to an Annual or Monthly Pass to continue using the Socratic AI Tutor.",
+        });
+        setLoading(false);
+        return;
+      }
       setConversation((prev) => [
         ...prev,
         {
@@ -209,8 +237,11 @@ export function AITutorDrawer({
                   <span className="truncate">Gemini {personaLabels[activePersona]}</span>
                   <Badge variant="success" className="text-[10px] py-0 px-1.5 shrink-0">Live</Badge>
                 </SheetTitle>
-                <SheetDescription className="text-xs truncate">
-                  {subjectName} • {lessonTitle}
+                <SheetDescription className="text-xs truncate flex items-center gap-1.5">
+                  <Badge variant="outline" className="text-[10px] font-semibold text-primary border-primary/30">
+                    Anchored to Q#{questionNumber}{totalQuestions ? ` of ${totalQuestions}` : ""}
+                  </Badge>
+                  <span className="truncate">{subjectName} • {lessonTitle}</span>
                 </SheetDescription>
               </div>
             </div>
@@ -244,134 +275,121 @@ export function AITutorDrawer({
             </select>
           </div>
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => handleLanguageChange("Taglish")}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                activeLanguage.toLowerCase().includes("taglish")
-                  ? "bg-indigo-600 text-white"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
+            <span className="text-[11px] font-medium text-muted-foreground">Lang:</span>
+            <select
+              aria-label="Tutor Language"
+              value={activeLanguage}
+              onChange={(e) => handleLanguageChange(e.target.value)}
+              className="bg-background border border-border/70 rounded-md px-2 py-0.5 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
             >
-              🇵🇭 Taglish
-            </button>
-            <button
-              type="button"
-              onClick={() => handleLanguageChange("English")}
-              className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors cursor-pointer ${
-                !activeLanguage.toLowerCase().includes("taglish")
-                  ? "bg-indigo-600 text-white"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              🇺🇸 English
-            </button>
+              <option value="English">English</option>
+              <option value="Taglish">Taglish</option>
+              <option value="Filipino">Filipino</option>
+              <option value="Cebuano">Cebuano</option>
+              <option value="Ilocano">Ilocano</option>
+              <option value="Hiligaynon">Hiligaynon</option>
+              <option value="Bikol">Bikol</option>
+              <option value="Waray">Waray</option>
+            </select>
           </div>
         </div>
 
-        {/* Conversation Area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-          {/* Active Question Preview */}
-          <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-3 text-xs space-y-1.5">
-            <span className="font-semibold text-indigo-600 dark:text-indigo-400 uppercase text-[10px] tracking-wider">
-              Active Question Context
+        {/* Anchored Question Context Banner */}
+        <div className="bg-muted/30 border-b border-border/50 px-4 py-2.5 text-xs">
+          <div className="flex items-center justify-between mb-1">
+            <span className="font-semibold text-foreground text-[11px] flex items-center gap-1">
+              <HelpCircle className="size-3 text-primary" />
+              Question #{questionNumber} Context
             </span>
-            <MarkdownRenderer
-              content={currentQuestion.question}
-              className="text-foreground font-medium text-xs line-clamp-3"
-            />
+            {userSelectedAnswer && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 font-medium">
+                Selected: Option {userSelectedAnswer}
+              </Badge>
+            )}
           </div>
+          <p className="text-muted-foreground line-clamp-2 text-[11px] italic font-serif">
+            &ldquo;{currentQuestion.question}&rdquo;
+          </p>
+        </div>
 
-          {/* Messages */}
-          {allMessages.map((msg, idx) => {
-            const isBot = msg.role === "assistant";
-            return (
+        {/* Chat Messages */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+          {allMessages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex gap-3 text-sm ${
+                msg.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              {msg.role === "assistant" && (
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 mt-0.5">
+                  <Bot className="size-3.5" />
+                </div>
+              )}
               <div
-                key={idx}
-                className={`flex gap-3 text-xs ${
-                  isBot ? "items-start" : "items-start flex-row-reverse"
+                className={`rounded-2xl px-3.5 py-2.5 max-w-[85%] text-xs leading-relaxed ${
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground font-medium"
+                    : "bg-muted/60 text-foreground border border-border/40"
                 }`}
               >
-                <div
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-full ${
-                    isBot
-                      ? "bg-indigo-600 text-white"
-                      : "bg-secondary text-secondary-foreground"
-                  }`}
-                >
-                  {isBot ? <Bot className="size-3.5" /> : <User className="size-3.5" />}
-                </div>
-
-                <div
-                  className={`rounded-2xl px-4 py-2.5 max-w-[85%] leading-relaxed ${
-                    isBot
-                      ? "bg-muted/70 text-foreground border border-border/40"
-                      : "bg-indigo-600 text-white font-medium whitespace-pre-wrap"
-                  }`}
-                >
-                  {isBot ? (
-                    <MarkdownRenderer content={msg.content} />
-                  ) : (
-                    msg.content
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {creditsRemaining === 0 && !isUnlimited && (
-            <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs flex items-start gap-2.5 text-destructive">
-              <AlertCircle className="size-4 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">Daily Free AI Credits Exhausted</p>
-                <p className="text-[11px] opacity-90 mt-0.5">
-                  You have used all 20 free credits for today. Resets daily at midnight PHT! Upgrade for unlimited AI tutoring.
-                </p>
+                {msg.role === "assistant" ? (
+                  <MarkdownRenderer content={msg.content} />
+                ) : (
+                  <p className="whitespace-pre-wrap">{msg.content}</p>
+                )}
               </div>
             </div>
-          )}
+          ))}
 
           {loading && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground pl-10">
-              <Loader2 className="size-3.5 animate-spin text-indigo-500" />
-              <span>{personaLabels[activePersona]} is thinking...</span>
+            <div className="flex gap-3 text-sm items-center text-muted-foreground">
+              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <Bot className="size-3.5" />
+              </div>
+              <div className="flex items-center gap-2 rounded-2xl px-3.5 py-2 bg-muted/40 border border-border/30 text-xs">
+                <Loader2 className="size-3 animate-spin text-primary" />
+                <span>Analyzing Question #{questionNumber}...</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Quick Suggestion Prompts */}
-        <div className="border-t border-border/40 bg-muted/10 p-3">
-          <div className="flex flex-wrap gap-1.5">
+        {/* Quick Prompts Bar */}
+        <div className="px-3 py-2 border-t border-border/40 bg-muted/10">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleQuickPrompt("Can you give me a hint without telling me the exact answer?")}
+              onClick={() => handleQuickPrompt(`Can you give me a subtle hint to solve Question #${questionNumber}?`)}
               disabled={loading || (creditsRemaining === 0 && !isUnlimited)}
-              className="h-7 text-[11px] px-2.5 gap-1"
+              className="h-7 text-[11px] px-2.5 gap-1 shrink-0"
             >
               <Lightbulb className="size-3 text-amber-500" />
-              <span>Give me a hint</span>
+              <span>Hint for Q#{questionNumber}</span>
             </Button>
+
+            {userSelectedAnswer && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickPrompt(`Why might someone pick Option ${userSelectedAnswer}, and what is the misconception?`)}
+                disabled={loading || (creditsRemaining === 0 && !isUnlimited)}
+                className="h-7 text-[11px] px-2.5 gap-1 shrink-0"
+              >
+                <HelpCircle className="size-3 text-rose-500" />
+                <span>Analyze Option {userSelectedAnswer}</span>
+              </Button>
+            )}
 
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleQuickPrompt("Can you explain this in Taglish?")}
+              onClick={() => handleQuickPrompt("What formula or concept applies to this specific question?")}
               disabled={loading || (creditsRemaining === 0 && !isUnlimited)}
-              className="h-7 text-[11px] px-2.5 gap-1"
+              className="h-7 text-[11px] px-2.5 gap-1 shrink-0"
             >
-              <span>🇵🇭 Explain in Taglish</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleQuickPrompt("Why are the other options incorrect?")}
-              disabled={loading || (creditsRemaining === 0 && !isUnlimited)}
-              className="h-7 text-[11px] px-2.5 gap-1"
-            >
-              <HelpCircle className="size-3 text-indigo-500" />
-              <span>Break down options</span>
+              <span>📐 Concept/Formula</span>
             </Button>
           </div>
         </div>
@@ -389,7 +407,7 @@ export function AITutorDrawer({
               placeholder={
                 creditsRemaining === 0 && !isUnlimited
                   ? "Daily AI credits exhausted (20/20). Resets daily at midnight PHT!"
-                  : "Ask your tutor anything about this question..."
+                  : `Ask your tutor anything about Question #${questionNumber}...`
               }
               value={input}
               onChange={(e) => setInput(e.target.value)}

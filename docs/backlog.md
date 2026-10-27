@@ -1,5 +1,45 @@
 # Project Backlog & Change Log
 
+## [2026-10-27]
+
+### Task 026 - UI Modernization and Diagnostic Learning Enhancements
+
+- **Modernized Subject Cards & Fluid Responsive Grid**:
+  - Replaced hover vertical jump (`hover:-translate-y-1`) with smooth Tailwind v4 elevation drop shadows (`shadow-xs hover:shadow-md dark:hover:shadow-xl hover:border-primary/50 transition-all duration-200 translate-y-0`).
+  - Standardized Job-Card visual rhythm in `SubjectCatalog.tsx` with discipline icon monogram, term badge, clamped 2-line title, academic metadata tags, curriculum scope metric (`X Lessons • DepEd DO 015 Aligned`), and high-contrast action button.
+  - Implemented responsive grid: 1 col (<640px), 2 cols (640-1023px), 3 cols (1024-1535px), and 4 cols (≥1536px up to `max-w-[1600px]`).
+- **Consolidated Single-Bar Sticky Filter Toolbar**:
+  - Consolidated multi-row filter into a single compact sticky toolbar (`sticky top-16 z-20 backdrop-blur-md py-3`).
+  - Implemented segmented level selector (`All`, `Junior High School`, `Senior High School`), contextual popovers (Quarters 1–4 for JHS; Sem 1/2 and Strands STEM/ABM/HUMSS/GAS/TVL for SHS), debounced search with clear button, active filters count badge, and 1-click filter reset.
+- **Subject Detail Header Typography & Badge Decluttering**:
+  - Decluttered `/curriculum/[slug]` (`LessonList.tsx`) replacing 4-badge row with academic eyebrow metadata typography (`CODE • Level • Grade — Term`) and a single access/trial status badge.
+- **Annual Pass Brand Icon Upgrade**:
+  - Upgraded generic `<Sparkles>` icon to prestigious `<Crown>` icon (`text-amber-500 fill-amber-500/20 size-4.5`) in `CheckoutModal.tsx`, reinforcing annual unlimited VIP tiering.
+- **30-Day Free Trial Hard Gate & 7-Day Expiration Notice**:
+  - Implemented server-side hard-gate checks (`isUserTrialExpired`, `canAccessLesson`) in `tier-guardrails.ts`, `lesson-material.actions.ts`, `quiz-session.actions.ts`, and `curriculum.actions.ts`.
+  - Allowed catalog exploration and dashboard preview while strictly gating lesson reading, quiz starts, and AI tutor interactions behind the upgrade modal.
+  - Implemented automated cron endpoint `/api/cron/trial-reminders` with `CRON_SECRET` authentication, detecting Day 23 (7 days remaining) trial accounts, idempotent logging to `ReminderNotice`, and modular email delivery via `email-service.ts`.
+- **Multilingual Translation Integrity**:
+  - Refactored `batchTranslateQuizQuestion` in `features/curriculum/api/gemini-service.ts` to translate ONLY the question stem and explanation.
+  - Strictly preserved multiple-choice options A, B, C, and D 100% in original English across all dialects, protecting technical nomenclature, scientific notation, and algebraic symbols.
+  - Added LaTeX syntax protection and in-memory translation caching.
+- **Question-Level Socratic AI Context**:
+  - Refactored `buildTutorSystemPrompt` in `features/curriculum/api/gemini-service.ts` to strictly anchor Gemini AI tutor to the active question's numbers, variables, and competency, prohibiting generic subject lectures.
+  - Upgraded `AITutorDrawer.tsx` with dynamic question anchor header badge (`Anchored to Q#{n} of {total}`), question context preview, and tailored quick prompts.
+- **Quiz State Auto-Persistence & 'Continue Quiz' Resumption**:
+  - Added `activeQuestionIndex Int @default(0)` to `QuizSession` model in `prisma/schema.prisma`.
+  - Implemented `saveQuizProgressAction`, `getActiveQuizSessionAction`, and `discardQuizSessionAction` in `quiz-session.actions.ts`.
+  - Created `ActiveQuizResumptionCard.tsx` and integrated it into both Student Dashboard (`StudentDashboardView.tsx`) and Subject Page (`LessonList.tsx`).
+  - Added 300ms debounced auto-save on answer selection and initial state restoration in `QuizRunner.tsx`.
+- **Diagnostic 'Weak Points' by Topic & Targeted Practice**:
+  - Implemented `getSubjectWeakPointsAction` enforcing the **Latest Attempt Rule** against DepEd DO 015 s. 2026 standards (transmuted grade < 75%).
+  - Added `createTargetedPracticeAction` to spin up 10-question Study Mode sessions focused on weak competencies.
+  - Built `SubjectWeakPointsCard.tsx` on `/curriculum/[slug]` displaying sub-topic tags (`keyConcepts`), latest score, and 1-click targeted practice.
+- **Verification Results**:
+  - Strict TypeScript check: 0 errors (`npx tsc --noEmit`).
+  - Strict ESLint check: 0 errors, 0 warnings (`npm run lint`).
+  - Unit & Integration Test Suites: 25 test suites, 165 tests passed (100% pass rate).
+
 ## [2026-10-26]
 
 ### Task 025 - PayMongo Hosted Checkout Gateway & SGWS Affiliate Integration
@@ -397,6 +437,48 @@
 - **Verification Results**: Verified Prisma schema validation, successful migration generation, and clean build/tests.
 
 ## [2026-10-26]
+
+# Project Backlog & Change Log
+
+## [2026-10-27]
+
+### Task 026 - UI Modernization and Diagnostic Learning Enhancements
+
+- **Modernized Subject Cards & Fluid Responsive Grid**:
+  - Replaced hover vertical jump (`hover:-translate-y-1`) with smooth Tailwind v4 elevation drop shadows (`shadow-xs hover:shadow-md dark:hover:shadow-xl hover:border-primary/50 transition-all duration-200 translate-y-0`).
+  - Standardized Job-Card visual rhythm in `SubjectCatalog.tsx` with discipline icon monogram, term badge, clamped 2-line title, academic metadata tags, curriculum scope metric (`X Lessons • DepEd DO 015 Aligned`), and high-contrast action button.
+  - Implemented responsive grid: 1 col (<640px), 2 cols (640-1023px), 3 cols (1024-1535px), and 4 cols (≥1536px up to `max-w-[1600px]`).
+- **Consolidated Single-Bar Sticky Filter Toolbar**:
+  - Consolidated multi-row filter into a single compact sticky toolbar (`sticky top-16 z-20 backdrop-blur-md py-3`).
+  - Implemented segmented level selector (`All`, `Junior High School`, `Senior High School`), contextual popovers (Quarters 1–4 for JHS; Sem 1/2 and Strands STEM/ABM/HUMSS/GAS/TVL for SHS), debounced search with clear button, active filters count badge, and 1-click filter reset.
+- **Subject Detail Header Typography & Badge Decluttering**:
+  - Decluttered `/curriculum/[slug]` (`LessonList.tsx`) replacing 4-badge row with academic eyebrow metadata typography (`CODE • Level • Grade — Term`) and a single access/trial status badge.
+- **Annual Pass Brand Icon Upgrade**:
+  - Upgraded generic `<Sparkles>` icon to prestigious `<Crown>` icon (`text-amber-500 fill-amber-500/20 size-4.5`) in `CheckoutModal.tsx`, reinforcing annual unlimited VIP tiering.
+- **30-Day Free Trial Hard Gate & 7-Day Expiration Notice**:
+  - Implemented server-side hard-gate checks (`isUserTrialExpired`, `canAccessLesson`) in `tier-guardrails.ts`, `lesson-material.actions.ts`, `quiz-session.actions.ts`, and `curriculum.actions.ts`.
+  - Allowed catalog exploration and dashboard preview while strictly gating lesson reading, quiz starts, and AI tutor interactions behind the upgrade modal.
+  - Implemented automated cron endpoint `/api/cron/trial-reminders` with `CRON_SECRET` authentication, detecting Day 23 (7 days remaining) trial accounts, idempotent logging to `ReminderNotice`, and modular email delivery via `email-service.ts`.
+- **Multilingual Translation Integrity**:
+  - Refactored `batchTranslateQuizQuestion` in `features/curriculum/api/gemini-service.ts` to translate ONLY the question stem and explanation.
+  - Strictly preserved multiple-choice options A, B, C, and D 100% in original English across all dialects, protecting technical nomenclature, scientific notation, and algebraic symbols.
+  - Added LaTeX syntax protection and in-memory translation caching.
+- **Question-Level Socratic AI Context**:
+  - Refactored `buildTutorSystemPrompt` in `features/curriculum/api/gemini-service.ts` to strictly anchor Gemini AI tutor to the active question's numbers, variables, and competency, prohibiting generic subject lectures.
+  - Upgraded `AITutorDrawer.tsx` with dynamic question anchor header badge (`Anchored to Q#{n} of {total}`), question context preview, and tailored quick prompts.
+- **Quiz State Auto-Persistence & 'Continue Quiz' Resumption**:
+  - Added `activeQuestionIndex Int @default(0)` to `QuizSession` model in `prisma/schema.prisma`.
+  - Implemented `saveQuizProgressAction`, `getActiveQuizSessionAction`, and `discardQuizSessionAction` in `quiz-session.actions.ts`.
+  - Created `ActiveQuizResumptionCard.tsx` and integrated it into both Student Dashboard (`StudentDashboardView.tsx`) and Subject Page (`LessonList.tsx`).
+  - Added 300ms debounced auto-save on answer selection and initial state restoration in `QuizRunner.tsx`.
+- **Diagnostic 'Weak Points' by Topic & Targeted Practice**:
+  - Implemented `getSubjectWeakPointsAction` enforcing the **Latest Attempt Rule** against DepEd DO 015 s. 2026 standards (transmuted grade < 75%).
+  - Added `createTargetedPracticeAction` to spin up 10-question Study Mode sessions focused on weak competencies.
+  - Built `SubjectWeakPointsCard.tsx` on `/curriculum/[slug]` displaying sub-topic tags (`keyConcepts`), latest score, and 1-click targeted practice.
+- **Verification Results**:
+  - Strict TypeScript check: 0 errors (`npx tsc --noEmit`).
+  - Strict ESLint check: 0 errors, 0 warnings (`npm run lint`).
+  - Unit & Integration Test Suites: 25 test suites, 165 tests passed (100% pass rate).
 
 ### Task 025 - PayMongo Hosted Checkout Gateway & SGWS Affiliate Integration
 

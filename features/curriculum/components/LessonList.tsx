@@ -38,6 +38,8 @@ import { Progress } from "@/shared/components/ui/progress";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 import { GradeTermPicker } from "./GradeTermPicker";
+import { ActiveQuizResumptionCard } from "./ActiveQuizResumptionCard";
+import { SubjectWeakPointsCard } from "./SubjectWeakPointsCard";
 import { LessonReaderModal } from "./LessonReaderModal";
 import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
 import { AiPromptsFab } from "@/shared/components/ui/AiPromptsFab";
@@ -151,7 +153,9 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
     e.preventDefault();
     openUpgradeModal({
       featureName: lesson.title,
-      reason: `Unlock all lessons & full DepEd competencies for ${subject.name}.`,
+      reason: trialStatus.isExpired
+        ? "Your 30-day trial has expired. Upgrade to unlock all lessons and unlimited AI tutoring."
+        : `Unlock all lessons & full DepEd competencies for ${subject.name}.`,
     });
   };
 
@@ -187,37 +191,40 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
 
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-mono text-xs font-bold uppercase tracking-wider text-primary">
                 {subject.code}
               </span>
-              <Badge
-                variant={
-                  subject.level === "Senior High School"
-                    ? "default"
-                    : "secondary"
-                }
-                className="text-xs"
-              >
+              <span className="text-muted-foreground text-xs">•</span>
+              <span className="text-xs font-semibold text-muted-foreground">
                 {subject.level}
-              </Badge>
-              <Badge variant="outline" className="text-xs">
-                {subject.grade} • {subject.term}
-              </Badge>
-              {!isSubscribed && (
+              </span>
+              <span className="text-muted-foreground text-xs">•</span>
+              <span className="text-xs font-semibold text-muted-foreground">
+                {subject.grade} — {subject.term}
+              </span>
+              {isSubscribed ? (
                 <Badge
                   variant="outline"
-                  className={cn(
-                    "text-xs gap-1 font-bold",
-                    isTrialActive
-                      ? "border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
-                      : "border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10"
-                  )}
+                  className="text-xs gap-1 font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 ml-1"
+                >
+                  <Crown className="size-3" />
+                  Full Access Pass
+                </Badge>
+              ) : isTrialActive ? (
+                <Badge
+                  variant="outline"
+                  className="text-xs gap-1 font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 ml-1"
                 >
                   <Sparkles className="size-3" />
-                  {isTrialActive
-                    ? `30-Day Free Trial (${trialStatus.daysRemaining}d Left • All Lessons Unlocked)`
-                    : "Trial Expired (Upgrade to Unlock)"}
+                  {trialStatus.daysRemaining}d Trial Left
+                </Badge>
+              ) : (
+                <Badge
+                  variant="outline"
+                  className="text-xs gap-1 font-semibold border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 ml-1"
+                >
+                  Trial Expired
                 </Badge>
               )}
             </div>
@@ -265,6 +272,9 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
       {/* Grade & Term Picker for JHS Subjects */}
       <GradeTermPicker subject={subject} />
 
+      {/* Active Quiz Resumption Card */}
+      <ActiveQuizResumptionCard subjectSlug={subject.slug} />
+
       {/* Progress Card */}
       <Card className="border-primary/20 bg-gradient-to-r from-primary/5 via-primary/5 to-background rounded-2xl">
         <CardContent className="p-6">
@@ -305,6 +315,9 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
         </CardContent>
       </Card>
 
+      {/* Diagnostic Weak Points Card */}
+      <SubjectWeakPointsCard subjectSlug={subject.slug} />
+
       {/* Lessons List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -343,7 +356,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
               const stat = progress.lessonScores[lesson.number];
               const isMastered = stat?.status === "Mastered";
               const isNeedsReview = stat?.status === "Needs Review";
-              const isAccessible = canAccessLesson(lesson.number, isSubscribed, maxFreeLessons, isTrialActive);
+              const isAccessible = canAccessLesson(lesson.number, isSubscribed, maxFreeLessons, isTrialActive, trialStatus.isExpired);
 
               return (
                 <Card

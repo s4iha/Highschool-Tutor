@@ -17,9 +17,11 @@ import {
   BookOpen,
   HelpCircle,
   SlidersHorizontal,
+  Bot,
 } from "lucide-react";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { useAiPromptsModalStore } from "@/shared/hooks/useAiPromptsModalStore";
+import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 import type { Subject, QuizQuestion } from "../types/curriculum.types";
 import {
   getQuizAction,
@@ -30,10 +32,12 @@ import {
   createQuizSessionAction,
   getQuizSessionAction,
   submitQuizSessionAction,
+  saveQuizProgressAction,
 } from "../actions/quiz-session.actions";
 import { MarkdownRenderer } from "@/shared/components/ui/MarkdownRenderer";
 import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
 import { TranslationControls } from "./TranslationControls";
+import { AITutorDrawer } from "./AITutorDrawer";
 import { sampleQuizQuestions } from "../utils/quiz-sampler";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
@@ -73,6 +77,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
 
   // Translation State
   const [language, setLanguage] = React.useState("English");
+  const [isAiTutorOpen, setIsAiTutorOpen] = React.useState(false);
   const [isTranslating, setIsTranslating] = React.useState(false);
   const [translatedContent, setTranslatedContent] = React.useState<{
     question?: string;
@@ -89,6 +94,27 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
     }
   }, [mode, userAnswers, currentIndex]);
 
+  // 300ms debounced auto-save of active question index and answers
+  React.useEffect(() => {
+    if (!sessionId || isSubmitted || loading) return;
+
+    const timer = setTimeout(() => {
+      const formattedAnswers: Record<string, "A" | "B" | "C" | "D"> = {};
+      for (const [k, v] of Object.entries(userAnswers)) {
+        formattedAnswers[k] = v;
+      }
+      saveQuizProgressAction({
+        sessionId,
+        activeQuestionIndex: currentIndex,
+        userAnswers: formattedAnswers,
+      }).catch((err) => {
+        console.error("Auto-save quiz progress error:", err);
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [sessionId, isSubmitted, loading, currentIndex, userAnswers]);
+
   React.useEffect(() => {
     let isMounted = true;
     const initSession = async () => {
@@ -101,6 +127,14 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
             mode: rawModeParam,
             count: initialCount,
           });
+          if (res.error === "TRIAL_EXPIRED") {
+            useUpgradeModalStore.getState().openUpgradeModal({
+              featureName: "Interactive Quizzes",
+              reason: "Your 30-day free trial has expired. Upgrade to an Annual or Monthly Pass to continue taking quizzes.",
+            });
+            router.push(`/curriculum/${subject.slug}`);
+            return;
+          }
           if (res.success && res.sessionId) {
             activeSessionId = res.sessionId;
             if (isMounted) setSessionId(res.sessionId);
@@ -117,6 +151,17 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
             if (sessionRes.session.completedAt && sessionRes.session.score !== null) {
               setIsSubmitted(true);
               setServerScore(sessionRes.session.score);
+            } else {
+              if (sessionRes.session.activeQuestionIndex !== undefined) {
+                setCurrentIndex(sessionRes.session.activeQuestionIndex);
+              }
+              if (sessionRes.session.userAnswers) {
+                const restoredAnswers: Record<number, "A" | "B" | "C" | "D"> = {};
+                for (const [k, v] of Object.entries(sessionRes.session.userAnswers)) {
+                  restoredAnswers[Number(k)] = v;
+                }
+                setUserAnswers(restoredAnswers);
+              }
             }
           }
         } else {
@@ -140,7 +185,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
     return () => {
       isMounted = false;
     };
-  }, [subject.slug, lessonNumber, initialSessionId, initialCount, rawModeParam]);
+  }, [subject.slug, lessonNumber, initialSessionId, initialCount, rawModeParam, router]);
 
   const loadQuiz = async () => {
     setLoading(true);
@@ -423,10 +468,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
     language !== "English" && translatedContent.question
       ? translatedContent.question
       : currentQ.question;
-  const displayOptions =
-    language !== "English" && translatedContent.options
-      ? translatedContent.options
-      : currentQ.options;
+  const displayOptions = currentQ.options; // Keep multiple choice options strictly in English
   const displayExplanation =
     language !== "English" && translatedContent.explanation
       ? translatedContent.explanation
@@ -489,15 +531,26 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
               {subject.code} • Lesson {lessonNumber}
             </Badge>
             {mode === "study" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => openPromptsModal(lessonTitle || subject.name)}
-                className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/10 rounded-xl font-bold"
-              >
-                <Sparkles className="size-3.5 text-amber-500" />
-                <span>AI Study Prompts</span>
-              </Button>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAiTutorOpen(true)}
+                  className="gap-1.5 text-xs text-indigo-600 dark:text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/10 rounded-xl font-bold cursor-pointer"
+                >
+                  <Bot className="size-3.5 text-indigo-500" />
+                  <span>Ask AI Tutor</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => openPromptsModal(lessonTitle || subject.name)}
+                  className="gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/10 rounded-xl font-bold cursor-pointer"
+                >
+                  <Sparkles className="size-3.5 text-amber-500" />
+                  <span>AI Study Prompts</span>
+                </Button>
+              </div>
             )}
           </div>
           <CardTitle className="text-base sm:text-lg font-bold leading-snug text-foreground pt-1">
@@ -611,6 +664,23 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
 
       {/* Pre-configured AI Study Prompts Modal */}
       <AiPromptsHelpModal />
+
+      {/* Socratic AI Tutor Drawer */}
+      {currentQ && (
+        <AITutorDrawer
+          isOpen={isAiTutorOpen}
+          onOpenChange={setIsAiTutorOpen}
+          subjectName={subject.name}
+          subjectSlug={subject.slug}
+          lessonTitle={lessonTitle}
+          currentQuestion={currentQ}
+          language={language}
+          persona="socratic"
+          questionIndex={currentIndex}
+          totalQuestions={questions.length}
+          userSelectedAnswer={userAnswers[currentIndex]}
+        />
+      )}
     </div>
   );
 }

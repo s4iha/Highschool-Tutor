@@ -3,11 +3,12 @@
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/features/auth/lib/session";
 import { SUBJECT_BY_SLUG } from "../utils/curriculum-data";
-import { canAccessLesson } from "../utils/tier-guardrails";
+import { canAccessLesson, getTrialStatus } from "../utils/tier-guardrails";
 import { getQuizAction, recordQuizAttemptAction } from "./curriculum.actions";
 import { sampleQuizQuestions } from "../utils/quiz-sampler";
 import { Prisma } from "@prisma/client";
 import type { QuizQuestion } from "../types/curriculum.types";
+import { saveQuizProgressInputSchema } from "../schemas/curriculum.schema";
 
 export interface CreateQuizSessionInput {
   subjectSlug: string;
@@ -52,10 +53,16 @@ export async function createQuizSessionAction(input: CreateQuizSessionInput): Pr
       isSubscribed = !!activeSub;
     }
 
-    if (!canAccessLesson(lessonNum, isSubscribed)) {
+    const trialStatus = getTrialStatus(sessionUser?.createdAt);
+    const isTrialExpired = trialStatus.isExpired;
+    const isTrialActive = trialStatus.isTrialActive;
+
+    if (!canAccessLesson(lessonNum, isSubscribed, 3, isTrialActive, isTrialExpired)) {
       return {
         success: false,
-        error: `Lesson ${lessonNum} is locked for free-tier accounts. Please upgrade to access lessons beyond Lesson 3.`,
+        error: isTrialExpired
+          ? "TRIAL_EXPIRED"
+          : `Lesson ${lessonNum} is locked. Please upgrade to unlock all curriculum lessons.`,
       };
     }
 
@@ -120,6 +127,8 @@ export async function getQuizSessionAction(sessionId: string): Promise<{
     completedAt: Date | null;
     score: number | null;
     total: number | null;
+    activeQuestionIndex?: number;
+    userAnswers?: Record<string, "A" | "B" | "C" | "D">;
   };
   error?: string;
 }> {
@@ -162,6 +171,8 @@ export async function getQuizSessionAction(sessionId: string): Promise<{
         completedAt: session.completedAt,
         score: session.score,
         total: session.total,
+        activeQuestionIndex: session.activeQuestionIndex ?? 0,
+        userAnswers: (session.userAnswers as Record<string, "A" | "B" | "C" | "D">) ?? {},
       },
     };
   } catch (err) {
@@ -246,6 +257,157 @@ export async function submitQuizSessionAction(
     return {
       success: false,
       error: err instanceof Error ? err.message : "Failed to submit quiz session",
+    };
+  }
+}
+
+
+/**
+ * Saves incremental quiz progress (current question index and answers)
+ * to support accidental tab closure recovery.
+ */
+export async function saveQuizProgressAction(rawInput: unknown): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const parseResult = saveQuizProgressInputSchema.safeParse(rawInput);
+    if (!parseResult.success) {
+      return { success: false, error: "Invalid progress payload" };
+    }
+    const input = parseResult.data;
+
+    const session = await prisma.quizSession.findUnique({
+      where: { id: input.sessionId },
+    });
+
+    if (!session) {
+      return { success: false, error: "Quiz session not found" };
+    }
+
+    const sessionUser = await getCurrentUser();
+    if (session.userId && sessionUser?.id && session.userId !== sessionUser.id) {
+      return { success: false, error: "Unauthorized access to save quiz progress" };
+    }
+
+    if (session.completedAt) {
+      return { success: false, error: "Quiz session already completed" };
+    }
+
+    await prisma.quizSession.update({
+      where: { id: input.sessionId },
+      data: {
+        activeQuestionIndex: input.activeQuestionIndex,
+        userAnswers: input.userAnswers as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.error("saveQuizProgressAction error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to save quiz progress",
+    };
+  }
+}
+
+/**
+ * Retrieves the latest uncompleted quiz session for the current student.
+ * Optionally filtered by subjectSlug.
+ */
+export async function getActiveQuizSessionAction(subjectSlug?: string): Promise<{
+  success: boolean;
+  activeSession: {
+    id: string;
+    subjectSlug: string;
+    lessonNumber: number;
+    lessonTitle: string;
+    mode: "study" | "exam";
+    questionCount: number;
+    answeredCount: number;
+    activeQuestionIndex: number;
+    createdAt: Date;
+  } | null;
+  error?: string;
+}> {
+  try {
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser?.id) {
+      return { success: true, activeSession: null };
+    }
+
+    const session = await prisma.quizSession.findFirst({
+      where: {
+        userId: sessionUser.id,
+        completedAt: null,
+        ...(subjectSlug ? { subjectSlug } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!session) {
+      return { success: true, activeSession: null };
+    }
+
+    const userAnswers = (session.userAnswers as Record<string, string>) || {};
+    const answeredCount = Object.keys(userAnswers).length;
+
+    return {
+      success: true,
+      activeSession: {
+        id: session.id,
+        subjectSlug: session.subjectSlug,
+        lessonNumber: session.lessonNumber,
+        lessonTitle: session.lessonTitle,
+        mode: session.mode as "study" | "exam",
+        questionCount: session.questionCount,
+        answeredCount,
+        activeQuestionIndex: session.activeQuestionIndex ?? 0,
+        createdAt: session.createdAt,
+      },
+    };
+  } catch (err) {
+    console.error("getActiveQuizSessionAction error:", err);
+    return {
+      success: false,
+      activeSession: null,
+      error: err instanceof Error ? err.message : "Failed to fetch active quiz session",
+    };
+  }
+}
+
+/**
+ * Discards an active uncompleted quiz session.
+ */
+export async function discardQuizSessionAction(sessionId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const session = await prisma.quizSession.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      return { success: true };
+    }
+
+    const sessionUser = await getCurrentUser();
+    if (session.userId && sessionUser?.id && session.userId !== sessionUser.id) {
+      return { success: false, error: "Unauthorized access to discard quiz session" };
+    }
+
+    await prisma.quizSession.delete({
+      where: { id: sessionId },
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.error("discardQuizSessionAction error:", err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Failed to discard quiz session",
     };
   }
 }
