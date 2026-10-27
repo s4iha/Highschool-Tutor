@@ -2,6 +2,31 @@
 
 ## [2026-10-27]
 
+### Task 027 - Technical SEO, Rich Structured Data (JSON-LD), and Social Preview Optimization
+
+- **Feature-Driven Architecture Domain Module (`features/seo/`)**:
+  - Implemented domain TypeScript models in `features/seo/types/index.ts` covering `SiteConfig`, `RobotsConfig`, `SitemapEntry`, and Schema.org types (`EducationalOrganization`, `WebSite`, `FAQPage`, `Course`, `BreadcrumbList`, etc.).
+  - Implemented canonical site configuration and sanitization helpers in `features/seo/utils/siteConfig.ts` with query parameter and hash fragment stripping.
+  - Implemented robots policy builder in `features/seo/utils/robotsBuilder.ts` and dynamic route handler `app/robots.ts` with strict crawler quarantine boundaries protecting `/dashboard/*`, `/admin/*`, `/curriculum/*`, and `/api/*`.
+  - Implemented dynamic XML sitemap builder in `features/seo/utils/sitemapBuilder.ts` and dynamic route handler `app/sitemap.ts` enumerating exactly 12 canonical public URLs (5 static + 7 academic tracks from `TRACKS_DATA`).
+  - Implemented Google Search Central compliant Schema.org builders in `features/seo/utils/schemaBuilders.ts` for `EducationalOrganization`, `WebSite` with `SearchAction`, `FAQPage` (DepEd DO 015 s. 2026 MATATAG Q&A), `Course`, and `BreadcrumbList`.
+  - Built pure Server Component `<JsonLd>` in `features/seo/components/JsonLd.tsx` with XSS script injection prevention (`\u003c`, `\u003e`, `\u0026` replacement).
+  - Implemented metadata builders in `features/seo/utils/metadataBuilders.ts` (`buildPageMetadata`, `buildSocialCards`).
+  - Created centralized barrel export `features/seo/index.ts`.
+- **Dynamic OpenGraph Previews & Visual Identity (`app/opengraph-image.tsx`)**:
+  - Implemented high-contrast, edge-cached dynamic 1200x630 `ImageResponse` social card featuring platform monogram, DepEd MATATAG badge, DO 015 s. 2026 badge, headline, and curriculum pills.
+  - Generated static fallback OpenGraph card asset at `public/images/og-image.png` (1200x630 PNG).
+- **Multi-Route Metadata Consistency & Canonical Hygiene**:
+  - Configured authoritative `metadataBase` and global OpenGraph/Twitter defaults in `app/layout.tsx`.
+  - Injected root `EducationalOrganization` and `WebSite` JSON-LD schemas in `app/layout.tsx`.
+  - Configured route metadata and JSON-LD structured data across `app/page.tsx`, `app/how-it-works/page.tsx` (`FAQPage`), `app/tracks/page.tsx` (`BreadcrumbList`), `app/tracks/[id]/page.tsx` (`Course` + `BreadcrumbList` + 404 `noindex, nofollow`), `app/privacy/page.tsx`, and `app/terms/page.tsx`.
+  - Added `NEXT_PUBLIC_SITE_URL` to `.env.example`.
+- **Verification Results**:
+  - Strict TypeScript check: 0 errors (`npx tsc --noEmit`).
+  - Strict ESLint check: 0 errors, 0 warnings (`npm run lint`).
+  - Unit & Diagnostic Test Suites: 32 test suites, 197 tests passed (100% pass rate).
+  - Next.js Production Build: clean static and SSG compilation of all routes including `/robots.txt`, `/sitemap.xml`, `/opengraph-image`, and all 7 `/tracks/[id]` static pages.
+
 ### Task 026 - UI Modernization and Diagnostic Learning Enhancements
 
 - **Modernized Subject Cards & Fluid Responsive Grid**:
