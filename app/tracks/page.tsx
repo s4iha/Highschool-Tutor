@@ -1,9 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import { Metadata } from "next";
 import { TRACKS_DATA } from "@/features/landing/components";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
+import {
+  JsonLd,
+  buildBreadcrumbSchema,
+  buildPageMetadata,
+} from "@/features/seo";
 import {
   BookOpenCheck,
   GraduationCap,
@@ -12,17 +16,23 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "DepEd K-12 Academic Tracks & Strands • HighSchool Tutor",
   description:
     "Explore DepEd MATATAG-aligned Junior High School and Senior High School academic tracks, strands, and specialized subjects.",
-};
+  path: "/tracks",
+});
 
 export default function TracksIndexPage() {
   const tracks = Object.values(TRACKS_DATA);
+  const breadcrumbSchema = buildBreadcrumbSchema([
+    { name: "Home", path: "/" },
+    { name: "Academic Tracks & Strands", path: "/tracks" },
+  ]);
 
   return (
     <div className="min-h-screen pb-24 pt-8 sm:pt-12 bg-background">
+      <JsonLd schema={breadcrumbSchema} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
         {/* Breadcrumb Navigation */}
         <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -48,74 +58,48 @@ export default function TracksIndexPage() {
           </p>
         </div>
 
-        {/* Tracks Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        {/* Grid of Tracks */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tracks.map((track) => {
             const Icon = track.icon;
             return (
               <div
                 key={track.id}
-                className="rounded-3xl border border-border bg-card p-6 sm:p-8 flex flex-col justify-between shadow-sm hover:shadow-lg transition-all duration-200 group hover:border-primary/40"
+                className="group relative flex flex-col justify-between rounded-3xl border border-border/80 bg-card p-6 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300"
               >
                 <div className="space-y-4">
-                  {/* Top: Icon and Badge */}
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-start justify-between gap-4">
                     <div
                       className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${track.color}`}
                     >
                       <Icon className="w-6 h-6" />
                     </div>
-                    <Badge variant="secondary" className="font-bold text-[11px] px-2.5 py-0.5">
-                      {track.badge}
+                    <Badge variant="outline" className={`font-semibold text-xs ${track.pill}`}>
+                      {track.grades}
                     </Badge>
                   </div>
 
-                  {/* Track Title and Headline */}
                   <div>
                     <h2 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
                       {track.name}
                     </h2>
-                    <p className="text-xs font-semibold text-muted-foreground mt-1">
-                      {track.grades} • {track.subjectsCount}
+                    <p className="text-xs font-medium text-muted-foreground mt-0.5">
+                      {track.badge}
                     </p>
                   </div>
 
-                  {/* Overview snippet */}
-                  <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
                     {track.overview}
                   </p>
-
-                  {/* Featured subjects preview */}
-                  <div className="pt-2 border-t border-border/60">
-                    <p className="text-[11px] font-bold text-foreground uppercase tracking-wider mb-2">
-                      Core Subjects Included:
-                    </p>
-                    <ul className="space-y-1">
-                      {track.featuredSubjects.slice(0, 3).map((sub) => (
-                        <li
-                          key={sub.code}
-                          className="text-xs text-muted-foreground flex items-center gap-1.5"
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary/60" />
-                          <span className="font-medium text-foreground/90 truncate">{sub.title}</span>
-                        </li>
-                      ))}
-                      {track.featuredSubjects.length > 3 && (
-                        <li className="text-[11px] text-muted-foreground font-semibold pl-3">
-                          +{track.featuredSubjects.length - 3} more subjects
-                        </li>
-                      )}
-                    </ul>
-                  </div>
                 </div>
 
-                {/* Bottom CTA Button */}
-                <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between">
-                  <span className="text-xs font-bold text-primary group-hover:underline">
-                    View Track Curriculum
+                <div className="pt-6 mt-6 border-t border-border/60 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground">
+                    {track.subjectsCount}
                   </span>
                   <Button
                     asChild
+                    variant="default"
                     size="sm"
                     className="rounded-xl font-bold text-xs gap-1.5 shadow-sm"
                   >
