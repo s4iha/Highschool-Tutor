@@ -1,5 +1,51 @@
 # Project Backlog & Change Log
 
+## [2026-11-03]
+
+### Task 028 - Landing Page Overhaul, Curriculum Truth Alignment, and Conversion Optimization
+
+- **Outcome-Driven Hero & PLG Free Trial Experience (`features/landing/components/HeroSection.tsx`)**:
+  - Populated empty top eyebrow badge with "DepEd Order No. 015, s. 2026 Aligned • Philippine K-12 MATATAG Companion" and academic icon `<GraduationCap>`.
+  - Upgraded headline and subtitle to deliver specific exam-readiness value proposition: *"Master Every DepEd Quarterly Exam with Confidence"* and *"Standardized 8-lesson modules, 24 verified practice drills per subject, and Socratic Taglish AI tutoring aligned 100% with DepEd Order No. 015, s. 2026."*
+  - Replaced ambiguous signup CTA with high-intent PLG CTA: *"Start 30-Day Free Trial"* linking to `/login` with `<ArrowRight>`.
+  - Added transparent, friction-reducing microcopy: *"₱0 upfront • No credit card required • Cancel anytime"*.
+  - Updated interactive floating preview cards to reflect authentic high school competencies (General Math 75% progress, Socratic Taglish AI assistant hint *"Bakit Mali Ito?"*, Earth & Life Science quarterly exam in 3 days, DO 015 88% transmuted quarter mastery), completely removing decorative sparkles.
+- **Dynamic Live Engagement & Fallback Stats Architecture (`StatsBar.tsx`, `use-landing-stats.ts`, `get-landing-stats.action.ts`)**:
+  - Purged all fabricated vanity metrics (15,000+ enrolled students, 98.2% pass rate, 130+ subjects, 12 / 24 lessons).
+  - Built typed Next.js Server Action `getLandingStatsAction` with Zod schema validation, querying PostgreSQL live counts (`prisma.user.count` for active learners and `prisma.quizAttempt.count` for completed quizzes).
+  - Designed resilient static fallback catalog constants in `features/landing/constants/catalog-stats.ts`:
+    - **75+ DepEd Subjects** (*"8 JHS Core + 67 SHS Strands"*)
+    - **1,800+ Practice Drills** (*"24 verified drills per subject"*)
+    - **600+ Lesson Modules** (*"8 structured lessons per subject"*)
+    - **100% DepEd DO 015 s. 2026** (*"Official MATATAG Transmutation"*)
+  - Integrated TanStack Query hook `useLandingStatsQuery` with `initialData` support, guaranteeing instant zero Cumulative Layout Shift (`CLS = 0`).
+- **Product-Led Growth (PLG) Scroll Sequence Re-architecture (`app/page.tsx`)**:
+  - Re-sequenced landing page narrative following GetSpike and Lovable SaaS best practices: "Show the product before the signup wall".
+  - Moved interactive `<AcademicWorkflowDemo>` up to **Section 4** immediately after `<AboutSection />` and before `<HowToUseAppSection />`, `<CategorySection />`, `<PopularSubjectsSection />`, and `<TrialNoticeSection />`.
+  - Enabled prospective students and teachers to experience interactive Socratic Taglish hints and live DepEd DO 015 gradebook transmutation (60–100 scale, ≥ 75% passing) prior to account creation.
+  - Added Next.js App Router dynamic directive `export const dynamic = "force-dynamic";` to accommodate session cookie reading without static generation conflicts.
+- **Academic Track Taxonomy, Iconography & DepEd Quarter Standards**:
+  - Corrected Senior High School Core icon in `CategorySection.tsx` and `TrackDetail.tsx` from incorrect `<Code>` icon to official academic icon `<GraduationCap>`.
+  - Standardized subject badge counts across all 7 tracks based on real DepEd curriculum offerings:
+    - Junior High Core: 8 Core Subjects (32 Grade-Level Offerings across Grades 7–10)
+    - SHS Core: 15 DepEd Core Subjects
+    - STEM Strand: 11 Specialized Subjects
+    - ABM Strand: 9 Specialized Subjects
+    - HUMSS Strand: 9 Specialized Subjects
+    - GAS Strand: 7 Specialized Subjects
+    - TVL Track: 9 Specialized Subjects
+  - Overhauled `PopularSubjectsSection.tsx`: purged fabricated 4.9★ star ratings and 2.4K review counters, displaying genuine curriculum metadata (Grade Level, DepEd Quarter 1, 8 Lessons & 24 Practice Drills, DO 015 badge).
+  - Replaced legacy non-DepEd "Trimester" slug (`g10-t1-sci`) with official DepEd "Quarter" slug (`g10-q1-sci` • Grade 10 • Quarter 1).
+- **Design Discipline: Complete `Sparkles` Purge & Transparent Pricing**:
+  - Purged the `Sparkles` icon across all landing components (`HeroSection`, `AboutSection`, `HowToUseAppSection`, `TrackDetail`, `TrialNoticeSection`, `HowItWorks`, `TermsOfService`, and `CtaBanner`), substituting clean, purpose-driven Lucide icons (`GraduationCap`, `BookOpen`, `Bot`, `ShieldCheck`, `CheckCircle2`, `ArrowRight`).
+  - Standardized scannable 30-day free trial terms in `TrialNoticeSection.tsx` and `CtaBanner.tsx`: unrestricted access to all 75+ subjects, 600+ lesson modules, and 1,800+ drills for ₱0 upfront, no credit card required, followed by ₱299/month with Philippine local payments (GCash, Maya, cards).
+- **Verification Results**:
+  - Strict TypeScript check: 0 errors (`npx tsc --noEmit`).
+  - Strict ESLint check: 0 errors, 0 warnings (`npm run lint`).
+  - Jest Unit & Diagnostic Test Suite: 36 test suites, 221 tests passed (100% pass rate).
+  - Automated PowerShell code scans: 0 `Sparkles`, 0 `<Code>` in categories, 0 `Trimester`, 0 vanity numbers (`15,000` / `98.2%`) across all landing components.
+  - Next.js Production Build: clean compilation across all 38 static and dynamic routes (`npm run build`).
+
 ## [2026-10-27]
 
 ### Task 027 - Technical SEO, Rich Structured Data (JSON-LD), and Social Preview Optimization

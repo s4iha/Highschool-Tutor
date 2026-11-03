@@ -6,11 +6,11 @@ import Link from "next/link";
 import {
   BookMarked,
   ArrowRight,
-  Star,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
+import { FEATURED_POPULAR_SUBJECTS } from "../constants/popular-subjects";
 
 export function PopularSubjectsSection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -25,68 +25,7 @@ export function PopularSubjectsSection() {
     }
   };
 
-  const subjects = [
-    {
-      id: 1,
-      category: "SHS CORE",
-      title: "General Mathematics",
-      image: "/images/course-programming.jpg",
-      rating: 4.9,
-      reviews: "2.4K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 11 • Semester 1",
-      price: "FREE TRIAL",
-      slug: "g11-s1-genmath",
-    },
-    {
-      id: 2,
-      category: "STEM STRAND",
-      title: "Pre-Calculus & Analytical Geometry",
-      image: "/images/course-accounting.jpg",
-      rating: 4.8,
-      reviews: "1.8K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 11 STEM • Semester 1",
-      price: "FREE TRIAL",
-      slug: "g11-s1-precalc",
-    },
-    {
-      id: 3,
-      category: "SHS CORE",
-      title: "Earth and Life Science",
-      image: "/images/course-anatomy.jpg",
-      rating: 4.9,
-      reviews: "1.9K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 11 • Semester 1",
-      price: "FREE TRIAL",
-      slug: "g11-s1-earthsci",
-    },
-    {
-      id: 4,
-      category: "JUNIOR HIGH CORE",
-      title: "Grade 10 Science: Physics & Biology",
-      image: "/images/course-agriculture.jpg",
-      rating: 4.7,
-      reviews: "1.5K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 10 • Trimester 1",
-      price: "FREE TRIAL",
-      slug: "g10-t1-sci",
-    },
-    {
-      id: 5,
-      category: "APPLIED ACADEMIC",
-      title: "English for Academic Purposes (EAPP)",
-      image: "/images/course-composition.jpg",
-      rating: 4.8,
-      reviews: "1.3K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 11 • Semester 1",
-      price: "FREE TRIAL",
-      slug: "g11-s1-eapp",
-    },
-  ];
+  const subjects = FEATURED_POPULAR_SUBJECTS;
 
   return (
     <section id="subjects" className="py-16 lg:py-24 bg-muted/40 relative transition-colors duration-200">
@@ -110,7 +49,7 @@ export function PopularSubjectsSection() {
             href="/curriculum"
             className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline transition-colors group"
           >
-            <span>View All 130+ DepEd Subjects</span>
+            <span>View All 75+ DepEd Subjects</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
@@ -173,21 +112,13 @@ export function PopularSubjectsSection() {
                       {subject.title}
                     </h3>
 
-                    {/* Rating */}
-                    <div className="flex items-center gap-1.5 mb-3">
-                      <div className="flex items-center text-amber-500">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-3.5 h-3.5 fill-amber-500 text-amber-500"
-                          />
-                        ))}
-                      </div>
-                      <span className="text-xs font-bold text-card-foreground">
-                        {subject.rating}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({subject.reviews})
+                    {/* Genuine Curriculum Metadata */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <Badge variant="outline" className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10">
+                        DepEd DO 015 s. 2026
+                      </Badge>
+                      <span className="text-[11px] font-medium text-muted-foreground">
+                        {subject.quarter}
                       </span>
                     </div>
 

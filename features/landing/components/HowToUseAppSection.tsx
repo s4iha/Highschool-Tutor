@@ -9,7 +9,7 @@ import {
   Award,
   ArrowRight,
   CheckCircle2,
-  Sparkles,
+  GraduationCap,
   Smartphone,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
@@ -84,7 +84,7 @@ export function HowToUseAppSection() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-14 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
-            <Sparkles className="size-3.5" />
+            <GraduationCap className="size-3.5" />
             <span>Student Onboarding Guide</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-foreground tracking-tight font-heading">

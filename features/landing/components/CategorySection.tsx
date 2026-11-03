@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 
 import {
-  Code,
+  GraduationCap,
   Briefcase,
   FlaskConical,
   BookOpenCheck,
@@ -21,7 +21,7 @@ export function CategorySection() {
       id: 1,
       slug: "junior-high-core",
       name: "Junior High Core",
-      count: "32+ Subjects",
+      count: "8 Core (32 Offerings)",
       desc: "Grades 7-10: English, Math, Science, AP, Filipino, MAPEH, TLE & EsP",
       icon: BookOpenCheck,
       color: "bg-blue-100/90 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 border-blue-200/80 dark:border-blue-800",
@@ -32,7 +32,7 @@ export function CategorySection() {
       id: 2,
       slug: "stem-strand",
       name: "STEM Strand",
-      count: "24+ Subjects",
+      count: "11 Specialized Subjects",
       desc: "Pre-Calculus, Basic Calculus, General Biology, Chemistry & Physics",
       icon: FlaskConical,
       color: "bg-emerald-100/90 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800",
@@ -43,7 +43,7 @@ export function CategorySection() {
       id: 3,
       slug: "abm-strand",
       name: "ABM Strand",
-      count: "18+ Subjects",
+      count: "9 Specialized Subjects",
       desc: "Business Mathematics, Organization & Management, Principles of Marketing & Economics",
       icon: Briefcase,
       color: "bg-amber-100/90 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 border-amber-200/80 dark:border-amber-800",
@@ -54,7 +54,7 @@ export function CategorySection() {
       id: 4,
       slug: "humss-strand",
       name: "HUMSS Strand",
-      count: "20+ Subjects",
+      count: "9 Specialized Subjects",
       desc: "Philippine Politics & Governance, Creative Writing, World Religions & Trends",
       icon: Compass,
       color: "bg-purple-100/90 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400 border-purple-200/80 dark:border-purple-800",
@@ -65,9 +65,9 @@ export function CategorySection() {
       id: 5,
       slug: "shs-core",
       name: "SHS Core Subjects",
-      count: "36+ Subjects",
+      count: "15 DepEd Core Subjects",
       desc: "Oral Communication, Komunikasyon, 21st Century Lit, General Math & Earth Sci",
-      icon: Code,
+      icon: GraduationCap,
       color: "bg-teal-100/90 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 border-teal-200/80 dark:border-teal-800",
       accent: "hover:border-teal-300 dark:hover:border-teal-700 hover:shadow-teal-500/10",
       pill: "bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300",
@@ -76,7 +76,7 @@ export function CategorySection() {
       id: 6,
       slug: "gas-strand",
       name: "GAS Strand",
-      count: "22+ Subjects",
+      count: "7 Specialized Subjects",
       desc: "Applied Economics, Org & Management, DRRR, Trends & Academic Inquiries",
       icon: Layers,
       color: "bg-indigo-100/90 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border-indigo-200/80 dark:border-indigo-800",
@@ -87,7 +87,7 @@ export function CategorySection() {
       id: 7,
       slug: "tvl-track",
       name: "TVL Track",
-      count: "28+ Subjects",
+      count: "9 Specialized Subjects",
       desc: "Computer Systems (CSS NC II), Cookery, Electrical (EIM), Bread & Pastry",
       icon: Wrench,
       color: "bg-rose-100/90 dark:bg-rose-950/80 text-rose-600 dark:text-rose-400 border-rose-200/80 dark:border-rose-800",
@@ -115,7 +115,7 @@ export function CategorySection() {
             Explore Subjects by Academic Track &amp; Strand
           </h2>
           <p className="mt-3 text-muted-foreground text-sm sm:text-base font-normal">
-            Every subject includes 12 sequential lesson modules and 24 practice quizzes with &lsquo;Ask AI&rsquo; Socratic explanation support.
+            Every subject includes 8 sequential lesson modules and 24 practice drills with &lsquo;Ask AI&rsquo; Socratic explanation support.
           </p>
         </div>
 

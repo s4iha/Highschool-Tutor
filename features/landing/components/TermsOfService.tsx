@@ -8,7 +8,6 @@ import {
   Award,
   AlertTriangle,
   Scale,
-  Sparkles,
   BookOpen,
   ArrowRight,
   Clock,
@@ -23,7 +22,7 @@ export function TermsOfService() {
     { id: "eligibility", title: "2. Student Accounts & Eligibility", icon: ShieldCheck },
     { id: "integrity", title: "3. Academic Integrity & AI Ethics", icon: Award },
     { id: "grading", title: "4. DepEd DO 015 s. 2026 Transmutation", icon: Scale },
-    { id: "tiers", title: "5. Free Tier & Premium Subscriptions", icon: Sparkles },
+    { id: "tiers", title: "5. Free Tier & Premium Subscriptions", icon: ShieldCheck },
     { id: "liability", title: "6. Disclaimers & AI Fallibility", icon: AlertTriangle },
     { id: "governing", title: "7. Governing Law & Contact", icon: FileText },
   ];
@@ -213,7 +212,7 @@ export function TermsOfService() {
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-                    <Sparkles className="w-5 h-5" />
+                    <ShieldCheck className="w-5 h-5" />
                   </div>
                   <h2 className="text-xl sm:text-2xl font-black text-foreground font-heading tracking-tight">
                     5. Free Tier &amp; Premium Subscriptions
@@ -221,7 +220,7 @@ export function TermsOfService() {
                 </div>
                 <div className="space-y-3 text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   <ul className="list-disc list-inside space-y-1.5 pl-2">
-                    <li><strong>30-Day Free Trial:</strong> New student accounts receive an all-access 30-day trial with unrestricted access to all 130+ DepEd Junior &amp; Senior High subjects, lesson modules, practice quizzes, and Socratic AI guidance.</li>
+                    <li><strong>30-Day Free Trial:</strong> New student accounts receive an all-access 30-day trial with unrestricted access to all 75+ DepEd Junior &amp; Senior High subjects, lesson modules, practice quizzes, and Socratic AI guidance.</li>
                     <li><strong>Premium Tier:</strong> Upgrading to a Monthly or Annual pass maintains unlimited access to all subjects, lesson summaries, verified quizzes, and DepEd DO 015 gradebook evaluations following the trial period.</li>
                     <li><strong>Subscription Billing:</strong> Premium subscriptions are billed on a recurring or one-time basis as specified at checkout. Subscriptions may be cancelled at any time through your dashboard settings.</li>
                   </ul>

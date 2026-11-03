@@ -3,7 +3,6 @@
 import React from "react";
 import Link from "next/link";
 import {
-  Sparkles,
   BookOpen,
   Bot,
   ArrowRight,
@@ -24,7 +23,7 @@ export function HowItWorks() {
       title: "Select Your Grade Level & Strand",
       badge: "Step 1: Curriculum Setup",
       description:
-        "Choose your Junior High (Grades 7–10) or Senior High (Grades 11–12 STEM, ABM, HUMSS, GAS, TVL) grade level and target subjects from our comprehensive 130+ DepEd curriculum catalog.",
+        "Choose your Junior High (Grades 7–10) or Senior High (Grades 11–12 STEM, ABM, HUMSS, GAS, TVL) grade level and target subjects from our comprehensive 75+ DepEd curriculum catalog.",
       icon: BookOpen,
       color: "bg-primary text-primary-foreground",
       accent: "text-primary",
@@ -87,7 +86,7 @@ export function HowItWorks() {
       questions: [
         {
           q: "What is HighSchool Tutor?",
-          a: "HighSchool Tutor is an AI-powered classroom study companion designed for Philippine Junior and Senior High School students (Grades 7 to 12). It provides 130+ DepEd K-12 MATATAG aligned subjects with structured lesson modules, verified practice quizzes, and real-time Socratic AI guidance.",
+          a: "HighSchool Tutor is an AI-powered classroom study companion designed for Philippine Junior and Senior High School students (Grades 7 to 12). It provides 75+ DepEd K-12 MATATAG aligned subjects with structured lesson modules, verified practice quizzes, and real-time Socratic AI guidance.",
         },
         {
           q: "Is HighSchool Tutor aligned with the new DepEd MATATAG curriculum?",
@@ -124,7 +123,7 @@ export function HowItWorks() {
       <section className="relative pt-12 pb-20 lg:pt-16 lg:pb-28 bg-gradient-to-b from-primary/10 via-background to-muted/30 overflow-hidden border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs sm:text-sm font-semibold tracking-wide shadow-xs mb-6">
-            <Sparkles className="w-4 h-4 text-primary" />
+            <Bot className="w-4 h-4 text-primary" />
             <span>DEPED K-12 MATATAG WORKFLOW</span>
           </div>
 

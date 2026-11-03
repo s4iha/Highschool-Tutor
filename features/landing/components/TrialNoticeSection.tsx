@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import {
   Clock,
-  Sparkles,
   CheckCircle2,
   ShieldCheck,
   ArrowRight,
@@ -16,7 +15,7 @@ import { Badge } from "@/shared/components/ui/badge";
 export function TrialNoticeSection() {
   const trialPerks = [
     {
-      title: "Full Access to All 130+ Subjects",
+      title: "Full Access to All 75+ Subjects",
       description: "No locked curriculum tracks. Explore Junior High (Grades 7–10) and Senior High (STEM, ABM, HUMSS, GAS, TVL) freely.",
     },
     {
@@ -129,7 +128,7 @@ export function TrialNoticeSection() {
                 <div className="space-y-2.5">
                   <Button asChild size="lg" className="w-full rounded-xl text-xs sm:text-sm font-bold shadow-md gap-2">
                     <Link href="/login">
-                      <Sparkles className="size-4" />
+                      
                       <span>Start 30-Day Free Trial</span>
                       <ArrowRight className="size-4" />
                     </Link>

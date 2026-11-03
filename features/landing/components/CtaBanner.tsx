@@ -35,7 +35,10 @@ export function CtaBanner() {
                   Ready to Excel in High School?
                 </h3>
                 <p className="text-sm sm:text-base text-white/90 font-normal leading-relaxed">
-                  Join thousands of Junior &amp; Senior High School learners mastering 130+ DepEd subjects with 12 structured lessons, 24 practice quizzes, and 24/7 AI tutor guidance.
+                  Join Filipino learners mastering 75+ DepEd subjects with 8 structured lessons, 24 practice drills, and 24/7 Socratic AI guidance.
+                </p>
+                <p className="text-xs text-white/80 font-medium">
+                  ₱0 upfront • No credit card required • Cancel anytime
                 </p>
               </div>
             </div>
@@ -43,14 +46,14 @@ export function CtaBanner() {
             {/* Right Buttons */}
             <div className="flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto shrink-0">
               <Button asChild size="lg" className="w-full sm:w-auto bg-white hover:bg-slate-100 text-primary font-bold rounded-xl shadow-lg transition-all duration-200">
-                <Link href="/#subjects" className="gap-2">
-                  <span>Explore Subjects</span>
+                <Link href="/login" className="gap-2">
+                  <span>Start 30-Day Free Trial</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="w-full sm:w-auto bg-transparent hover:bg-white/10 text-white font-bold rounded-xl border-2 border-white/80 hover:border-white transition-all duration-200">
-                <Link href="/login">
-                  <span>Student Sign In</span>
+                <Link href="/#subjects">
+                  <span>Explore Subjects</span>
                 </Link>
               </Button>
             </div>

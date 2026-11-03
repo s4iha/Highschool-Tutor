@@ -8,10 +8,9 @@ import {
   FlaskConical,
   Briefcase,
   Compass,
-  Code,
   ArrowLeft,
+  ArrowRight,
   CheckCircle2,
-  Sparkles,
   GraduationCap,
   ChevronRight,
   BookMarked,
@@ -58,7 +57,7 @@ export const TRACKS_DATA: Record<string, TrackData> = {
     color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
     accent: "text-blue-600 dark:text-blue-400",
     pill: "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-300",
-    subjectsCount: "32+ MATATAG Subjects",
+    subjectsCount: "8 Core (32 Offerings)",
     learningGoals: [
       "Master essential mathematical operations, linear equations, geometry, and introductory statistics.",
       "Develop scientific inquiry skills in living things, matter, earth and space, and forces and motion.",
@@ -71,37 +70,37 @@ export const TRACKS_DATA: Record<string, TrackData> = {
         code: "MATH-710",
         title: "Mathematics 7–10",
         description: "From rational numbers and algebraic expressions to quadratic equations, trigonometry, and probability.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "SCI-710",
         title: "Integrated Science 7–10",
         description: "Hands-on biological systems, chemical reactions, thermodynamics, earth cycles, and astronomy.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "ENG-710",
         title: "English Language & Literature",
         description: "Grammar conventions, critical reading, informative/persuasive writing, and world literature.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "FIL-710",
         title: "Filipino at Panitikang Pilipino",
         description: "Ibong Adarna, Florante at Laura, Noli Me Tangere, El Filibusterismo, at balarila.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "AP-710",
         title: "Araling Panlipunan",
         description: "Heograpiya ng Daigdig, Kasaysayan ng Asya, Kasaysayan ng Pilipinas, at Ekonomiks.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "TLE-710",
         title: "Technology & Livelihood Education",
         description: "Information & communications technology, home economics, agri-fishery arts, and industrial arts.",
-        modules: 12,
+        modules: 8,
       },
     ],
     careerPathways: [
@@ -129,7 +128,7 @@ export const TRACKS_DATA: Record<string, TrackData> = {
     color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
     accent: "text-emerald-600 dark:text-emerald-400",
     pill: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300",
-    subjectsCount: "24+ Specialized Subjects",
+    subjectsCount: "11 Specialized Subjects",
     learningGoals: [
       "Master analytic geometry, conic sections, trigonometric functions, and mathematical induction in Pre-Calculus.",
       "Understand differential and integral calculus concepts, limit theorems, and optimization in Basic Calculus.",
@@ -142,37 +141,37 @@ export const TRACKS_DATA: Record<string, TrackData> = {
         code: "STEM-PCALC",
         title: "Pre-Calculus",
         description: "Conic sections, systems of nonlinear equations, series & sequences, and circular functions.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "STEM-BCALC",
         title: "Basic Calculus",
         description: "Limits and continuity, derivatives, related rates, optimization, and Riemann sums integration.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "STEM-BIO12",
         title: "General Biology 1 & 2",
         description: "Cell biology, bioenergetics, genetics, organismal physiology, and systematics.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "STEM-CHEM12",
         title: "General Chemistry 1 & 2",
         description: "Atomic structure, intermolecular forces, chemical thermodynamics, and electrochemistry.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "STEM-PHYS12",
         title: "General Physics 1 & 2",
         description: "Vectors, rotational kinematics, fluid mechanics, thermodynamics, and electric circuits.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "STEM-RES",
         title: "Research Capstone & Inquiries",
         description: "Quantitative scientific methodology, data modeling, statistical hypothesis testing, and reporting.",
-        modules: 12,
+        modules: 8,
       },
     ],
     careerPathways: [
@@ -200,7 +199,7 @@ export const TRACKS_DATA: Record<string, TrackData> = {
     color: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
     accent: "text-amber-600 dark:text-amber-400",
     pill: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-300",
-    subjectsCount: "18+ Specialized Subjects",
+    subjectsCount: "9 Specialized Subjects",
     learningGoals: [
       "Master the accounting equation, journalizing, ledger posting, and preparation of trial balances.",
       "Calculate interest rates, annuities, loan amortization, depreciation, and payroll in Business Mathematics.",
@@ -213,37 +212,37 @@ export const TRACKS_DATA: Record<string, TrackData> = {
         code: "ABM-BMATH",
         title: "Business Mathematics",
         description: "Fractions, decimals, percentages, mark-up/mark-down, break-even analysis, and financial ratios.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "ABM-FABM1",
         title: "Fundamentals of ABM 1",
         description: "Introduction to accounting, rules of debit & credit, and the complete accounting cycle of a service business.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "ABM-FABM2",
         title: "Fundamentals of ABM 2",
         description: "Accounting for merchandising and manufacturing firms, financial statement analysis, and cash flows.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "ABM-ORGMGT",
         title: "Organization and Management",
         description: "Management theories, corporate structures, planning matrices, and strategic decision making.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "ABM-MKTG",
         title: "Principles of Marketing",
         description: "The 4 Ps of marketing, digital branding, consumer behavior, and sales strategies in the Philippines.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "ABM-ECON",
         title: "Applied Economics",
         description: "Economic indicators, market structures, labor challenges, and socioeconomic development strategies.",
-        modules: 12,
+        modules: 8,
       },
     ],
     careerPathways: [
@@ -271,7 +270,7 @@ export const TRACKS_DATA: Record<string, TrackData> = {
     color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
     accent: "text-purple-600 dark:text-purple-400",
     pill: "bg-purple-100 text-purple-700 dark:bg-purple-900/60 dark:text-purple-300",
-    subjectsCount: "20+ Specialized Subjects",
+    subjectsCount: "9 Specialized Subjects",
     learningGoals: [
       "Understand the Philippine Constitution, executive-legislative-judicial branches, and local governance.",
       "Analyze classical and contemporary social science theories (anthropology, sociology, political science).",
@@ -284,37 +283,37 @@ export const TRACKS_DATA: Record<string, TrackData> = {
         code: "HUMSS-PPG",
         title: "Philippine Politics and Governance",
         description: "Historical foundations, constitutional rights, political parties, election laws, and decentralization.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "HUMSS-DISS",
         title: "Disciplines & Ideas in the Social Sciences",
         description: "Psychoanalysis, rational choice, structural-functionalism, Marxism, and feminist theory.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "HUMSS-CW",
         title: "Creative Writing",
         description: "Sensory imagery, poetic forms, narrative arcs, characterization, and dramatic dialogue.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "HUMSS-REL",
         title: "Introduction to World Religions",
         description: "Judaism, Christianity, Islam, Hinduism, Theravada & Mahayana Buddhism, Taoism, and Shinto.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "HUMSS-CESC",
         title: "Community Engagement & Citizenship",
         description: "Solidarity, participatory governance, civil society organizations, and community development.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "HUMSS-TRENDS",
         title: "Trends, Networks & Critical Thinking",
         description: "Neural networks, megatrends, planetary networks, digital democracy, and systemic analysis.",
-        modules: 12,
+        modules: 8,
       },
     ],
     careerPathways: [
@@ -338,11 +337,11 @@ export const TRACKS_DATA: Record<string, TrackData> = {
     overview:
       "Regardless of strand (STEM, ABM, HUMSS, GAS, or TVL), all Filipino senior high students complete 15 compulsory Core Subjects mandated by the Department of Education. HighSchool Tutor ensures complete mastery of communication, mathematics, science, literature, and philosophy.",
     grades: "Grades 11 and 12 (All Strands)",
-    icon: Code,
+    icon: GraduationCap,
     color: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
     accent: "text-teal-600 dark:text-teal-400",
     pill: "bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-300",
-    subjectsCount: "36+ Core Modules",
+    subjectsCount: "15 DepEd Core Subjects",
     learningGoals: [
       "Deliver persuasive oral presentations and understand speech communication contexts in Oral Communication.",
       "Write professional and academic texts, critiques, and literature reviews in Reading and Writing.",
@@ -355,37 +354,37 @@ export const TRACKS_DATA: Record<string, TrackData> = {
         code: "CORE-ORALCOM",
         title: "Oral Communication in Context",
         description: "Communication models, intercultural communication, speech acts, and public speaking techniques.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "CORE-READWRIT",
         title: "Reading and Writing Skills",
         description: "Text patterns, critical reading as reasoning, discourse evaluation, and purposeful writing.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "CORE-GENMATH",
         title: "General Mathematics",
         description: "Functions, inverse/rational/logarithmic equations, simple and compound interest, and business logic.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "CORE-STATPROB",
         title: "Statistics and Probability",
         description: "Random variables, normal curve, estimation of parameters, hypothesis testing, and correlation.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "CORE-EARTHSCI",
         title: "Earth and Life Science",
         description: "Origin of universe, plate tectonics, mineral resources, bioenergetics, and ecosystem dynamics.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "CORE-PHILOSOPHY",
         title: "Introduction to Philosophy",
         description: "Methods of philosophizing, human freedom, intersubjectivity, and the meaning of life.",
-        modules: 12,
+        modules: 8,
       },
     ],
     careerPathways: [
@@ -413,7 +412,7 @@ export const TRACKS_DATA: Record<string, TrackData> = {
     color: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",
     accent: "text-indigo-600 dark:text-indigo-400",
     pill: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300",
-    subjectsCount: "22+ DepEd GAS Subjects",
+    subjectsCount: "7 Specialized Subjects",
     learningGoals: [
       "Master interdisciplinary competencies bridging humanities, basic sciences, and applied business.",
       "Conduct rigorous academic investigations through Practical Research 1 (Qualitative) and 2 (Quantitative).",
@@ -426,37 +425,37 @@ export const TRACKS_DATA: Record<string, TrackData> = {
         code: "GAS-APECON",
         title: "Applied Economics",
         description: "Market equilibrium, consumer behavior, industry competitiveness, and national socioeconomic issues.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "GAS-ORGMGT",
         title: "Organization and Management",
         description: "Management theories, strategic planning, staffing, leadership motivation, and organizational control.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "GAS-DRRR",
         title: "Disaster Readiness and Risk Reduction",
         description: "Geological hazards, hydro-meteorological risks, fire safety, and school/community disaster mitigation.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "GAS-HUM1",
         title: "Humanities & Social Sciences 1",
         description: "Introduction to sociology, human rights, civic participation, and social movements.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "GAS-TRENDS",
         title: "Trends, Networks & Critical Thinking",
         description: "Global trends, strategic decision making, neural connections, and technology impacts.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "GAS-3IS",
         title: "Inquiries, Investigations & Immersion",
         description: "Culminating research defense, data synthesis, and scholarly research presentation.",
-        modules: 12,
+        modules: 8,
       },
     ],
     careerPathways: [
@@ -484,7 +483,7 @@ export const TRACKS_DATA: Record<string, TrackData> = {
     color: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
     accent: "text-rose-600 dark:text-rose-400",
     pill: "bg-rose-100 text-rose-700 dark:bg-rose-900/60 dark:text-rose-300",
-    subjectsCount: "28+ TVL Competencies",
+    subjectsCount: "9 Specialized Subjects",
     learningGoals: [
       "Master core competencies aligned with TESDA National Certificate (NC II / NC III) requirements.",
       "Implement stringent workplace safety, hazard identification, and Occupational Health and Safety (OHS) standards.",
@@ -497,37 +496,37 @@ export const TRACKS_DATA: Record<string, TrackData> = {
         code: "TVL-CSS",
         title: "Computer Systems Servicing (CSS NC II)",
         description: "PC assembly, OS installation, network cabling, client configuration, and server maintenance.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "TVL-COOKERY",
         title: "Commercial Cookery & Food Preparation",
         description: "Culinary terminology, kitchen mise-en-place, knife skills, food safety, and nutritional plating.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "TVL-EIM",
         title: "Electrical Installation & Maintenance (EIM NC II)",
         description: "Circuit schematics, conduit bending, residential wiring, breaker panels, and safety protocols.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "TVL-BREADPASTRY",
         title: "Bread and Pastry Production",
         description: "Baking science, yeast doughs, pastry creams, cakes, and bakery merchandising.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "TVL-ENTREP",
         title: "Entrepreneurship for TVL",
         description: "Business plan formulation, unit economics, inventory management, and market pricing.",
-        modules: 12,
+        modules: 8,
       },
       {
         code: "TVL-WORKIMM",
         title: "Work Immersion & Culminating Portfolio",
         description: "Industry internship simulations, work ethics, resume building, and mock technical interviews.",
-        modules: 12,
+        modules: 8,
       },
     ],
     careerPathways: [
@@ -600,7 +599,7 @@ export function TrackDetail({ trackId }: { trackId: string }) {
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-auto shrink-0">
               <Link href="/dashboard" className="w-full">
                 <Button className="w-full rounded-2xl h-12 font-bold text-sm shadow-md gap-2">
-                  <Sparkles className="size-4" />
+                  <ArrowRight className="size-4" />
                   <span>Study This Track Now</span>
                 </Button>
               </Link>
@@ -623,7 +622,7 @@ export function TrackDetail({ trackId }: { trackId: string }) {
                   Curriculum Subjects & Modules
                 </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  Each subject contains 12 sequential lesson modules and 24 practice tests.
+                  Each subject contains 8 sequential lesson modules and 24 practice drills.
                 </p>
               </div>
               <span className="text-xs font-bold text-primary px-3 py-1 rounded-full bg-primary/10">
@@ -692,7 +691,7 @@ export function TrackDetail({ trackId }: { trackId: string }) {
                     key={idx}
                     className="flex items-start gap-2.5 p-3 rounded-xl bg-background/60 border border-border/40 text-xs text-muted-foreground leading-relaxed"
                   >
-                    <Sparkles className="size-4 text-primary shrink-0 mt-0.5" />
+                    <CheckCircle2 className="size-4 text-primary shrink-0 mt-0.5" />
                     <span>{item}</span>
                   </div>
                 ))}

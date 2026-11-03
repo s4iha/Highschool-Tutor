@@ -14,7 +14,7 @@ import { Button } from "@/shared/components/ui/button";
 export function AboutSection() {
   const benefits = [
     "8 focused lesson modules per subject aligned with DepEd K-12 MATATAG competencies",
-    "24 practice quizzes with instant grading, feedback, and verified answer keys",
+    "24 practice drills with instant grading, feedback, and verified answer keys",
     "Interactive Socratic AI Tutor providing step-by-step guidance in English and Taglish",
     "DepEd DO 015 s. 2026 transmutation engine with automated gradebook and parent reporting",
   ];
@@ -102,7 +102,7 @@ export function AboutSection() {
 
             {/* Description */}
             <p className="text-base text-muted-foreground leading-relaxed font-normal">
-              HighSchool Tutor structures Junior & Senior High School subjects into standardized 12-lesson modules and 24 assessments, backed by 24/7 AI Socratic explanation support in Taglish so students master complex concepts with confidence.
+              HighSchool Tutor structures Junior &amp; Senior High School subjects into standardized 8-lesson modules and 24 practice drills, backed by 24/7 AI Socratic explanation support in Taglish so students master complex concepts with confidence.
             </p>
 
             {/* Checklist items */}

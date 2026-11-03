@@ -2,6 +2,9 @@ import {
   SUBJECTS,
   getSubjectBySlug,
   getSubjectsByGrade,
+  buildJhsSlug,
+  parseJhsSlug,
+  JHS_QUARTERS,
 } from "@/features/curriculum/utils/curriculum-data";
 
 describe("Curriculum Metadata & Data Structure", () => {
@@ -12,6 +15,21 @@ describe("Curriculum Metadata & Data Structure", () => {
 
     expect(jhsSubjects.length).toBeGreaterThan(0);
     expect(shsSubjects.length).toBeGreaterThan(0);
+  });
+
+  it("should support official DepEd Quarters (Q1 to Q4)", () => {
+    expect(JHS_QUARTERS).toEqual(["Quarter 1", "Quarter 2", "Quarter 3", "Quarter 4"]);
+  });
+
+  it("should correctly build and parse official DepEd Quarter slugs like g10-q1-sci", () => {
+    const slug = buildJhsSlug("sci", "Grade 10", "Quarter 1");
+    expect(slug).toBe("g10-q1-sci");
+
+    const parsed = parseJhsSlug("g10-q1-sci");
+    expect(parsed.isJhs).toBe(true);
+    expect(parsed.grade).toBe("Grade 10");
+    expect(parsed.term).toBe("Quarter 1");
+    expect(parsed.abbr).toBe("SCI");
   });
 
   it("should find subject by slug correctly", () => {
