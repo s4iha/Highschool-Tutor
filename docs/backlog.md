@@ -17,8 +17,17 @@
     - **75+ DepEd Subjects** (*"8 JHS Core + 67 SHS Strands"*)
     - **1,800+ Practice Drills** (*"24 verified drills per subject"*)
     - **600+ Lesson Modules** (*"8 structured lessons per subject"*)
-    - **100% DepEd DO 015 s. 2026** (*"Official MATATAG Transmutation"*)
-  - Integrated TanStack Query hook `useLandingStatsQuery` with `initialData` support, guaranteeing instant zero Cumulative Layout Shift (`CLS = 0`).
+    - **30 Days Free All-Access Pass** (*"₱0 upfront • Full curriculum access"*)
+  - Integrated TanStack Query hook `useLandingStatsQuery` with `initialData` support, guaranteeing instant zero Cumulative Layout Shift (`CLS = 0`) and eliminating multi-line header wrapping in `StatsBar.tsx`.
+- **Authentic Filipino High School Student Imagery (`features/landing/components/AboutSection.tsx`)**:
+  - Replaced foreign university library stock photos with authentic high-resolution photographs of Filipino high school students in Philippine school uniforms studying together around textbooks (`public/images/filipino-students-group.jpg`) and writing in notebooks (`public/images/filipino-student-writing.jpg`).
+- **Dynamic Multi-Subject Interactive Quiz Demo (`AcademicWorkflowDemo.tsx`)**:
+  - Overhauled live demo engine to dynamically adapt assessment questions, multiple-choice options, Google Gemini Socratic Taglish hints, class averages, gradebook student rows, and AI diagnostic insights across all 4 high school subjects:
+    - *General Mathematics (Grade 11 Core)*: Rational functions & equations.
+    - *Earth and Life Science (Grade 11 Core)*: Law of Superposition & cellular respiration ATP synthesis.
+    - *Pre-Calculus (Grade 11 STEM)*: Parabola standard equations & unit circle circular functions.
+    - *Grade 10 Science (Grade 10 JHS)*: Convergent plate boundaries & electromagnetic spectrum frequencies.
+  - Dynamically updates Teacher & DepEd Gradebook view and AI diagnostic recommendations based on the active subject.
 - **Product-Led Growth (PLG) Scroll Sequence Re-architecture (`app/page.tsx`)**:
   - Re-sequenced landing page narrative following GetSpike and Lovable SaaS best practices: "Show the product before the signup wall".
   - Moved interactive `<AcademicWorkflowDemo>` up to **Section 4** immediately after `<AboutSection />` and before `<HowToUseAppSection />`, `<CategorySection />`, `<PopularSubjectsSection />`, and `<TrialNoticeSection />`.
@@ -42,7 +51,7 @@
 - **Verification Results**:
   - Strict TypeScript check: 0 errors (`npx tsc --noEmit`).
   - Strict ESLint check: 0 errors, 0 warnings (`npm run lint`).
-  - Jest Unit & Diagnostic Test Suite: 36 test suites, 221 tests passed (100% pass rate).
+  - Jest Unit & Diagnostic Test Suite: 38 test suites, 228 tests passed (100% pass rate).
   - Automated PowerShell code scans: 0 `Sparkles`, 0 `<Code>` in categories, 0 `Trimester`, 0 vanity numbers (`15,000` / `98.2%`) across all landing components.
   - Next.js Production Build: clean compilation across all 38 static and dynamic routes (`npm run build`).
 

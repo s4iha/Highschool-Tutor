@@ -44,8 +44,8 @@ export function AboutSection() {
               {/* Primary Image: Group Study in Library */}
               <div className="relative w-full aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl border-4 border-card bg-muted">
                 <Image
-                  src="/images/library-group.jpg"
-                  alt="High school students studying together"
+                  src="/images/filipino-students-group.jpg"
+                  alt="Filipino high school students studying together in school uniforms"
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                   className="object-cover hover:scale-105 transition-transform duration-700"
@@ -55,8 +55,8 @@ export function AboutSection() {
               {/* Overlapping Secondary Image: Student Writing */}
               <div className="absolute -bottom-10 -right-4 sm:-right-8 w-44 sm:w-56 aspect-square rounded-2xl overflow-hidden shadow-2xl border-4 border-card bg-card z-20">
                 <Image
-                  src="/images/student-writing.jpg"
-                  alt="High school student taking notes"
+                  src="/images/filipino-student-writing.jpg"
+                  alt="Filipina high school student taking notes in her study notebook"
                   fill
                   sizes="(max-width: 640px) 176px, 224px"
                   className="object-cover hover:scale-105 transition-transform duration-500"

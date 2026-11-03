@@ -43,7 +43,7 @@ export function StatsBar({ initialData }: StatsBarProps) {
     {
       icon: CheckCircle2,
       value: data.curriculumStandard,
-      label: "MATATAG Aligned",
+      label: "Free All-Access Pass",
       sub: data.standardSubtext,
       color: "text-teal-600 dark:text-teal-400 bg-teal-100/80 dark:bg-teal-950/80",
     },

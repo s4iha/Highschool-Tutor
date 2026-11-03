@@ -15,8 +15,8 @@ export const CATALOG_BASELINE_STATS: CatalogBaselineStats = {
   drillsSubtext: "24 verified drills per subject",
   lessonModules: "600+",
   modulesSubtext: "8 structured lessons per subject",
-  curriculumStandard: "100% DepEd DO 015 s. 2026",
-  standardSubtext: "Official MATATAG Transmutation",
+  curriculumStandard: "30 Days",
+  standardSubtext: "₱0 upfront • Full curriculum access",
   trialTerms: "30-Day Free Pass",
   trialSubtext: "₱0 upfront • No card required",
 };

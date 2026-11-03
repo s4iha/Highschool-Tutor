@@ -12,6 +12,334 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 
+interface DemoQuestion {
+  id: number;
+  question: string;
+  options: { key: string; text: string }[];
+  correct: string;
+  explanation: {
+    socraticHint: string;
+    taglishExplanation: string;
+    takeaway: string;
+  };
+}
+
+interface DemoStudent {
+  name: string;
+  lrn: string;
+  gradeLevel: string;
+  subject: string;
+  quizzesDone: string;
+  averageScore: string;
+  status: string;
+  lastActive: string;
+}
+
+interface DemoSubjectData {
+  questions: DemoQuestion[];
+  classAverage: string;
+  gradebook: DemoStudent[];
+  diagnosticInsight: {
+    topicRecap: string;
+    description: string;
+  };
+}
+
+const DEMO_SUBJECT_DATA: Record<string, DemoSubjectData> = {
+  "General Mathematics": {
+    classAverage: "89.2% (DepEd Outstanding)",
+    questions: [
+      {
+        id: 1,
+        question: "Which of the following functions represents a rational function according to DepEd General Mathematics standards?",
+        options: [
+          { key: "A", text: "f(x) = (2x + 1) / (x - 3), where x ≠ 3" },
+          { key: "B", text: "f(x) = √(x + 4) / 2" },
+          { key: "C", text: "f(x) = 2^x + 5" },
+          { key: "D", text: "f(x) = log(x - 2)" },
+        ],
+        correct: "A",
+        explanation: {
+          socraticHint: "A rational function is defined as f(x) = p(x)/q(x) where both p(x) and q(x) are polynomials and q(x) ≠ 0.",
+          taglishExplanation: "Ang rational function ay quotient ng dalawang polynomial expressions. Sa Option A, ang 2x + 1 at x - 3 ay parehong polynomials. Ang Option B naman ay radical function dahil may square root.",
+          takeaway: "Tandaan: Ang exponent ng variable sa polynomial ay dapat non-negative integers lamang.",
+        },
+      },
+      {
+        id: 2,
+        question: "Solve for x in the rational equation: (x + 2) / (x - 1) = 2",
+        options: [
+          { key: "A", text: "x = 3" },
+          { key: "B", text: "x = 4" },
+          { key: "C", text: "x = 2" },
+          { key: "D", text: "x = -4" },
+        ],
+        correct: "B",
+        explanation: {
+          socraticHint: "Cross-multiply: (x + 2) = 2(x - 1) and simplify.",
+          taglishExplanation: "Multiply both sides by (x - 1): x + 2 = 2x - 2. Ilipat ang x sa kanan at -2 sa kaliwa: 2 + 2 = 2x - x, kaya x = 4. Check domain: 4 - 1 = 3 ≠ 0, kaya valid root!",
+          takeaway: "Laging i-check ang extraneous roots sa rational equations.",
+        },
+      },
+    ],
+    gradebook: [
+      {
+        name: "Juan Dela Cruz",
+        lrn: "109283746501",
+        gradeLevel: "Grade 11 - STEM A",
+        subject: "General Mathematics",
+        quizzesDone: "22 / 24",
+        averageScore: "94.5%",
+        status: "PASSED (Outstanding)",
+        lastActive: "15 mins ago",
+      },
+      {
+        name: "Maria Santos",
+        lrn: "109283746502",
+        gradeLevel: "Grade 11 - STEM A",
+        subject: "General Mathematics",
+        quizzesDone: "20 / 24",
+        averageScore: "89.0%",
+        status: "PASSED (Very Satisfactory)",
+        lastActive: "1 hour ago",
+      },
+      {
+        name: "Angelo Reyes",
+        lrn: "109283746503",
+        gradeLevel: "Grade 11 - STEM A",
+        subject: "General Mathematics",
+        quizzesDone: "18 / 24",
+        averageScore: "76.5%",
+        status: "NEEDS REVIEW (Fairly Satisfactory)",
+        lastActive: "Yesterday",
+      },
+    ],
+    diagnosticInsight: {
+      topicRecap: "Rational Inequalities (Lesson 4) and Inverse Functions (Lesson 8)",
+      description: "Across 24 quizzes in General Mathematics, 38% of Grade 11 students requested Socratic explanations on Rational Inequalities (Lesson 4) and Inverse Functions (Lesson 8). Recommending a focused recap before the 1st Periodic Examination.",
+    },
+  },
+  "Earth and Life Science": {
+    classAverage: "90.8% (DepEd Outstanding)",
+    questions: [
+      {
+        id: 1,
+        question: "According to the Law of Superposition in historical geology, what can be inferred about undisturbed sedimentary rock strata?",
+        options: [
+          { key: "A", text: "The youngest rock layer is located at the top, while the oldest is at the bottom." },
+          { key: "B", text: "The oldest rock layer is always found at the top due to tectonic uplift." },
+          { key: "C", text: "Rock layers have identical ages regardless of depth." },
+          { key: "D", text: "Igneous intrusions are always older than the sedimentary rocks they cut through." },
+        ],
+        correct: "A",
+        explanation: {
+          socraticHint: "Think about how sediments settle over time: newer layers are continuously deposited on top of previously settled layers.",
+          taglishExplanation: "Sa Law of Superposition ni Nicolas Steno, dahil natural na nagpapatong-patong ang sediments mula sa ilalim pataas, ang pinakailalim ang pinakamatanda (oldest) at ang pinakataas ang pinakabata (youngest) hangga't walang tectonic folding.",
+          takeaway: "Prinsipyo ng Relative Dating: Bottom layer = oldest, top layer = youngest (undisturbed).",
+        },
+      },
+      {
+        id: 2,
+        question: "During cellular respiration in living cells, which organelle is responsible for generating the majority of ATP through the electron transport chain?",
+        options: [
+          { key: "A", text: "Ribosome" },
+          { key: "B", text: "Mitochondria" },
+          { key: "C", text: "Endoplasmic Reticulum" },
+          { key: "D", text: "Golgi Apparatus" },
+        ],
+        correct: "B",
+        explanation: {
+          socraticHint: "Known as the 'powerhouse of the cell,' this double-membraned organelle carries out oxidative phosphorylation.",
+          taglishExplanation: "Ang Mitochondria ang tinaguriang 'powerhouse ng cell.' Dito nagaganap ang Krebs cycle at Oxidative Phosphorylation sa cristae, kung saan nagagawa ang halos 32-34 ATP per glucose molecule!",
+          takeaway: "Mitochondria = site of aerobic respiration and cellular ATP production.",
+        },
+      },
+    ],
+    gradebook: [
+      {
+        name: "Bea Alcantara",
+        lrn: "109283746504",
+        gradeLevel: "Grade 11 - HUMSS B",
+        subject: "Earth and Life Science",
+        quizzesDone: "23 / 24",
+        averageScore: "96.0%",
+        status: "PASSED (Outstanding)",
+        lastActive: "10 mins ago",
+      },
+      {
+        name: "Joshua Dizon",
+        lrn: "109283746505",
+        gradeLevel: "Grade 11 - HUMSS B",
+        subject: "Earth and Life Science",
+        quizzesDone: "21 / 24",
+        averageScore: "88.5%",
+        status: "PASSED (Very Satisfactory)",
+        lastActive: "2 hours ago",
+      },
+      {
+        name: "Alyssa Mendoza",
+        lrn: "109283746506",
+        gradeLevel: "Grade 11 - HUMSS B",
+        subject: "Earth and Life Science",
+        quizzesDone: "17 / 24",
+        averageScore: "74.0%",
+        status: "NEEDS REVIEW (Did Not Meet Expectations)",
+        lastActive: "Yesterday",
+      },
+    ],
+    diagnosticInsight: {
+      topicRecap: "Relative vs. Absolute Geologic Dating (Lesson 3) and Calvin Cycle Stages (Lesson 7)",
+      description: "Across 24 quizzes in Earth and Life Science, 41% of Grade 11 students flagged difficulty distinguishing between Relative vs. Absolute Geologic Dating (Lesson 3) and Calvin Cycle Stages (Lesson 7). Recommended targeted drill session scheduled.",
+    },
+  },
+  "Pre-Calculus": {
+    classAverage: "88.5% (DepEd Very Satisfactory)",
+    questions: [
+      {
+        id: 1,
+        question: "What is the standard equation of a parabola opening upward with its vertex at the origin (0, 0) and focal distance p > 0?",
+        options: [
+          { key: "A", text: "x² = 4py" },
+          { key: "B", text: "y² = 4px" },
+          { key: "C", text: "x² = -4py" },
+          { key: "D", text: "x² + y² = p²" },
+        ],
+        correct: "A",
+        explanation: {
+          socraticHint: "Recall the geometric definition of a parabola: when opening vertically upward along the y-axis, the squared term is x.",
+          taglishExplanation: "Kapag ang parabola ay patayo at bumubukas paitaas (opening upward) na ang vertex ay nasa origin, ang equation ay x² = 4py kung saan p > 0. Kung y² = 4px naman, ito ay bumubukas sa kanan.",
+          takeaway: "Vertical axis of symmetry: x² = 4py (upward kung p > 0, downward kung p < 0).",
+        },
+      },
+      {
+        id: 2,
+        question: "Evaluate the exact value of sin(π/6) + cos(π/3) according to circular functions on the unit circle.",
+        options: [
+          { key: "A", text: "1/2" },
+          { key: "B", text: "1" },
+          { key: "C", text: "√3 / 2" },
+          { key: "D", text: "√2" },
+        ],
+        correct: "B",
+        explanation: {
+          socraticHint: "Recall the special angles in radians: π/6 = 30° and π/3 = 60°.",
+          taglishExplanation: "Ang π/6 radians ay katumbas ng 30°, kaya sin(30°) = 1/2. Ang π/3 radians naman ay 60°, kaya cos(60°) = 1/2. Kapag pinag-add: 1/2 + 1/2 = 1. Sakto at malinis!",
+          takeaway: "Co-function identity: sin(θ) = cos(90° - θ), kaya sin(30°) = cos(60°) = 1/2.",
+        },
+      },
+    ],
+    gradebook: [
+      {
+        name: "Gabriel Tan",
+        lrn: "109283746507",
+        gradeLevel: "Grade 11 - STEM 1",
+        subject: "Pre-Calculus",
+        quizzesDone: "24 / 24",
+        averageScore: "98.0%",
+        status: "PASSED (Outstanding)",
+        lastActive: "5 mins ago",
+      },
+      {
+        name: "Chloe Lim",
+        lrn: "109283746508",
+        gradeLevel: "Grade 11 - STEM 1",
+        subject: "Pre-Calculus",
+        quizzesDone: "21 / 24",
+        averageScore: "91.5%",
+        status: "PASSED (Outstanding)",
+        lastActive: "40 mins ago",
+      },
+      {
+        name: "Kenneth Soriano",
+        lrn: "109283746509",
+        gradeLevel: "Grade 11 - STEM 1",
+        subject: "Pre-Calculus",
+        quizzesDone: "16 / 24",
+        averageScore: "73.5%",
+        status: "NEEDS REVIEW (Did Not Meet Expectations)",
+        lastActive: "Yesterday",
+      },
+    ],
+    diagnosticInsight: {
+      topicRecap: "Hyperbola Asymptote Equations (Lesson 5) and Sum-to-Product Trigonometric Identities (Lesson 8)",
+      description: "Across 24 quizzes in Pre-Calculus, STEM educators observed high error rates in Hyperbola Asymptote Equations (Lesson 5) and Sum-to-Product Trigonometric Identities (Lesson 8). 32 students received automated targeted practice sessions.",
+    },
+  },
+  "Grade 10 Science": {
+    classAverage: "88.8% (DepEd Very Satisfactory)",
+    questions: [
+      {
+        id: 1,
+        question: "What geologic feature or event is typically produced at a convergent plate boundary where two oceanic plates collide?",
+        options: [
+          { key: "A", text: "Island arc and deep ocean trench (subduction zone)" },
+          { key: "B", text: "Mid-ocean ridge and rift valley" },
+          { key: "C", text: "Transform fault line like the San Andreas Fault" },
+          { key: "D", text: "Continental mountain range without volcanism" },
+        ],
+        correct: "A",
+        explanation: {
+          socraticHint: "When denser oceanic crust subducts under another oceanic plate, magma rises through the seafloor over time.",
+          taglishExplanation: "Sa oceanic-oceanic convergence, ang mas matandang dense plate ay lulubog (subduct) sa trench. Ang natutunaw na magma ay aangat upang bumuo ng volcanic island arc, katulad ng kapuluan ng Pilipinas!",
+          takeaway: "Oceanic-Oceanic Convergence = Deep-Sea Trench + Volcanic Island Arc (e.g., Philippine Mobile Belt).",
+        },
+      },
+      {
+        id: 2,
+        question: "Which of the following electromagnetic waves has the shortest wavelength and highest frequency in the electromagnetic spectrum?",
+        options: [
+          { key: "A", text: "Radio waves" },
+          { key: "B", text: "Visible light" },
+          { key: "C", text: "Ultraviolet rays" },
+          { key: "D", text: "Gamma rays" },
+        ],
+        correct: "D",
+        explanation: {
+          socraticHint: "Energy is directly proportional to frequency and inversely proportional to wavelength (E = hf = hc/λ).",
+          taglishExplanation: "Sa EM Spectrum, habang umiikli ang wavelength, tumataas ang frequency at energy. Ang Gamma rays ang may pinakamaikling wavelength (< 10 picometers) at pinakamataas na frequency, kaya ito ang pinaka-penetrating ionizing radiation.",
+          takeaway: "EM Spectrum Order (Lowest to Highest Frequency): Radio < Microwave < Infrared < Visible < UV < X-ray < Gamma.",
+        },
+      },
+    ],
+    gradebook: [
+      {
+        name: "Patricia Bautista",
+        lrn: "109283746510",
+        gradeLevel: "Grade 10 - Aguinaldo",
+        subject: "Grade 10 Science",
+        quizzesDone: "23 / 24",
+        averageScore: "95.5%",
+        status: "PASSED (Outstanding)",
+        lastActive: "12 mins ago",
+      },
+      {
+        name: "Samantha Cruz",
+        lrn: "109283746511",
+        gradeLevel: "Grade 10 - Aguinaldo",
+        subject: "Grade 10 Science",
+        quizzesDone: "19 / 24",
+        averageScore: "86.0%",
+        status: "PASSED (Very Satisfactory)",
+        lastActive: "3 hours ago",
+      },
+      {
+        name: "John Paul Ramos",
+        lrn: "109283746512",
+        gradeLevel: "Grade 10 - Aguinaldo",
+        subject: "Grade 10 Science",
+        quizzesDone: "15 / 24",
+        averageScore: "75.0%",
+        status: "PASSED (Fairly Satisfactory)",
+        lastActive: "Yesterday",
+      },
+    ],
+    diagnosticInsight: {
+      topicRecap: "Divergent vs. Transform Plate Motion (Lesson 2) and Ray Diagrams in Concave Mirrors (Lesson 6)",
+      description: "Across 24 quizzes in Grade 10 Science, 35% of learners needed additional Socratic breakdown on Divergent vs. Transform Plate Motion (Lesson 2) and Ray Diagrams in Concave Mirrors (Lesson 6). DO 015 automated remediation modules deployed.",
+    },
+  },
+};
+
 export function AcademicWorkflowDemo() {
   const [activeWorkflowTab, setActiveWorkflowTab] = useState<"student" | "admin">("student");
   const [selectedSubject, setSelectedSubject] = useState("General Mathematics");
@@ -19,82 +347,15 @@ export function AcademicWorkflowDemo() {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [activeAiExplanation, setActiveAiExplanation] = useState<number | null>(null);
 
+  // Active Subject Content
+  const activeSubjectData = DEMO_SUBJECT_DATA[selectedSubject] ?? DEMO_SUBJECT_DATA["General Mathematics"];
+
   // High School Subjects for Demo
   const demoSubjects = [
     { name: "General Mathematics", grade: "Grade 11 • Core", lessons: 8, quizzes: 24 },
     { name: "Earth and Life Science", grade: "Grade 11 • Core", lessons: 8, quizzes: 24 },
     { name: "Pre-Calculus", grade: "Grade 11 • STEM", lessons: 8, quizzes: 24 },
     { name: "Grade 10 Science", grade: "Grade 10 • Junior High", lessons: 8, quizzes: 24 },
-  ];
-
-  // High School Sample Questions
-  const sampleQuestions = [
-    {
-      id: 1,
-      question: "Which of the following functions represents a rational function according to DepEd General Mathematics standards?",
-      options: [
-        { key: "A", text: "f(x) = (2x + 1) / (x - 3), where x ≠ 3" },
-        { key: "B", text: "f(x) = √(x + 4) / 2" },
-        { key: "C", text: "f(x) = 2^x + 5" },
-        { key: "D", text: "f(x) = log(x - 2)" },
-      ],
-      correct: "A",
-      explanation: {
-        socraticHint: "A rational function is defined as f(x) = p(x)/q(x) where both p(x) and q(x) are polynomials and q(x) ≠ 0.",
-        taglishExplanation: "Ang rational function ay quotient ng dalawang polynomial expressions. Sa Option A, ang 2x + 1 at x - 3 ay parehong polynomials. Ang Option B naman ay radical function dahil may square root.",
-        takeaway: "Tandaan: Ang exponent ng variable sa polynomial ay dapat non-negative integers lamang.",
-      },
-    },
-    {
-      id: 2,
-      question: "Solve for x in the rational equation: (x + 2) / (x - 1) = 2",
-      options: [
-        { key: "A", text: "x = 3" },
-        { key: "B", text: "x = 4" },
-        { key: "C", text: "x = 2" },
-        { key: "D", text: "x = -4" },
-      ],
-      correct: "B",
-      explanation: {
-        socraticHint: "Cross-multiply: (x + 2) = 2(x - 1) and simplify.",
-        taglishExplanation: "Multiply both sides by (x - 1): x + 2 = 2x - 2. Ilipat ang x sa kanan at -2 sa kaliwa: 2 + 2 = 2x - x, kaya x = 4. Check domain: 4 - 1 = 3 ≠ 0, kaya valid root!",
-        takeaway: "Laging i-check ang extraneous roots sa rational equations.",
-      },
-    },
-  ];
-
-  // Mock Student Gradebook for Teachers
-  const studentGradebook = [
-    {
-      name: "Juan Dela Cruz",
-      lrn: "109283746501",
-      gradeLevel: "Grade 11 - STEM A",
-      subject: "General Mathematics",
-      quizzesDone: "22 / 24",
-      averageScore: "94.5%",
-      status: "PASSED (Outstanding)",
-      lastActive: "15 mins ago",
-    },
-    {
-      name: "Maria Santos",
-      lrn: "109283746502",
-      gradeLevel: "Grade 11 - STEM A",
-      subject: "General Mathematics",
-      quizzesDone: "20 / 24",
-      averageScore: "89.0%",
-      status: "PASSED (Very Satisfactory)",
-      lastActive: "1 hour ago",
-    },
-    {
-      name: "Angelo Reyes",
-      lrn: "109283746503",
-      gradeLevel: "Grade 11 - STEM A",
-      subject: "General Mathematics",
-      quizzesDone: "18 / 24",
-      averageScore: "76.5%",
-      status: "NEEDS REVIEW (Fairly Satisfactory)",
-      lastActive: "Yesterday",
-    },
   ];
 
   const handleSelectAnswer = (questionId: number, optionKey: string) => {
@@ -105,7 +366,7 @@ export function AcademicWorkflowDemo() {
 
   const handleSubmitQuiz = () => {
     setQuizSubmitted(true);
-    setActiveAiExplanation(1);
+    setActiveAiExplanation(activeSubjectData.questions[0]?.id ?? 1);
   };
 
   return (
@@ -202,7 +463,7 @@ export function AcademicWorkflowDemo() {
 
                 {/* Question List */}
                 <div className="space-y-5">
-                  {sampleQuestions.map((q, qIndex) => {
+                  {activeSubjectData.questions.map((q, qIndex) => {
                     const selected = selectedQuizAnswers[q.id];
                     const isCorrect = selected === q.correct;
                     const isExplaining = activeAiExplanation === q.id;
@@ -216,7 +477,7 @@ export function AcademicWorkflowDemo() {
                         <div className="flex items-start justify-between gap-4">
                           <div className="space-y-1">
                             <span className="text-[11px] font-bold text-primary uppercase tracking-wider">
-                              Assessment Question {qIndex + 1} of 2
+                              Assessment Question {qIndex + 1} of {activeSubjectData.questions.length}
                             </span>
                             <h4 className="text-sm sm:text-base font-bold text-foreground">
                               {q.question}
@@ -344,7 +605,7 @@ export function AcademicWorkflowDemo() {
                     </p>
                   </div>
                   <Badge variant="secondary" className="px-3.5 py-1.5 font-bold text-xs bg-primary/10 text-primary">
-                    Class Average: 89.2% (DepEd Outstanding)
+                    Class Average: {activeSubjectData.classAverage}
                   </Badge>
                 </div>
 
@@ -364,7 +625,7 @@ export function AcademicWorkflowDemo() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-card font-medium text-card-foreground">
-                      {studentGradebook.map((st, sIdx) => (
+                      {activeSubjectData.gradebook.map((st, sIdx) => (
                         <tr key={sIdx} className="hover:bg-muted/40 transition-colors">
                           <td className="p-4 font-bold text-foreground">{st.name}</td>
                           <td className="p-4 text-muted-foreground font-mono">{st.lrn}</td>
@@ -402,7 +663,7 @@ export function AcademicWorkflowDemo() {
                       AI Diagnostic Insight for High School Educators:
                     </h4>
                     <p className="leading-relaxed">
-                      Across 24 quizzes in <strong>General Mathematics</strong>, 38% of Grade 11 students requested Socratic explanations on <strong>Rational Inequalities (Lesson 4)</strong> and <strong>Inverse Functions (Lesson 8)</strong>. Recommending a focused recap before the 1st Periodic Examination.
+                      {activeSubjectData.diagnosticInsight.description}
                     </p>
                   </div>
                 </div>

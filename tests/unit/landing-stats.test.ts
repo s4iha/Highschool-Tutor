@@ -14,7 +14,8 @@ describe("Landing Stats Schemas & Catalog Constants Validation", () => {
         expect(result.data.totalSubjects).toBe("75+");
         expect(result.data.practiceDrills).toBe("1,800+");
         expect(result.data.lessonModules).toBe("600+");
-        expect(result.data.curriculumStandard).toBe("100% DepEd DO 015 s. 2026");
+        expect(result.data.curriculumStandard).toBe("30 Days");
+        expect(result.data.standardSubtext).toBe("₱0 upfront • Full curriculum access");
       }
     });
 
