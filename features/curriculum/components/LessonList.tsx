@@ -291,13 +291,13 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                     {masteredCount} Mastered •{" "}
                     {attemptedCount - masteredCount > 0
                       ? `${attemptedCount - masteredCount} Needs Review`
-                      : "All Passed"}
+                      : "All Mastered"}
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
                 {attemptedCount} of {totalLessonsCount} lessons completed •{" "}
-                {masteredCount} mastered (DepEd DO 015 Passing Grade ≥ 75%)
+                {masteredCount} mastered
               </p>
             </div>
             <div className="flex items-center gap-3 w-full sm:w-64">
@@ -320,7 +320,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
 
       {/* Lessons List */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-bold tracking-tight text-foreground flex items-center gap-2 font-heading">
             <BookOpen className="size-5 text-primary" />
             <span>Curriculum Lessons ({lessons.length})</span>
@@ -407,10 +407,10 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                             <CheckCircle2 className="size-3" />
                             <span>Mastered ({stat.transmutedGrade}%)</span>
                           </Badge>
-                        ) : stat?.status === "Practice Passed" ? (
+                        ) : (stat?.status === "Practice Passed" || stat?.status === "Practice Proficient") ? (
                           <Badge variant="secondary" className="gap-1 text-xs bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
                             <CheckCircle2 className="size-3" />
-                            <span>Practice Passed ({stat.transmutedGrade}%)</span>
+                            <span>Practice Proficient ({stat.transmutedGrade}%)</span>
                           </Badge>
                         ) : isNeedsReview ? (
                           <Badge variant="secondary" className="gap-1 text-xs bg-warning/20 text-warning-foreground">
@@ -601,7 +601,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                         <Trophy className="size-4" />
                       </div>
                       <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                        DO 015 Graded
+                        Exam Mode (Graded)
                       </Badge>
                     </div>
                     <h3 className="font-bold text-sm text-foreground">Exam Mode</h3>

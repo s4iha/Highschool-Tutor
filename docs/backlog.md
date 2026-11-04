@@ -1,5 +1,124 @@
 # Project Backlog & Change Log
 
+## [2026-11-04]
+
+### Task 030 - Subject Scope 8-Lesson Syllabus Breakdown, Public Catalog Deduplication (108 Subjects), Hydration Fixes & Landing Page Accuracy
+
+- **Full Curriculum Scope & 8-Lesson Syllabus Breakdown (`/subjects/[slug]`)**:
+  - Extended `SubjectScopeLesson` interface and `SubjectScopeDefinition` in `features/curriculum/types/subjectScope.types.ts`.
+  - Built comprehensive DepEd Order No. 015, s. 2026 MATATAG syllabus registry in `features/curriculum/utils/subject-lessons-data.ts` delivering authentic 8-lesson curriculum breakdowns (with titles, 2–3 sentence summaries, 3–5 concept tags, and 3 practice drills each totaling 24 drills) for all 108 subjects and JHS grade×quarter variations.
+  - Implemented interactive Grade (Grades 7–10) & Quarter (Quarters 1–4) Switcher for the 8 JHS Core subjects in `features/curriculum/components/SubjectScopeView.tsx` with dynamic metadata, syllabus updates, and live `/curriculum/` CTA links.
+- **Public Catalog Deduplication (`/subjects`: 324 → 108 Distinct Subjects)**:
+  - Deduplicated public catalog from 324 redundant items to exactly 108 distinct subjects (8 JHS Core covering Grades 7–10 • Quarters 1–4 + 100 SHS subjects).
+  - Updated `getAllSubjectScopeDefinitions()` and `getAllSubjectScopeSlugs()` in `features/curriculum/utils/subject-scope-data.ts` to output 228 canonical slugs while cleanly handling legacy trimester bookmarks.
+  - Updated JHS subject cards in `features/curriculum/components/PublicSubjectCatalog.tsx` with `Grades 7–10 • Quarters 1–4` and `JHS-${ABBR}` badges.
+- **Zero Hydration Mismatch Errors**:
+  - Added `suppressHydrationWarning` to `<html lang="en">` in `app/layout.tsx` to eliminate hydration warnings from `next-themes`.
+  - Refactored `features/billing/components/CheckoutModal.tsx` using `useSyncExternalStore` for reading client referral cookies, avoiding SSR hydration divergence and eliminating cascading render lint errors.
+- **Centered Subscription Intercept Modal CTA**:
+  - Removed `ml-auto` from `<ArrowRight />` in `features/billing/components/AuthInterceptDialog.tsx`, perfectly centering the leading icon, text, and arrow together.
+- **Landing Page Feature Accuracy & Student Mastery Demo**:
+  - Removed unsupported claims of "parent reporting" and "automated gradebook" from `features/landing/components/AboutSection.tsx` and `features/landing/components/HowToUseAppSection.tsx`.
+  - Replaced the mock teacher LMS table in `features/landing/components/AcademicWorkflowDemo.tsx` with an authentic "Student Mastery & Weak Points" preview showcasing DO 015 transmuted scores, per-lesson mastery status badges, and diagnostic AI insights.
+- **Clean Iconless Academic Track Cards**:
+  - Removed arbitrary decorative track icons from `features/landing/components/CategorySection.tsx`, `app/tracks/page.tsx`, and `features/landing/components/TrackDetail.tsx` for clean typography-first headers.
+- **Post-Review Polish & UI/UX Bug Fixes (Bugs #1–#4)**:
+  - **Bug #1 (Subjects Filtering & Small Screen Button Layout)**: Auto-reconciled academic level and track/strand filter combinations in `PublicSubjectCatalog.tsx` (automatically switching between JHS and SHS to prevent empty result sets); added search parameter deep-linking (`initialLevel`, `initialStrand`) in `app/subjects/page.tsx`; added all 15 missing `slug` properties to `tracks-data.ts`; wrapped filter buttons with `flex-wrap` to eliminate horizontal clipping on mobile and desktop; mapped `/tracks/[id]` buttons directly to filtered `/subjects` views.
+  - **Bugs #2 & #3 (Landing Page Padding & Large Section Gaps)**: Removed outer `gap-12 sm:gap-16 pb-12` wrapper in `app/page.tsx` for flush section alignment; standardized vertical section padding to `py-12 sm:py-16 lg:py-20` and max-width gutters across all 9 landing sections; eliminated nested padding crowding in `AcademicWorkflowDemo.tsx` and `TrialNoticeSection.tsx`.
+  - **Bug #4 (Popular Subjects Swipable Track)**: Removed floating `<` and `>` chevron buttons in `PopularSubjectsSection.tsx` that obscured subject card text on mobile; implemented smooth touch-snap swiping and desktop mouse drag-to-scroll with click-capture prevention.
+- **Verification & Quality Assurance**:
+  - All automated unit test suites passed: 40/40 test suites, 253/253 tests passed cleanly (`npm test`).
+  - TypeScript strict compilation passed with 0 errors (`npx tsc --noEmit`).
+  - ESLint verification passed cleanly with 0 errors and 0 warnings (`npm run lint`).
+  - Next.js production build (`npm run build`) succeeded generating all 276 static pages cleanly.
+
+## [2026-11-03]
+
+### Task 029 - Authentic Filipino Hero Imagery, Frictionless Subscription Availment, DepEd MATATAG Scope Pages & Expanded Curriculum Catalog
+
+- **Authentic Filipino Hero Imagery (`features/landing/components/HeroSection.tsx`)**:
+  - Replaced foreign student stock photograph with authentic high-resolution photograph of a local Filipino high school student in Philippine school uniform studying with notebook (`public/images/filipino-student-writing.jpg`).
+  - Container strictly enforced with a 4:5 vertical portrait aspect ratio (`aspect-[4/5]`) using Next.js `Image` with `object-cover` and `object-top` positioning.
+  - Configured Next.js Image with `priority`, responsive `sizes`, and descriptive alt text: *"Filipino high school student studying DepEd MATATAG curriculum with HighSchool Tutor"*.
+  - Positioned floating preview cards to prevent facial occlusion across mobile (360px-375px) and desktop viewports.
+- **Frictionless Subscription Availment via Auth Intercept & Return Intent (`features/billing/`)**:
+  - Eliminated jarring 401 Unauthorized toast errors when unauthenticated visitors click subscribe or checkout.
+  - Implemented `AuthInterceptDialog.tsx` displaying plan badge, pricing, domestic payment rails (QR Ph, GCash, Maya, Cards), and Google/Email auth buttons.
+  - Added client-side preflight check in `CheckoutModal.tsx` that captures user plan selection and affiliate code into `sessionStorage` with a 2-hour TTL via `returnIntent.ts`.
+  - Created `useCheckoutReturnIntent.ts` and mounted `CheckoutReturnIntentListener.tsx` in `app/layout.tsx` to automatically detect session activation, purge storage idempotently, and initiate PayMongo checkout redirect without manual re-selection.
+- **Public DepEd MATATAG Subject Scope Pages & SEO (`app/subjects/`, `features/curriculum/`, `features/seo/`)**:
+  - Built public catalog route `app/subjects/page.tsx` embedding `PublicSubjectCatalog.tsx` with instant multi-facet filtering (level, strand, search).
+  - Built dynamic route `app/subjects/[slug]/page.tsx` rendering `SubjectScopeView.tsx` with official course code, hours, prerequisites, DepEd descriptions, competencies table, and Socratic AI practice CTAs.
+  - Implemented `generateStaticParams()` to pre-render 320+ canonical subject scope pages statically at build time with 0 build warnings.
+  - Added Schema.org `Course` and `BreadcrumbList` JSON-LD structured data via `schemaBuilders.ts`.
+  - Updated `sitemapBuilder.ts` to dynamically enumerate `/subjects` and all `/subjects/[slug]` routes.
+- **Missing SHS Tracks & Core TVL Catalog Expansion (`curriculum-data.ts`, `TrackDetail.tsx`)**:
+  - Expanded `SHS_SUBJECT_CATALOG` in `curriculum-data.ts` to include 6 Arts and Design general subjects + 5 specializations, 9 Sports Track subjects, and core TVL specializations across Agri-Fishery Arts (AFA), Industrial Arts (IA), Home Economics (HE), and Information and Communications Technology (ICT).
+  - Registered `arts-design-track` (with `Palette` icon) and `sports-track` (with `Trophy` icon) in `TRACKS_DATA` in `features/landing/components/TrackDetail.tsx`.
+  - Updated `tvl-track` in `TRACKS_DATA` with full 4-sector coverage (AFA, IA, HE, ICT).
+  - Updated unit test suite `tests/unit/tracks-data.test.ts` to validate all 9 tracks and 8-module standardization.
+- **Post-Implementation Bug Fixes & UX Streamlining**:
+  - *Auth Intercept Modal Redundancy & Persistence Fix*: Streamlined dual CTAs into a single primary button: *"Continue to Sign In / Sign Up"* in `AuthInterceptDialog.tsx`. Fixed modal persistence bug by invoking `onOpenChange(false)` on click and auto-closing `UpgradeModal.tsx` whenever navigating to `/login` or `/register`.
+  - *Track Page 404 Resolution & Server-Safe Data Extraction*: Extracted `TRACKS_DATA` from `"use client"` `TrackDetail.tsx` into a dedicated, server-safe constants file `features/landing/constants/tracks-data.ts`. Resolved Next.js SSR/SSG boundary issue that was preventing static path generation for `/tracks/[id]` (`abm-strand`, etc.).
+  - *Seamless Curriculum & Scope Navigation*: Updated `Navbar.tsx` "Subjects Catalog", `Footer.tsx` "Subjects Catalog", and `PopularSubjectsSection.tsx` "View All 75+ DepEd Subjects" to link directly to the new public `/subjects` catalog. Added direct links from each featured track subject on `/tracks/[id]` to its respective `/subjects/[slug]` DepEd scope page.
+- **Verification & Quality Assurance**:
+  - All unit test suites passed cleanly: `tests/unit/tracks-data.test.ts` (8/8), `tests/unit/subject-scope.test.ts` (7/7), `tests/unit/auth-intercept.test.ts` (6/6), `tests/unit/hero-section.test.ts` (6/6), `tests/unit/curriculum-data.test.ts` (6/6), `__tests__/seo/sitemap.test.ts`, and `__tests__/seo/seoAuditor.test.ts` (9/9) — 42/42 tests passing.
+  - Strict TypeScript checking passed with 0 errors (`npx tsc --noEmit`).
+  - Next.js production build (`npm run build`) completed successfully with 372 pages pre-rendered statically with zero errors.
+
+### Task 028 - Landing Page Overhaul, Curriculum Truth Alignment, and Conversion Optimization
+
+- **Outcome-Driven Hero & PLG Free Trial Experience (`features/landing/components/HeroSection.tsx`)**:
+  - Populated empty top eyebrow badge with "DepEd Order No. 015, s. 2026 Aligned • Philippine K-12 MATATAG Companion" and academic icon `<GraduationCap>`.
+  - Upgraded headline and subtitle to deliver specific exam-readiness value proposition: *"Master Every DepEd Quarterly Exam with Confidence"* and *"Standardized 8-lesson modules, 24 verified practice drills per subject, and Socratic Taglish AI tutoring aligned 100% with DepEd Order No. 015, s. 2026."*
+  - Replaced ambiguous signup CTA with high-intent PLG CTA: *"Start 30-Day Free Trial"* linking to `/login` with `<ArrowRight>`.
+  - Added transparent, friction-reducing microcopy: *"₱0 upfront • No credit card required • Cancel anytime"*.
+  - Updated interactive floating preview cards to reflect authentic high school competencies (General Math 75% progress, Socratic Taglish AI assistant hint *"Bakit Mali Ito?"*, Earth & Life Science quarterly exam in 3 days, DO 015 88% transmuted quarter mastery), completely removing decorative sparkles.
+- **Dynamic Live Engagement & Fallback Stats Architecture (`StatsBar.tsx`, `use-landing-stats.ts`, `get-landing-stats.action.ts`)**:
+  - Purged all fabricated vanity metrics (15,000+ enrolled students, 98.2% pass rate, 130+ subjects, 12 / 24 lessons).
+  - Built typed Next.js Server Action `getLandingStatsAction` with Zod schema validation, querying PostgreSQL live counts (`prisma.user.count` for active learners and `prisma.quizAttempt.count` for completed quizzes).
+  - Designed resilient static fallback catalog constants in `features/landing/constants/catalog-stats.ts`:
+    - **75+ DepEd Subjects** (*"8 JHS Core + 67 SHS Strands"*)
+    - **1,800+ Practice Drills** (*"24 verified drills per subject"*)
+    - **600+ Lesson Modules** (*"8 structured lessons per subject"*)
+    - **30 Days Free All-Access Pass** (*"₱0 upfront • Full curriculum access"*)
+  - Integrated TanStack Query hook `useLandingStatsQuery` with `initialData` support, guaranteeing instant zero Cumulative Layout Shift (`CLS = 0`) and eliminating multi-line header wrapping in `StatsBar.tsx`.
+- **Authentic Filipino High School Student Imagery (`features/landing/components/AboutSection.tsx`)**:
+  - Replaced foreign university library stock photos with authentic high-resolution photographs of Filipino high school students in Philippine school uniforms studying together around textbooks (`public/images/filipino-students-group.jpg`) and writing in notebooks (`public/images/filipino-student-writing.jpg`).
+- **Dynamic Multi-Subject Interactive Quiz Demo (`AcademicWorkflowDemo.tsx`)**:
+  - Overhauled live demo engine to dynamically adapt assessment questions, multiple-choice options, Google Gemini Socratic Taglish hints, class averages, gradebook student rows, and AI diagnostic insights across all 4 high school subjects:
+    - *General Mathematics (Grade 11 Core)*: Rational functions & equations.
+    - *Earth and Life Science (Grade 11 Core)*: Law of Superposition & cellular respiration ATP synthesis.
+    - *Pre-Calculus (Grade 11 STEM)*: Parabola standard equations & unit circle circular functions.
+    - *Grade 10 Science (Grade 10 JHS)*: Convergent plate boundaries & electromagnetic spectrum frequencies.
+  - Dynamically updates Teacher & DepEd Gradebook view and AI diagnostic recommendations based on the active subject.
+- **Product-Led Growth (PLG) Scroll Sequence Re-architecture (`app/page.tsx`)**:
+  - Re-sequenced landing page narrative following GetSpike and Lovable SaaS best practices: "Show the product before the signup wall".
+  - Moved interactive `<AcademicWorkflowDemo>` up to **Section 4** immediately after `<AboutSection />` and before `<HowToUseAppSection />`, `<CategorySection />`, `<PopularSubjectsSection />`, and `<TrialNoticeSection />`.
+  - Enabled prospective students and teachers to experience interactive Socratic Taglish hints and live DepEd DO 015 gradebook transmutation (60–100 scale, ≥ 75% passing) prior to account creation.
+  - Added Next.js App Router dynamic directive `export const dynamic = "force-dynamic";` to accommodate session cookie reading without static generation conflicts.
+- **Academic Track Taxonomy, Iconography & DepEd Quarter Standards**:
+  - Corrected Senior High School Core icon in `CategorySection.tsx` and `TrackDetail.tsx` from incorrect `<Code>` icon to official academic icon `<GraduationCap>`.
+  - Standardized subject badge counts across all 7 tracks based on real DepEd curriculum offerings:
+    - Junior High Core: 8 Core Subjects (32 Grade-Level Offerings across Grades 7–10)
+    - SHS Core: 15 DepEd Core Subjects
+    - STEM Strand: 11 Specialized Subjects
+    - ABM Strand: 9 Specialized Subjects
+    - HUMSS Strand: 9 Specialized Subjects
+    - GAS Strand: 7 Specialized Subjects
+    - TVL Track: 9 Specialized Subjects
+  - Overhauled `PopularSubjectsSection.tsx`: purged fabricated 4.9★ star ratings and 2.4K review counters, displaying genuine curriculum metadata (Grade Level, DepEd Quarter 1, 8 Lessons & 24 Practice Drills, DO 015 badge).
+  - Replaced legacy non-DepEd "Trimester" slug (`g10-t1-sci`) with official DepEd "Quarter" slug (`g10-q1-sci` • Grade 10 • Quarter 1).
+- **Design Discipline: Complete `Sparkles` Purge & Transparent Pricing**:
+  - Purged the `Sparkles` icon across all landing components (`HeroSection`, `AboutSection`, `HowToUseAppSection`, `TrackDetail`, `TrialNoticeSection`, `HowItWorks`, `TermsOfService`, and `CtaBanner`), substituting clean, purpose-driven Lucide icons (`GraduationCap`, `BookOpen`, `Bot`, `ShieldCheck`, `CheckCircle2`, `ArrowRight`).
+  - Standardized scannable 30-day free trial terms in `TrialNoticeSection.tsx` and `CtaBanner.tsx`: unrestricted access to all 75+ subjects, 600+ lesson modules, and 1,800+ drills for ₱0 upfront, no credit card required, followed by ₱299/month with Philippine local payments (GCash, Maya, cards).
+- **Verification Results**:
+  - Strict TypeScript check: 0 errors (`npx tsc --noEmit`).
+  - Strict ESLint check: 0 errors, 0 warnings (`npm run lint`).
+  - Jest Unit & Diagnostic Test Suite: 38 test suites, 228 tests passed (100% pass rate).
+  - Automated PowerShell code scans: 0 `Sparkles`, 0 `<Code>` in categories, 0 `Trimester`, 0 vanity numbers (`15,000` / `98.2%`) across all landing components.
+  - Next.js Production Build: clean compilation across all 38 static and dynamic routes (`npm run build`).
+
 ## [2026-10-27]
 
 ### Task 027 - Technical SEO, Rich Structured Data (JSON-LD), and Social Preview Optimization

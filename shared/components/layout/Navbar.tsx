@@ -33,7 +33,7 @@ export function Navbar() {
   const links = [
     { href: "/how-it-works", label: "How It Works" },
     { href: "/#categories", label: "Curriculum Strands" },
-    { href: "/#subjects", label: "Subjects Catalog" },
+    { href: "/subjects", label: "Subjects Catalog" },
     { href: "/#demo", label: "AI Demo" },
     { href: "/#about", label: "About" },
   ];

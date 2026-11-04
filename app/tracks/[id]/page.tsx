@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
-import { TrackDetail, TRACKS_DATA } from "@/features/landing/components";
+import { TrackDetail } from "@/features/landing/components";
+import { TRACKS_DATA } from "@/features/landing/constants/tracks-data";
 import {
   JsonLd,
   buildCourseSchema,

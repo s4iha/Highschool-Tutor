@@ -14,13 +14,13 @@ import { Button } from "@/shared/components/ui/button";
 export function AboutSection() {
   const benefits = [
     "8 focused lesson modules per subject aligned with DepEd K-12 MATATAG competencies",
-    "24 practice quizzes with instant grading, feedback, and verified answer keys",
+    "24 practice drills with instant grading, feedback, and verified answer keys",
     "Interactive Socratic AI Tutor providing step-by-step guidance in English and Taglish",
-    "DepEd DO 015 s. 2026 transmutation engine with automated gradebook and parent reporting",
+    "DepEd DO 015 s. 2026 score transmutation engine with per-subject mastery tracking and diagnostic weak-point analysis",
   ];
 
   return (
-    <section id="about" className="relative py-16 lg:py-24 bg-muted/30 dark:bg-card/30 overflow-hidden transition-colors duration-200">
+    <section id="about" className="relative py-12 sm:py-16 lg:py-20 bg-muted/30 dark:bg-card/30 overflow-hidden transition-colors duration-200">
       {/* Subtle Background Graduation Cap Watermark */}
       <div className="absolute right-0 top-1/2 -translate-y-1/2 w-96 h-96 opacity-[0.035] dark:opacity-[0.02] pointer-events-none -z-0">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="w-full h-full text-primary">
@@ -44,8 +44,8 @@ export function AboutSection() {
               {/* Primary Image: Group Study in Library */}
               <div className="relative w-full aspect-[16/10] rounded-3xl overflow-hidden shadow-2xl border-4 border-card bg-muted">
                 <Image
-                  src="/images/library-group.jpg"
-                  alt="High school students studying together"
+                  src="/images/filipino-students-group.jpg"
+                  alt="Filipino high school students studying together in school uniforms"
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                   className="object-cover hover:scale-105 transition-transform duration-700"
@@ -55,8 +55,8 @@ export function AboutSection() {
               {/* Overlapping Secondary Image: Student Writing */}
               <div className="absolute -bottom-10 -right-4 sm:-right-8 w-44 sm:w-56 aspect-square rounded-2xl overflow-hidden shadow-2xl border-4 border-card bg-card z-20">
                 <Image
-                  src="/images/student-writing.jpg"
-                  alt="High school student taking notes"
+                  src="/images/filipino-student-writing.jpg"
+                  alt="Filipina high school student taking notes in her study notebook"
                   fill
                   sizes="(max-width: 640px) 176px, 224px"
                   className="object-cover hover:scale-105 transition-transform duration-500"
@@ -102,7 +102,7 @@ export function AboutSection() {
 
             {/* Description */}
             <p className="text-base text-muted-foreground leading-relaxed font-normal">
-              HighSchool Tutor structures Junior & Senior High School subjects into standardized 12-lesson modules and 24 assessments, backed by 24/7 AI Socratic explanation support in Taglish so students master complex concepts with confidence.
+              HighSchool Tutor structures Junior &amp; Senior High School subjects into standardized 8-lesson modules and 24 practice drills, backed by 24/7 AI Socratic explanation support in Taglish so students master complex concepts with confidence.
             </p>
 
             {/* Checklist items */}

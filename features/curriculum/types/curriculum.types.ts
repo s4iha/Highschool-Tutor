@@ -46,6 +46,7 @@ export type LessonProgressStatus =
   | "Not Started"
   | "In Progress"
   | "Needs Review"
+  | "Practice Proficient"
   | "Practice Passed"
   | "Mastered";
 
@@ -97,7 +98,8 @@ export type SubjectWeakPointsResult = {
 export type CatalogFilterLevel = "all" | "Junior High School" | "Senior High School";
 export type CatalogJhsQuarter = "all" | "Quarter 1" | "Quarter 2" | "Quarter 3" | "Quarter 4";
 export type CatalogShsSemester = "all" | "Semester 1" | "Semester 2";
-export type CatalogShsStrand = "all" | "STEM" | "ABM" | "HUMSS" | "GAS" | "TVL";
+export type CatalogShsStrand = "all" | "STEM" | "ABM" | "HUMSS" | "GAS" | "TVL" | "Arts & Design" | "Sports";
+export type ShsStrand = "Core" | "Applied" | "STEM" | "ABM" | "HUMSS" | "GAS" | "TVL" | "Arts & Design" | "Sports";
 
 export type CatalogFilterState = {
   level: CatalogFilterLevel;

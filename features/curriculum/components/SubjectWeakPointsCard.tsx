@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   Award,
   ArrowRight,
-  Sparkles,
   Loader2,
 } from "lucide-react";
 import {
@@ -86,8 +85,13 @@ export function SubjectWeakPointsCard({
     );
   }
 
-  // If no weak points exist or no attempts yet
-  if (!data || data.weakPoints.length === 0) {
+  // If no attempts exist yet for this subject, hide the diagnostic card completely
+  if (!data || data.totalAttemptedLessons === 0) {
+    return null;
+  }
+
+  // If attempted competencies have no weak points (all >= 75%)
+  if (data.weakPoints.length === 0) {
     return (
       <Card className={`rounded-2xl border-emerald-500/30 bg-emerald-500/5 shadow-xs p-5 ${className}`}>
         <div className="flex items-start sm:items-center gap-3.5">
@@ -95,14 +99,14 @@ export function SubjectWeakPointsCard({
             <Award className="size-5" />
           </div>
           <div className="space-y-0.5">
-            <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+            <h4 className="text-sm font-bold text-foreground flex flex-wrap items-center gap-2">
               <span>Diagnostic Mastery Achieved</span>
-              <Badge variant="outline" className="text-[10px] font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10">
-                DepEd DO 015 Passing Grade ≥ 75%
+              <Badge variant="outline" className="text-[10px] font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 shrink-0 whitespace-nowrap">
+                Mastery Target ≥ 75%
               </Badge>
             </h4>
             <p className="text-xs text-muted-foreground">
-              All attempted competencies for this subject currently meet or exceed the official passing threshold. Keep up the great work!
+              All attempted competencies for this subject currently meet or exceed the 75% mastery benchmark. Keep up the great work!
             </p>
           </div>
         </div>
@@ -113,19 +117,19 @@ export function SubjectWeakPointsCard({
   return (
     <Card className={`rounded-2xl border-amber-500/40 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-background shadow-xs overflow-hidden ${className}`}>
       <CardHeader className="p-5 pb-3 space-y-1">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-wrap items-start sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-foreground">
             <AlertTriangle className="size-4 text-amber-500 shrink-0" />
             <CardTitle className="text-sm sm:text-base font-bold">
               Diagnostic Weak Points
             </CardTitle>
           </div>
-          <Badge variant="outline" className="text-[10px] font-bold border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-500/15">
+          <Badge variant="outline" className="text-[10px] font-bold border-amber-500/40 text-amber-700 dark:text-amber-300 bg-amber-500/15 shrink-0 whitespace-nowrap">
             {data.totalWeakPoints} {data.totalWeakPoints === 1 ? "Competency" : "Competencies"} Under 75%
           </Badge>
         </div>
         <CardDescription className="text-xs text-muted-foreground leading-relaxed">
-          Based on your latest attempt per lesson, these topics fall below the DepEd DO 015 s. 2026 passing threshold (&lt; 75%). Practice them in Socratic Study mode to strengthen your mastery.
+          Based on your latest attempt per lesson, these topics scored below the 75% mastery benchmark (&lt; 75%). Practice them in Socratic Study mode to strengthen your mastery.
         </CardDescription>
       </CardHeader>
 
@@ -173,7 +177,7 @@ export function SubjectWeakPointsCard({
                   size="sm"
                   onClick={() => targetedPracticeMutation.mutate(wp.lessonNumber)}
                   disabled={isPracticing}
-                  className="shrink-0 h-8 text-xs font-bold gap-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer"
+                  className="w-full sm:w-auto shrink-0 h-8 text-xs font-bold gap-1.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 shadow-xs cursor-pointer justify-center"
                 >
                   {isPracticing ? (
                     <>
@@ -182,7 +186,6 @@ export function SubjectWeakPointsCard({
                     </>
                   ) : (
                     <>
-                      <Sparkles className="size-3 text-amber-300" />
                       <span>Targeted Practice</span>
                       <ArrowRight className="size-3" />
                     </>

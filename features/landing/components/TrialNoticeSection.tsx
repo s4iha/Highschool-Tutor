@@ -4,7 +4,6 @@ import React from "react";
 import Link from "next/link";
 import {
   Clock,
-  Sparkles,
   CheckCircle2,
   ShieldCheck,
   ArrowRight,
@@ -16,7 +15,7 @@ import { Badge } from "@/shared/components/ui/badge";
 export function TrialNoticeSection() {
   const trialPerks = [
     {
-      title: "Full Access to All 130+ Subjects",
+      title: "Full Access to All 75+ Subjects",
       description: "No locked curriculum tracks. Explore Junior High (Grades 7–10) and Senior High (STEM, ABM, HUMSS, GAS, TVL) freely.",
     },
     {
@@ -34,9 +33,9 @@ export function TrialNoticeSection() {
   ];
 
   return (
-    <section id="free-trial" className="relative py-16 sm:py-20 lg:py-24 bg-muted/40 dark:bg-card/20 border-y border-border/60">
+    <section id="free-trial" className="relative py-12 sm:py-16 lg:py-20 bg-muted/40 dark:bg-card/20 border-y border-border/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 p-8 sm:p-12 lg:p-16 shadow-2xl">
+        <div className="relative overflow-hidden rounded-3xl border border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 p-5 sm:p-8 lg:p-12 shadow-2xl">
           {/* Decorative Background Accents */}
           <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
@@ -80,7 +79,7 @@ export function TrialNoticeSection() {
 
             {/* Right Column: Pricing & Trial Card */}
             <div className="lg:col-span-5">
-              <div className="relative rounded-3xl border border-border/80 bg-background p-6 sm:p-8 shadow-xl flex flex-col gap-6">
+              <div className="relative rounded-3xl border border-border/80 bg-background p-5 sm:p-6 lg:p-8 shadow-xl flex flex-col gap-6">
                 <div className="flex items-center justify-between">
                   <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 border-primary/30 text-primary bg-primary/5">
                     <Clock className="size-3 mr-1 text-primary" />
@@ -129,7 +128,7 @@ export function TrialNoticeSection() {
                 <div className="space-y-2.5">
                   <Button asChild size="lg" className="w-full rounded-xl text-xs sm:text-sm font-bold shadow-md gap-2">
                     <Link href="/login">
-                      <Sparkles className="size-4" />
+                      
                       <span>Start 30-Day Free Trial</span>
                       <ArrowRight className="size-4" />
                     </Link>

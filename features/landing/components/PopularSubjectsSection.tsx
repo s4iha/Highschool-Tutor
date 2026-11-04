@@ -1,95 +1,58 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  BookMarked,
-  ArrowRight,
-  Star,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { BookMarked, ArrowRight } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
+import { FEATURED_POPULAR_SUBJECTS } from "../constants/popular-subjects";
+import { cn } from "@/lib/utils";
 
 export function PopularSubjectsSection() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [hasMoved, setHasMoved] = useState(false);
 
-  const scroll = (direction: "left" | "right") => {
-    if (scrollContainerRef.current) {
-      const scrollAmount = 320;
-      scrollContainerRef.current.scrollBy({
-        left: direction === "left" ? -scrollAmount : scrollAmount,
-        behavior: "smooth",
-      });
+  const subjects = FEATURED_POPULAR_SUBJECTS;
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setHasMoved(false);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollLeft(scrollContainerRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    if (Math.abs(walk) > 5) {
+      setHasMoved(true);
+    }
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk;
+  };
+
+  const handleClickCapture = (e: React.MouseEvent) => {
+    if (hasMoved) {
+      e.stopPropagation();
+      e.preventDefault();
     }
   };
 
-  const subjects = [
-    {
-      id: 1,
-      category: "SHS CORE",
-      title: "General Mathematics",
-      image: "/images/course-programming.jpg",
-      rating: 4.9,
-      reviews: "2.4K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 11 • Semester 1",
-      price: "FREE TRIAL",
-      slug: "g11-s1-genmath",
-    },
-    {
-      id: 2,
-      category: "STEM STRAND",
-      title: "Pre-Calculus & Analytical Geometry",
-      image: "/images/course-accounting.jpg",
-      rating: 4.8,
-      reviews: "1.8K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 11 STEM • Semester 1",
-      price: "FREE TRIAL",
-      slug: "g11-s1-precalc",
-    },
-    {
-      id: 3,
-      category: "SHS CORE",
-      title: "Earth and Life Science",
-      image: "/images/course-anatomy.jpg",
-      rating: 4.9,
-      reviews: "1.9K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 11 • Semester 1",
-      price: "FREE TRIAL",
-      slug: "g11-s1-earthsci",
-    },
-    {
-      id: 4,
-      category: "JUNIOR HIGH CORE",
-      title: "Grade 10 Science: Physics & Biology",
-      image: "/images/course-agriculture.jpg",
-      rating: 4.7,
-      reviews: "1.5K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 10 • Trimester 1",
-      price: "FREE TRIAL",
-      slug: "g10-t1-sci",
-    },
-    {
-      id: 5,
-      category: "APPLIED ACADEMIC",
-      title: "English for Academic Purposes (EAPP)",
-      image: "/images/course-composition.jpg",
-      rating: 4.8,
-      reviews: "1.3K",
-      lessons: "12 Lessons • 24 Quizzes",
-      level: "Grade 11 • Semester 1",
-      price: "FREE TRIAL",
-      slug: "g11-s1-eapp",
-    },
-  ];
-
   return (
-    <section id="subjects" className="py-16 lg:py-24 bg-muted/40 relative transition-colors duration-200">
+    <section id="subjects" className="py-12 sm:py-16 lg:py-20 bg-muted/40 relative transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Eyebrow Header */}
         <div className="flex items-center justify-center gap-3 mb-3">
@@ -102,46 +65,37 @@ export function PopularSubjectsSection() {
         </div>
 
         {/* Section Header & View All */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-10 text-center sm:text-left">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8 sm:mb-10 text-center sm:text-left">
           <h2 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
             Our Most Popular DepEd Subjects
           </h2>
           <Link
-            href="/curriculum"
+            href="/subjects"
             className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline transition-colors group"
           >
-            <span>View All 130+ DepEd Subjects</span>
+            <span>View All 75+ DepEd Subjects</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
-        {/* Carousel Container with Prev/Next buttons */}
-        <div className="relative group/carousel">
-          {/* Prev Button */}
-          <button
-            type="button"
-            onClick={() => scroll("left")}
-            aria-label="Previous subjects"
-            className="absolute -left-3 lg:-left-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card shadow-lg border border-border flex items-center justify-center text-foreground hover:text-primary hover:scale-110 transition-all z-20"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          {/* Next Button */}
-          <button
-            type="button"
-            onClick={() => scroll("right")}
-            aria-label="Next subjects"
-            className="absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card shadow-lg border border-border flex items-center justify-center text-foreground hover:text-primary hover:scale-110 transition-all z-20"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-
+        {/* Swipable Carousel Track Container */}
+        <div className="relative">
           {/* Subject Cards Scroll Track / Grid */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-5 sm:gap-6 overflow-x-auto pb-4 pt-1 px-1 scroll-smooth no-scrollbar"
-            style={{ scrollSnapType: "x mandatory" }}
+            onMouseDown={handleMouseDown}
+            onMouseLeave={handleMouseLeave}
+            onMouseUp={handleMouseUp}
+            onMouseMove={handleMouseMove}
+            onClickCapture={handleClickCapture}
+            className={cn(
+              "flex gap-5 sm:gap-6 overflow-x-auto pb-4 pt-1 px-1 no-scrollbar select-none",
+              isDragging ? "cursor-grabbing" : "cursor-grab"
+            )}
+            style={{
+              scrollSnapType: isDragging ? "none" : "x mandatory",
+              WebkitOverflowScrolling: "touch",
+            }}
           >
             {subjects.map((subject) => (
               <div
@@ -151,7 +105,7 @@ export function PopularSubjectsSection() {
               >
                 {/* Subject Image */}
                 <div>
-                  <div className="relative w-full aspect-[16/10] overflow-hidden bg-muted">
+                  <div className="relative w-full aspect-[16/10] overflow-hidden bg-muted pointer-events-none">
                     <Image
                       src={subject.image}
                       alt={subject.title}
@@ -173,21 +127,10 @@ export function PopularSubjectsSection() {
                       {subject.title}
                     </h3>
 
-                    {/* Rating */}
-                    <div className="flex items-center gap-1.5 mb-3">
-                      <div className="flex items-center text-amber-500">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className="w-3.5 h-3.5 fill-amber-500 text-amber-500"
-                          />
-                        ))}
-                      </div>
-                      <span className="text-xs font-bold text-card-foreground">
-                        {subject.rating}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({subject.reviews})
+                    {/* Genuine Curriculum Metadata */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-[11px] font-medium text-muted-foreground">
+                        {subject.quarter}
                       </span>
                     </div>
 

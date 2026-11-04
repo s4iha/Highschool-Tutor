@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "@/shared/components/ui/sonner";
 import { UpgradeModal } from "@/shared/components/ui/UpgradeModal";
 import { PaymentCelebrationDialog } from "@/features/billing/components/PaymentCelebrationDialog";
+import { CheckoutReturnIntentListener } from "@/features/billing/components/CheckoutReturnIntentListener";
 import { ReferralTracker } from "@/shared/components/marketing/ReferralTracker";
 import { OnboardingModal } from "@/features/auth/components/OnboardingModal";
 import {
@@ -85,6 +86,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn(
         "h-full",
         "antialiased",
@@ -104,6 +106,7 @@ export default function RootLayout({
           <QueryProvider>
             <Toaster position="bottom-right" closeButton />
             <ReferralTracker />
+            <CheckoutReturnIntentListener />
             <UpgradeModal />
             <PaymentCelebrationDialog />
             <OnboardingModal />

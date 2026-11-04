@@ -1,10 +1,11 @@
 import { MetadataRoute } from "next";
 import { getCanonicalUrl } from "./siteConfig";
-import { TRACKS_DATA } from "@/features/landing/components";
+import { TRACKS_DATA } from "@/features/landing/constants/tracks-data";
+import { getAllSubjectScopeSlugs } from "@/features/curriculum/utils/subject-scope-data";
 
 /**
  * Builds dynamic sitemap entries conforming to Next.js 16 MetadataRoute.Sitemap.
- * Enumerates all public static marketing routes and dynamic curriculum track routes.
+ * Enumerates all public static marketing routes, dynamic curriculum tracks, and subject scope pages.
  */
 export function buildSitemapEntries(): MetadataRoute.Sitemap {
   const lastModified = new Date();
@@ -18,6 +19,12 @@ export function buildSitemapEntries(): MetadataRoute.Sitemap {
     },
     {
       url: getCanonicalUrl("/tracks"),
+      lastModified,
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: getCanonicalUrl("/subjects"),
       lastModified,
       changeFrequency: "daily",
       priority: 0.9,
@@ -51,5 +58,14 @@ export function buildSitemapEntries(): MetadataRoute.Sitemap {
     })
   );
 
-  return [...staticEntries, ...trackEntries];
+  const subjectEntries: MetadataRoute.Sitemap = getAllSubjectScopeSlugs().map(
+    (slug) => ({
+      url: getCanonicalUrl(`/subjects/${slug}`),
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.8,
+    })
+  );
+
+  return [...staticEntries, ...trackEntries, ...subjectEntries];
 }

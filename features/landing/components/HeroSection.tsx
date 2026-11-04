@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Bot,
   Calendar,
+  GraduationCap,
   Layers,
   TrendingUp,
 } from "lucide-react";
@@ -15,7 +16,7 @@ import { Badge } from "@/shared/components/ui/badge";
 
 export function HeroSection() {
   return (
-    <section id="hero" className="relative pt-8 pb-16 lg:pt-14 lg:pb-24 overflow-hidden bg-gradient-to-b from-primary/10 via-background to-muted/30 dark:from-primary/5 dark:via-background dark:to-background transition-colors duration-200">
+    <section id="hero" className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 lg:pt-14 lg:pb-20 overflow-hidden bg-gradient-to-b from-primary/10 via-background to-muted/30 dark:from-primary/5 dark:via-background dark:to-background transition-colors duration-200">
       {/* Decorative background grid & radial glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary/20 dark:bg-primary/10 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-20 right-10 w-72 h-72 bg-info/20 dark:bg-info/10 rounded-full blur-3xl pointer-events-none -z-10" />
@@ -32,42 +33,49 @@ export function HeroSection() {
           {/* Left Column: Headline, Badge, Copy, CTAs */}
           <div className="lg:col-span-6 space-y-6 text-center lg:text-left">
             {/* Top Eyebrow Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/15 dark:bg-primary/20 text-primary dark:text-primary-foreground border border-primary/30 shadow-xs">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 dark:bg-primary/20 text-primary text-xs font-bold tracking-wide uppercase border border-primary/20 shadow-xs">
+              <GraduationCap className="w-4 h-4 text-primary shrink-0" />
+              <span>DepEd Order No. 015, s. 2026 Aligned • Philippine K-12 MATATAG Companion</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-foreground tracking-tight leading-[1.12]">
-              Master High School <br />
+              Ace DepEd High School Exams <br />
+              with{" "}
               <span className="text-primary bg-gradient-to-r from-primary via-emerald-500 to-teal-500 bg-clip-text text-transparent">
-                Lessons & Quizzes
-              </span>{" "}
-              with AI
+                Socratic AI Tutoring
+              </span>
             </h1>
 
             {/* Subtitle / Description */}
             <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 font-normal leading-relaxed">
-              Complete DepEd-aligned curriculum for Grades 7 to 12. Practice with 12 structured lessons, 24 verified quizzes per subject, and get step-by-step Socratic AI explanations in English and Taglish.
+              Complete DepEd-aligned curriculum across 75+ Junior &amp; Senior High subjects. Practice with 8 structured lessons, 24 verified drills per subject, and get step-by-step Socratic guidance in English and Taglish.
             </p>
 
             {/* Call to Actions */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
-              <Button asChild size="lg" className="w-full sm:w-auto shadow-lg shadow-primary/20 rounded-xl px-7 py-6 text-sm font-bold gap-2">
-                <Link href="/#subjects">
-                  <span>Explore Subjects</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto rounded-xl px-7 py-6 text-sm font-semibold border-border hover:bg-muted">
-                <Link href="/login">
-                  <span>Student Sign In</span>
-                </Link>
-              </Button>
+            <div className="flex flex-col gap-2 pt-2 items-center lg:items-start">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 w-full">
+                <Button asChild size="lg" className="w-full sm:w-auto shadow-lg shadow-primary/20 rounded-xl px-7 py-6 text-sm font-bold gap-2">
+                  <Link href="/login">
+                    <span>Start 30-Day Free Trial</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="w-full sm:w-auto rounded-xl px-7 py-6 text-sm font-semibold border-border hover:bg-muted">
+                  <Link href="/#subjects">
+                    <span>Explore Subjects</span>
+                  </Link>
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground font-medium pt-1">
+                ₱0 upfront • No credit card required • Cancel anytime
+              </p>
             </div>
 
             {/* Trust Badges */}
             <div className="pt-6 border-t border-border/60 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-success" />
+                <div className="w-2 h-2 rounded-full bg-emerald-500" />
                 <span className="font-semibold text-foreground">DepEd DO 015 s. 2026</span>
               </div>
               <div className="flex items-center gap-2">
@@ -75,8 +83,8 @@ export function HeroSection() {
                 <span className="font-semibold text-foreground">Google Gemini 3.5-Flash-Lite AI</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-warning" />
-                <span className="font-semibold text-foreground">Junior & Senior High</span>
+                <div className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="font-semibold text-foreground">75+ DepEd Subjects</span>
               </div>
             </div>
           </div>
@@ -90,8 +98,8 @@ export function HeroSection() {
             <div className="relative w-full max-w-[420px] aspect-[4/5] rounded-3xl overflow-visible mx-auto">
               <div className="w-full h-full rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 border-4 border-card bg-gradient-to-b from-primary/10 to-muted relative">
                 <Image
-                  src="/images/hero-student.jpg"
-                  alt="High School Student Studying with HighSchool Tutor"
+                  src="/images/filipino-student-writing.jpg"
+                  alt="Filipino high school student studying DepEd MATATAG curriculum with HighSchool Tutor"
                   fill
                   priority
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 420px"
@@ -128,7 +136,7 @@ export function HeroSection() {
                     AI Socratic Tutor
                   </h4>
                   <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">
-                    Ask questions & get instant help in Taglish
+                    Instant &apos;Bakit Mali Ito?&apos; hints in Taglish
                   </p>
                 </div>
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary shadow-xs shrink-0">
@@ -146,7 +154,7 @@ export function HeroSection() {
                     <Calendar className="w-4 h-4 text-primary" />
                   </div>
                   <span className="text-xs sm:text-sm font-bold text-card-foreground truncate">
-                    Earth & Life Science
+                    Earth &amp; Life Science
                   </span>
                 </div>
                 <Badge variant="secondary" className="text-[10px] font-bold">

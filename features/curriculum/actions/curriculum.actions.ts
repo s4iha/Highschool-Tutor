@@ -17,7 +17,7 @@ import {
   recordAttemptInputSchema,
   targetedPracticeInputSchema,
 } from "../schemas/curriculum.schema";
-import { sampleQuizQuestions } from "../utils/quiz-sampler";
+import { selectTargetedPracticeQuestions } from "../utils/quiz-sampler";
 import {
   checkAndConsumeAiCredit,
   getAiCreditBalance,
@@ -527,7 +527,7 @@ export async function getSubjectProgressAction(subjectSlug: string): Promise<{
       const status: LessonProgressStatus = isMastered
         ? "Mastered"
         : isPassing
-        ? "Practice Passed"
+        ? "Practice Proficient"
         : "Needs Review";
 
       if (!lessonScores[a.lessonNumber]) {
@@ -617,11 +617,11 @@ export async function getUserQuizAttemptsAction(limit = 10): Promise<{
         transmuted = Math.round(60 + (percent / 60) * 14);
       }
 
-      let descriptor = "Did Not Meet Expectations (<75%)";
-      if (transmuted >= 90) descriptor = "PASSED (Outstanding)";
-      else if (transmuted >= 85) descriptor = "PASSED (Very Satisfactory)";
-      else if (transmuted >= 80) descriptor = "PASSED (Satisfactory)";
-      else if (transmuted >= 75) descriptor = "PASSED (Fairly Satisfactory)";
+      let descriptor = "Needs Review (<75%)";
+      if (transmuted >= 90) descriptor = "Mastered (Outstanding)";
+      else if (transmuted >= 85) descriptor = "Mastered (Very Satisfactory)";
+      else if (transmuted >= 80) descriptor = "Proficient (Satisfactory)";
+      else if (transmuted >= 75) descriptor = "Competency Met";
 
       const dateFormatted = new Intl.DateTimeFormat("en-US", {
         month: "short",
@@ -673,6 +673,7 @@ export async function getSubjectWeakPointsAction(subjectSlug: string): Promise<{
     lastAttemptDate: Date;
   }>;
   totalWeakPoints: number;
+  totalAttemptedLessons: number;
   passingThreshold: number;
   error?: string;
 }> {
@@ -684,6 +685,7 @@ export async function getSubjectWeakPointsAction(subjectSlug: string): Promise<{
         subjectSlug,
         weakPoints: [],
         totalWeakPoints: 0,
+        totalAttemptedLessons: 0,
         passingThreshold: 75,
       };
     }
@@ -755,6 +757,7 @@ export async function getSubjectWeakPointsAction(subjectSlug: string): Promise<{
       subjectSlug,
       weakPoints,
       totalWeakPoints: weakPoints.length,
+      totalAttemptedLessons: latestAttemptByLesson.size,
       passingThreshold: 75,
     };
   } catch (err) {
@@ -764,6 +767,7 @@ export async function getSubjectWeakPointsAction(subjectSlug: string): Promise<{
       subjectSlug,
       weakPoints: [],
       totalWeakPoints: 0,
+      totalAttemptedLessons: 0,
       passingThreshold: 75,
       error: err instanceof Error ? err.message : "Failed to load weak points",
     };
@@ -808,7 +812,47 @@ export async function createTargetedPracticeAction(rawInput: unknown): Promise<{
       return { success: false, error: "Failed to load questions for targeted practice" };
     }
 
-    const sampled = sampleQuizQuestions(quizResult.questions, input.questionCount || 10);
+    // 1. Fetch user's previous quiz sessions for this lesson to identify missed questions (Tier 1)
+    const previousSessions = sessionUser?.id
+      ? await prisma.quizSession.findMany({
+          where: {
+            userId: sessionUser.id,
+            subjectSlug: input.subjectSlug,
+            lessonNumber: input.lessonNumber,
+          },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+        })
+      : [];
+
+    const missedQuestionTexts: string[] = [];
+    for (const s of previousSessions) {
+      if (Array.isArray(s.questions)) {
+        const qList = s.questions as Array<{ question?: string; answer?: string }>;
+        const answers = (s.userAnswers as Record<string, string>) || {};
+        qList.forEach((q, idx) => {
+          if (q && q.question) {
+            const studentAns = answers[String(idx)] ?? answers[idx];
+            if (!studentAns || studentAns !== q.answer) {
+              missedQuestionTexts.push(q.question);
+            }
+          }
+        });
+      }
+    }
+
+    // 2. Fetch lesson keyConcepts (Tier 2)
+    const lessonsResult = await getLessonsAction(input.subjectSlug);
+    const lesson = (lessonsResult.lessons || []).find((l) => l.number === input.lessonNumber);
+    const keyConcepts = lesson?.keyConcepts || [];
+
+    // 3. Select 3-tier prioritized targeted questions
+    const sampled = selectTargetedPracticeQuestions({
+      availableQuestions: quizResult.questions,
+      missedQuestionTexts,
+      keyConcepts,
+      count: input.questionCount || 10,
+    });
     const session = await prisma.quizSession.create({
       data: {
         userId: sessionUser?.id ?? null,

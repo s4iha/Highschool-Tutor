@@ -84,11 +84,11 @@ function calculateTransmutedGrade(score: number, total: number): number {
 
 function getTransmutedRemarks(avg: number | null): string {
   if (avg === null) return "No evaluations yet";
-  if (avg >= 90) return "Outstanding (DepEd)";
-  if (avg >= 85) return "Very Satisfactory";
-  if (avg >= 80) return "Satisfactory";
-  if (avg >= 75) return "Fairly Satisfactory (Passed)";
-  return "Did Not Meet Expectations";
+  if (avg >= 90) return "Mastered (Outstanding)";
+  if (avg >= 85) return "Mastered (Very Satisfactory)";
+  if (avg >= 80) return "Proficient (Satisfactory)";
+  if (avg >= 75) return "Competency Met";
+  return "Needs Review (<75%)";
 }
 
 export async function getDashboardDataAction(): Promise<{
