@@ -2,6 +2,38 @@
 
 ## [2026-11-03]
 
+### Task 029 - Authentic Filipino Hero Imagery, Frictionless Subscription Availment, DepEd MATATAG Scope Pages & Expanded Curriculum Catalog
+
+- **Authentic Filipino Hero Imagery (`features/landing/components/HeroSection.tsx`)**:
+  - Replaced foreign student stock photograph with authentic high-resolution photograph of a local Filipino high school student in Philippine school uniform studying with notebook (`public/images/filipino-student-writing.jpg`).
+  - Container strictly enforced with a 4:5 vertical portrait aspect ratio (`aspect-[4/5]`) using Next.js `Image` with `object-cover` and `object-top` positioning.
+  - Configured Next.js Image with `priority`, responsive `sizes`, and descriptive alt text: *"Filipino high school student studying DepEd MATATAG curriculum with HighSchool Tutor"*.
+  - Positioned floating preview cards to prevent facial occlusion across mobile (360px-375px) and desktop viewports.
+- **Frictionless Subscription Availment via Auth Intercept & Return Intent (`features/billing/`)**:
+  - Eliminated jarring 401 Unauthorized toast errors when unauthenticated visitors click subscribe or checkout.
+  - Implemented `AuthInterceptDialog.tsx` displaying plan badge, pricing, domestic payment rails (QR Ph, GCash, Maya, Cards), and Google/Email auth buttons.
+  - Added client-side preflight check in `CheckoutModal.tsx` that captures user plan selection and affiliate code into `sessionStorage` with a 2-hour TTL via `returnIntent.ts`.
+  - Created `useCheckoutReturnIntent.ts` and mounted `CheckoutReturnIntentListener.tsx` in `app/layout.tsx` to automatically detect session activation, purge storage idempotently, and initiate PayMongo checkout redirect without manual re-selection.
+- **Public DepEd MATATAG Subject Scope Pages & SEO (`app/subjects/`, `features/curriculum/`, `features/seo/`)**:
+  - Built public catalog route `app/subjects/page.tsx` embedding `PublicSubjectCatalog.tsx` with instant multi-facet filtering (level, strand, search).
+  - Built dynamic route `app/subjects/[slug]/page.tsx` rendering `SubjectScopeView.tsx` with official course code, hours, prerequisites, DepEd descriptions, competencies table, and Socratic AI practice CTAs.
+  - Implemented `generateStaticParams()` to pre-render 320+ canonical subject scope pages statically at build time with 0 build warnings.
+  - Added Schema.org `Course` and `BreadcrumbList` JSON-LD structured data via `schemaBuilders.ts`.
+  - Updated `sitemapBuilder.ts` to dynamically enumerate `/subjects` and all `/subjects/[slug]` routes.
+- **Missing SHS Tracks & Core TVL Catalog Expansion (`curriculum-data.ts`, `TrackDetail.tsx`)**:
+  - Expanded `SHS_SUBJECT_CATALOG` in `curriculum-data.ts` to include 6 Arts and Design general subjects + 5 specializations, 9 Sports Track subjects, and core TVL specializations across Agri-Fishery Arts (AFA), Industrial Arts (IA), Home Economics (HE), and Information and Communications Technology (ICT).
+  - Registered `arts-design-track` (with `Palette` icon) and `sports-track` (with `Trophy` icon) in `TRACKS_DATA` in `features/landing/components/TrackDetail.tsx`.
+  - Updated `tvl-track` in `TRACKS_DATA` with full 4-sector coverage (AFA, IA, HE, ICT).
+  - Updated unit test suite `tests/unit/tracks-data.test.ts` to validate all 9 tracks and 8-module standardization.
+- **Post-Implementation Bug Fixes & UX Streamlining**:
+  - *Auth Intercept Modal Redundancy & Persistence Fix*: Streamlined dual CTAs into a single primary button: *"Continue to Sign In / Sign Up"* in `AuthInterceptDialog.tsx`. Fixed modal persistence bug by invoking `onOpenChange(false)` on click and auto-closing `UpgradeModal.tsx` whenever navigating to `/login` or `/register`.
+  - *Track Page 404 Resolution & Server-Safe Data Extraction*: Extracted `TRACKS_DATA` from `"use client"` `TrackDetail.tsx` into a dedicated, server-safe constants file `features/landing/constants/tracks-data.ts`. Resolved Next.js SSR/SSG boundary issue that was preventing static path generation for `/tracks/[id]` (`abm-strand`, etc.).
+  - *Seamless Curriculum & Scope Navigation*: Updated `Navbar.tsx` "Subjects Catalog", `Footer.tsx` "Subjects Catalog", and `PopularSubjectsSection.tsx` "View All 75+ DepEd Subjects" to link directly to the new public `/subjects` catalog. Added direct links from each featured track subject on `/tracks/[id]` to its respective `/subjects/[slug]` DepEd scope page.
+- **Verification & Quality Assurance**:
+  - All unit test suites passed cleanly: `tests/unit/tracks-data.test.ts` (8/8), `tests/unit/subject-scope.test.ts` (7/7), `tests/unit/auth-intercept.test.ts` (6/6), `tests/unit/hero-section.test.ts` (6/6), `tests/unit/curriculum-data.test.ts` (6/6), `__tests__/seo/sitemap.test.ts`, and `__tests__/seo/seoAuditor.test.ts` (9/9) — 42/42 tests passing.
+  - Strict TypeScript checking passed with 0 errors (`npx tsc --noEmit`).
+  - Next.js production build (`npm run build`) completed successfully with 372 pages pre-rendered statically with zero errors.
+
 ### Task 028 - Landing Page Overhaul, Curriculum Truth Alignment, and Conversion Optimization
 
 - **Outcome-Driven Hero & PLG Free Trial Experience (`features/landing/components/HeroSection.tsx`)**:

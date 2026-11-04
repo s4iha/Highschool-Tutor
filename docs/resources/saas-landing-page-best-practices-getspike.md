@@ -1,7 +1,8 @@
 ## TLDR
 
 - Most SaaS landing page headlines are too vague. Your headline fails the specificity test if three of your competitors could use the exact same sentence.
-- Treat your landing page not as a brochure but as a sequenced sales conversation. Each section should answer the next logical objection a visitor has as they scroll.
+- Treat your landing page not as a brochure but as a sequenced sales conversation. Each section should answer
+  the next logical objection a visitor has as they scroll.
 - Social proof is not a design element; it's a trust argument. Use "proof stacking"—layering logos, specific testimonials, and usage metrics—at the point of maximum visitor skepticism.
 - The architecture of a product-led growth (PLG) page and a sales-led enterprise page must be different. PLG pages optimize for zero friction to signup; sales-led pages build a case before the demo request.
 - Over-designing a page with excessive animations and heavy assets creates cognitive load and poor page speed, measurably costing conversions. The bottleneck is often editorial discipline, not technical compression.
