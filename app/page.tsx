@@ -32,7 +32,7 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="flex flex-col gap-12 sm:gap-16 pb-12">
+    <div className="flex flex-col">
       {/* 1. Hero Experience (PLG Value Proposition & Frictionless Trial CTA) */}
       <HeroSection />
 

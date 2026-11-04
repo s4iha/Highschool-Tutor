@@ -16,7 +16,7 @@ import { Badge } from "@/shared/components/ui/badge";
 
 export function HeroSection() {
   return (
-    <section id="hero" className="relative pt-8 pb-16 lg:pt-14 lg:pb-24 overflow-hidden bg-gradient-to-b from-primary/10 via-background to-muted/30 dark:from-primary/5 dark:via-background dark:to-background transition-colors duration-200">
+    <section id="hero" className="relative pt-6 pb-12 sm:pt-10 sm:pb-16 lg:pt-14 lg:pb-20 overflow-hidden bg-gradient-to-b from-primary/10 via-background to-muted/30 dark:from-primary/5 dark:via-background dark:to-background transition-colors duration-200">
       {/* Decorative background grid & radial glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary/20 dark:bg-primary/10 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-20 right-10 w-72 h-72 bg-info/20 dark:bg-info/10 rounded-full blur-3xl pointer-events-none -z-10" />

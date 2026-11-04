@@ -7,9 +7,9 @@ import { Button } from "@/shared/components/ui/button";
 
 export function CtaBanner() {
   return (
-    <section className="py-12 bg-background transition-colors duration-200">
+    <section className="py-12 sm:py-16 lg:py-20 bg-background transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-emerald-600 to-teal-700 p-8 sm:p-12 shadow-2xl shadow-primary/20">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-primary via-emerald-600 to-teal-700 p-6 sm:p-10 lg:p-12 shadow-2xl shadow-primary/20">
           {/* Subtle Decorative Background Pattern */}
           <div className="absolute right-0 top-0 w-96 h-96 bg-white/10 rounded-full blur-2xl pointer-events-none -z-0" />
           <div className="absolute -left-10 -bottom-10 w-64 h-64 bg-emerald-500/20 rounded-full blur-xl pointer-events-none -z-0" />

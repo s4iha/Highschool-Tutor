@@ -35,9 +35,20 @@ interface DemoStudent {
   lastActive: string;
 }
 
+interface DemoLessonMastery {
+  lessonModule: string;
+  competency: string;
+  drillsDone: string;
+  transmutedScore: string;
+  status: string;
+  lastActive: string;
+}
+
 interface DemoSubjectData {
   questions: DemoQuestion[];
-  classAverage: string;
+  classAverage?: string;
+  transmutedAverage: string;
+  mastery: DemoLessonMastery[];
   gradebook: DemoStudent[];
   diagnosticInsight: {
     topicRecap: string;
@@ -82,38 +93,34 @@ const DEMO_SUBJECT_DATA: Record<string, DemoSubjectData> = {
         },
       },
     ],
-    gradebook: [
+    transmutedAverage: "94.5% (DepEd Outstanding)",
+    mastery: [
       {
-        name: "Juan Dela Cruz",
-        lrn: "109283746501",
-        gradeLevel: "Grade 11 - STEM A",
-        subject: "General Mathematics",
-        quizzesDone: "22 / 24",
-        averageScore: "94.5%",
-        status: "PASSED (Outstanding)",
+        lessonModule: "Lesson 01: Functions & Operations",
+        competency: "Evaluates functions and solves real-life piecewise models",
+        drillsDone: "3 / 3",
+        transmutedScore: "95.0%",
+        status: "Mastered",
         lastActive: "15 mins ago",
       },
       {
-        name: "Maria Santos",
-        lrn: "109283746502",
-        gradeLevel: "Grade 11 - STEM A",
-        subject: "General Mathematics",
-        quizzesDone: "20 / 24",
-        averageScore: "89.0%",
-        status: "PASSED (Very Satisfactory)",
+        lessonModule: "Lesson 02: Rational Functions & Equations",
+        competency: "Solves rational equations & checks domain restrictions",
+        drillsDone: "3 / 3",
+        transmutedScore: "89.0%",
+        status: "Practice Proficient",
         lastActive: "1 hour ago",
       },
       {
-        name: "Angelo Reyes",
-        lrn: "109283746503",
-        gradeLevel: "Grade 11 - STEM A",
-        subject: "General Mathematics",
-        quizzesDone: "18 / 24",
-        averageScore: "76.5%",
-        status: "NEEDS REVIEW (Fairly Satisfactory)",
+        lessonModule: "Lesson 04: Rational Inequalities & Graphs",
+        competency: "Determines asymptotes, intercepts & critical intervals",
+        drillsDone: "2 / 3",
+        transmutedScore: "76.5%",
+        status: "Needs Review",
         lastActive: "Yesterday",
       },
     ],
+    gradebook: [],
     diagnosticInsight: {
       topicRecap: "Rational Inequalities (Lesson 4) and Inverse Functions (Lesson 8)",
       description: "Across 24 quizzes in General Mathematics, 38% of Grade 11 students requested Socratic explanations on Rational Inequalities (Lesson 4) and Inverse Functions (Lesson 8). Recommending a focused recap before the 1st Periodic Examination.",
@@ -121,6 +128,33 @@ const DEMO_SUBJECT_DATA: Record<string, DemoSubjectData> = {
   },
   "Earth and Life Science": {
     classAverage: "90.8% (DepEd Outstanding)",
+    transmutedAverage: "90.8% (DepEd Outstanding)",
+    mastery: [
+      {
+        lessonModule: "Lesson 01: Historical Geology & Strata",
+        competency: "Applies relative dating and Law of Superposition",
+        drillsDone: "3 / 3",
+        transmutedScore: "96.0%",
+        status: "Mastered",
+        lastActive: "10 mins ago",
+      },
+      {
+        lessonModule: "Lesson 03: Cellular Respiration & Mitochondria",
+        competency: "Explains ATP production and oxidative phosphorylation",
+        drillsDone: "3 / 3",
+        transmutedScore: "88.5%",
+        status: "Practice Proficient",
+        lastActive: "2 hours ago",
+      },
+      {
+        lessonModule: "Lesson 07: Calvin Cycle & Photosynthesis",
+        competency: "Differentiates light-dependent from light-independent stages",
+        drillsDone: "2 / 3",
+        transmutedScore: "74.0%",
+        status: "Needs Review",
+        lastActive: "Yesterday",
+      },
+    ],
     questions: [
       {
         id: 1,
@@ -194,6 +228,33 @@ const DEMO_SUBJECT_DATA: Record<string, DemoSubjectData> = {
   },
   "Pre-Calculus": {
     classAverage: "88.5% (DepEd Very Satisfactory)",
+    transmutedAverage: "88.5% (DepEd Very Satisfactory)",
+    mastery: [
+      {
+        lessonModule: "Lesson 01: Parabolas & Standard Equations",
+        competency: "Derives vertex, focus & directrix of parabolas",
+        drillsDone: "3 / 3",
+        transmutedScore: "98.0%",
+        status: "Mastered",
+        lastActive: "5 mins ago",
+      },
+      {
+        lessonModule: "Lesson 02: Unit Circle & Circular Functions",
+        competency: "Computes exact special angle trigonometric values",
+        drillsDone: "3 / 3",
+        transmutedScore: "91.5%",
+        status: "Practice Proficient",
+        lastActive: "40 mins ago",
+      },
+      {
+        lessonModule: "Lesson 05: Hyperbola Asymptote Equations",
+        competency: "Calculates asymptotes and graphing lines for hyperbolas",
+        drillsDone: "2 / 3",
+        transmutedScore: "73.5%",
+        status: "Needs Review",
+        lastActive: "Yesterday",
+      },
+    ],
     questions: [
       {
         id: 1,
@@ -267,6 +328,33 @@ const DEMO_SUBJECT_DATA: Record<string, DemoSubjectData> = {
   },
   "Grade 10 Science": {
     classAverage: "88.8% (DepEd Very Satisfactory)",
+    transmutedAverage: "88.8% (DepEd Very Satisfactory)",
+    mastery: [
+      {
+        lessonModule: "Lesson 01: Plate Tectonics & Boundaries",
+        competency: "Models convergent oceanic plate subduction & island arcs",
+        drillsDone: "3 / 3",
+        transmutedScore: "95.5%",
+        status: "Mastered",
+        lastActive: "12 mins ago",
+      },
+      {
+        lessonModule: "Lesson 02: Electromagnetic Spectrum",
+        competency: "Compares frequencies and wavelengths of EM waves",
+        drillsDone: "3 / 3",
+        transmutedScore: "92.0%",
+        status: "Practice Proficient",
+        lastActive: "2 hours ago",
+      },
+      {
+        lessonModule: "Lesson 05: Magnetic Fields & Induction",
+        competency: "Calculates induced EMF and magnetic polarity",
+        drillsDone: "2 / 3",
+        transmutedScore: "78.0%",
+        status: "Practice Proficient",
+        lastActive: "Yesterday",
+      },
+    ],
     questions: [
       {
         id: 1,
@@ -370,7 +458,7 @@ export function AcademicWorkflowDemo() {
   };
 
   return (
-    <section id="demo" className="py-16 lg:py-24 bg-card/60 relative border-y border-border transition-colors duration-200">
+    <section id="demo" className="py-12 sm:py-16 lg:py-20 bg-card/60 relative border-y border-border transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Eyebrow */}
         <div className="flex items-center justify-center gap-3 mb-3">
@@ -382,7 +470,7 @@ export function AcademicWorkflowDemo() {
         </div>
 
         {/* Section Heading */}
-        <div className="text-center max-w-3xl mx-auto mb-10">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <h2 className="text-3xl sm:text-4xl font-black text-foreground tracking-tight">
             Experience the HighSchool Tutor Workflow
           </h2>
@@ -426,13 +514,13 @@ export function AcademicWorkflowDemo() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Teacher &amp; DepEd Gradebook
+                Student Mastery &amp; Weak Points
               </button>
             </div>
           </div>
 
           {/* Body */}
-          <div className="p-6 sm:p-8">
+          <div className="p-4 sm:p-6 lg:p-8">
             {activeWorkflowTab === "student" ? (
               <div className="space-y-6">
                 {/* Subject Selector Pills */}
@@ -471,7 +559,7 @@ export function AcademicWorkflowDemo() {
                     return (
                       <div
                         key={q.id}
-                        className="bg-card rounded-2xl p-5 sm:p-6 border border-border shadow-xs space-y-4"
+                        className="bg-card rounded-2xl p-4 sm:p-6 border border-border shadow-xs space-y-4"
                       >
                         {/* Question Title */}
                         <div className="flex items-start justify-between gap-4">
@@ -593,62 +681,60 @@ export function AcademicWorkflowDemo() {
                 </div>
               </div>
             ) : (
-              /* Teacher / Admin Gradebook View */
+              /* Student Mastery & Weak Points View */
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <h3 className="text-xl font-black text-foreground">
-                      Teacher &amp; School Head Performance Dashboard
+                      Student Mastery &amp; Diagnostic Performance
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Monitor student mastery across <strong>{selectedSubject}</strong>, inspect individual quiz progress, and export quarterly transmutation sheets.
+                      Monitor your DO 015 s. 2026 score transmutation across <strong>{selectedSubject}</strong>, track completed lesson drills, and review Socratic AI weak-point alerts.
                     </p>
                   </div>
                   <Badge variant="secondary" className="px-3.5 py-1.5 font-bold text-xs bg-primary/10 text-primary">
-                    Class Average: {activeSubjectData.classAverage}
+                    DO 015 Transmuted Avg: {activeSubjectData.transmutedAverage}
                   </Badge>
                 </div>
 
-                {/* Gradebook Table */}
+                {/* Mastery Table */}
                 <div className="overflow-x-auto rounded-2xl border border-border shadow-xs">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-muted text-muted-foreground font-bold uppercase tracking-wider text-[11px] border-b border-border">
                       <tr>
-                        <th className="p-4">Student Name</th>
-                        <th className="p-4">DepEd LRN</th>
-                        <th className="p-4">Grade &amp; Section</th>
-                        <th className="p-4">Subject</th>
-                        <th className="p-4">Quizzes Completed</th>
-                        <th className="p-4">DepEd DO 015 Score</th>
+                        <th className="p-4">Lesson Module</th>
+                        <th className="p-4">Competency Covered</th>
+                        <th className="p-4">Drills Completed</th>
+                        <th className="p-4">DO 015 Score</th>
                         <th className="p-4">Mastery Status</th>
-                        <th className="p-4">Last Active</th>
+                        <th className="p-4">Last Practiced</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-card font-medium text-card-foreground">
-                      {activeSubjectData.gradebook.map((st, sIdx) => (
-                        <tr key={sIdx} className="hover:bg-muted/40 transition-colors">
-                          <td className="p-4 font-bold text-foreground">{st.name}</td>
-                          <td className="p-4 text-muted-foreground font-mono">{st.lrn}</td>
-                          <td className="p-4">{st.gradeLevel}</td>
-                          <td className="p-4">{st.subject}</td>
-                          <td className="p-4 font-bold text-foreground">{st.quizzesDone}</td>
+                      {activeSubjectData.mastery.map((row, rIdx) => (
+                        <tr key={rIdx} className="hover:bg-muted/40 transition-colors">
+                          <td className="p-4 font-bold text-foreground">{row.lessonModule}</td>
+                          <td className="p-4 text-muted-foreground max-w-xs truncate">{row.competency}</td>
+                          <td className="p-4 font-bold text-foreground">{row.drillsDone}</td>
                           <td className="p-4">
                             <span className="text-sm font-black text-primary">
-                              {st.averageScore}
+                              {row.transmutedScore}
                             </span>
                           </td>
                           <td className="p-4">
                             <span
                               className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
-                                st.status.includes("PASSED")
+                                row.status === "Mastered"
                                   ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+                                  : (row.status === "Practice Passed" || row.status === "Practice Proficient")
+                                  ? "bg-blue-500/15 text-blue-700 dark:text-blue-300"
                                   : "bg-amber-500/15 text-amber-700 dark:text-amber-300"
                               }`}
                             >
-                              {st.status}
+                              {row.status}
                             </span>
                           </td>
-                          <td className="p-4 text-muted-foreground">{st.lastActive}</td>
+                          <td className="p-4 text-muted-foreground">{row.lastActive}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -660,15 +746,14 @@ export function AcademicWorkflowDemo() {
                   <Lightbulb className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                   <div>
                     <h4 className="font-bold text-sm text-amber-950 dark:text-amber-100 mb-1">
-                      AI Diagnostic Insight for High School Educators:
+                      AI Diagnostic Weak-Point Recommendation:
                     </h4>
                     <p className="leading-relaxed">
                       {activeSubjectData.diagnosticInsight.description}
                     </p>
                   </div>
                 </div>
-              </div>
-            )}
+              </div>            )}
           </div>
         </div>
       </div>

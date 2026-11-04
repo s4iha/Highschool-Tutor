@@ -50,8 +50,8 @@ export function StatsBar({ initialData }: StatsBarProps) {
   ];
 
   return (
-    <section className="relative z-20 -mt-6 sm:-mt-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="bg-card/90 backdrop-blur-md rounded-3xl p-6 sm:p-8 shadow-xl shadow-border/50 border border-border transition-all duration-200">
+    <section className="relative z-20 -mt-4 sm:-mt-6 pb-6 sm:pb-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-card/90 backdrop-blur-md rounded-3xl p-5 sm:p-6 lg:p-8 shadow-xl shadow-border/50 border border-border transition-all duration-200">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 divide-y sm:divide-y-0 sm:divide-x divide-border">
           {cards.map((card, index) => {
             const Icon = card.icon;

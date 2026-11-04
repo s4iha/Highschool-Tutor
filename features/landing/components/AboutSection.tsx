@@ -16,11 +16,11 @@ export function AboutSection() {
     "8 focused lesson modules per subject aligned with DepEd K-12 MATATAG competencies",
     "24 practice drills with instant grading, feedback, and verified answer keys",
     "Interactive Socratic AI Tutor providing step-by-step guidance in English and Taglish",
-    "DepEd DO 015 s. 2026 transmutation engine with automated gradebook and parent reporting",
+    "DepEd DO 015 s. 2026 score transmutation engine with per-subject mastery tracking and diagnostic weak-point analysis",
   ];
 
   return (
-    <section id="about" className="relative py-16 lg:py-24 bg-muted/30 dark:bg-card/30 overflow-hidden transition-colors duration-200">
+    <section id="about" className="relative py-12 sm:py-16 lg:py-20 bg-muted/30 dark:bg-card/30 overflow-hidden transition-colors duration-200">
       {/* Subtle Background Graduation Cap Watermark */}
       <div className="absolute right-0 top-1/2 -translate-y-1/2 w-96 h-96 opacity-[0.035] dark:opacity-[0.02] pointer-events-none -z-0">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="w-full h-full text-primary">

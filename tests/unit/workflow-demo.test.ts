@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-describe("AcademicWorkflowDemo Multi-Subject Quiz & Gradebook Integrity", () => {
+describe("AcademicWorkflowDemo Multi-Subject Quiz & Student Mastery Integrity", () => {
   const demoPath = path.join(
     process.cwd(),
     "features/landing/components/AcademicWorkflowDemo.tsx"
@@ -32,10 +32,11 @@ describe("AcademicWorkflowDemo Multi-Subject Quiz & Gradebook Integrity", () => 
     expect(demoSource).toContain("📌 Key Takeaway");
   });
 
-  it("should dynamically bind activeSubjectData for questions, gradebook, and diagnostic insights", () => {
+  it("should dynamically bind activeSubjectData for questions, student mastery, and diagnostic insights", () => {
     expect(demoSource).toContain("activeSubjectData.questions.map");
-    expect(demoSource).toContain("activeSubjectData.gradebook.map");
+    expect(demoSource).toContain("activeSubjectData.mastery.map");
     expect(demoSource).toContain("activeSubjectData.diagnosticInsight.description");
-    expect(demoSource).toContain("activeSubjectData.classAverage");
+    expect(demoSource).toContain("activeSubjectData.transmutedAverage");
+    expect(demoSource).toContain("Student Mastery &amp; Weak Points");
   });
 });

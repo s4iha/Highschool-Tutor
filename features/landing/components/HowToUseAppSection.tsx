@@ -72,17 +72,17 @@ export function HowToUseAppSection() {
       accent: "bg-amber-600 text-white",
       highlights: [
         "Official DO 015 s. 2026 transmutation scale",
-        "Instant mastery evaluation (Passing grade ≥ 75%)",
-        "Comprehensive gradebook review across all subjects",
+        "Instant mastery evaluation (Mastery target ≥ 75%)",
+        "Real-time DO 015 transmuted scores, subject mastery tracking, and diagnostic weak-point alerts",
       ],
     },
   ];
 
   return (
-    <section id="how-to-use" className="relative py-16 sm:py-20 lg:py-24 bg-background">
+    <section id="how-to-use" className="relative py-12 sm:py-16 lg:py-20 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto space-y-4 mb-14 sm:mb-16">
+        <div className="text-center max-w-3xl mx-auto space-y-4 mb-8 sm:mb-12">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
             <GraduationCap className="size-3.5" />
             <span>Student Onboarding Guide</span>
@@ -103,7 +103,7 @@ export function HowToUseAppSection() {
             return (
               <div
                 key={item.step}
-                className="group relative flex flex-col rounded-3xl border border-border/70 bg-card p-6 shadow-sm hover:shadow-xl hover:border-primary/40 transition-all duration-300"
+                className="group relative flex flex-col rounded-3xl border border-border/70 bg-card p-5 sm:p-6 shadow-sm hover:shadow-xl hover:border-primary/40 transition-all duration-300"
               >
                 {/* Step badge & Icon */}
                 <div className="flex items-center justify-between mb-5">
@@ -147,7 +147,7 @@ export function HowToUseAppSection() {
         </div>
 
         {/* Practical Student Tips Box */}
-        <div className="mt-12 rounded-2xl border border-primary/20 bg-primary/5 p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div className="mt-8 sm:mt-10 rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-6 lg:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
             <div className="size-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shrink-0 shadow-md">
               <Smartphone className="size-5" />
