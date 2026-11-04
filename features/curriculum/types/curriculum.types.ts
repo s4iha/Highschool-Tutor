@@ -46,6 +46,7 @@ export type LessonProgressStatus =
   | "Not Started"
   | "In Progress"
   | "Needs Review"
+  | "Practice Proficient"
   | "Practice Passed"
   | "Mastered";
 

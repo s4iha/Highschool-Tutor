@@ -215,7 +215,7 @@ export default function StudentDashboardView({
 
             <div className="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-1">
               <div className="flex items-center justify-between text-muted-foreground">
-                <span className="text-xs font-bold">DO 015 Transmuted Avg</span>
+                <span className="text-xs font-bold">Mastery Avg</span>
                 <TrendingUp className="w-4 h-4 text-primary" />
               </div>
               <span className="text-2xl font-black text-primary">

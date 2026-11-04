@@ -413,7 +413,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
               ) : isMastered ? (
                 <div className="flex flex-col items-center gap-1.5">
                   <Badge variant="secondary" className="text-sm px-3.5 py-1 font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
-                    Practice Passed ({transmuted}%)
+                    Practice Proficient ({transmuted}%)
                   </Badge>
                   <p className="text-[11px] text-muted-foreground">
                     Answer 10+ questions to qualify for official DepEd Competency Mastery.
@@ -505,7 +505,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
                 : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
             )}
           >
-            {mode === "exam" ? "Exam Mode (DO 015 Graded)" : "Study Mode (Guided)"}
+            {mode === "exam" ? "Exam Mode (Graded)" : "Study Mode (Guided)"}
           </Badge>
         </div>
       </div>

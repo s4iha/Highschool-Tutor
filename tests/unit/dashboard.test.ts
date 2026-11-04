@@ -134,7 +134,7 @@ describe("Dashboard Server Actions & Real-Time Aggregations", () => {
       expect(metrics.enrolledCount).toBe(1);
       expect(metrics.completedQuizzesCount).toBe(2);
       expect(metrics.transmutedAverage).toBe(92); // (100 + 84) / 2 = 92
-      expect(metrics.transmutedRemarks).toBe("Outstanding (DepEd)");
+      expect(metrics.transmutedRemarks).toBe("Mastered (Outstanding)");
       expect(metrics.totalAiCreditsRemaining).toBe(17); // 20 - 3
 
       // Active learning points to next lesson after latest attempt (lesson 1 + 1 = 2)
