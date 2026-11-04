@@ -227,24 +227,28 @@ export const TRACKS_DATA: Record<string, TrackData> = {
       },
       {
         code: "ABM-FABM2",
+        slug: "g12-s1-fabm2",
         title: "Fundamentals of ABM 2",
         description: "Accounting for merchandising and manufacturing firms, financial statement analysis, and cash flows.",
         modules: 8,
       },
       {
         code: "ABM-ORGMGT",
+        slug: "g11-s1-orgman",
         title: "Organization and Management",
         description: "Management theories, corporate structures, planning matrices, and strategic decision making.",
         modules: 8,
       },
       {
         code: "ABM-MKTG",
+        slug: "g11-s2-prinmkt",
         title: "Principles of Marketing",
         description: "The 4 Ps of marketing, digital branding, consumer behavior, and sales strategies in the Philippines.",
         modules: 8,
       },
       {
         code: "ABM-ECON",
+        slug: "g12-s2-abmeco",
         title: "Applied Economics",
         description: "Economic indicators, market structures, labor challenges, and socioeconomic development strategies.",
         modules: 8,
@@ -307,18 +311,21 @@ export const TRACKS_DATA: Record<string, TrackData> = {
       },
       {
         code: "HUMSS-REL",
+        slug: "g11-s2-worldrel",
         title: "Introduction to World Religions",
         description: "Judaism, Christianity, Islam, Hinduism, Theravada & Mahayana Buddhism, Taoism, and Shinto.",
         modules: 8,
       },
       {
         code: "HUMSS-CESC",
+        slug: "g12-s2-commeng",
         title: "Community Engagement & Citizenship",
         description: "Solidarity, participatory governance, civil society organizations, and community development.",
         modules: 8,
       },
       {
         code: "HUMSS-TRENDS",
+        slug: "g12-s2-trends21",
         title: "Trends, Networks & Critical Thinking",
         description: "Neural networks, megatrends, planetary networks, digital democracy, and systemic analysis.",
         modules: 8,
@@ -360,12 +367,14 @@ export const TRACKS_DATA: Record<string, TrackData> = {
     featuredSubjects: [
       {
         code: "CORE-ORALCOM",
+        slug: "g11-s1-oralcomm",
         title: "Oral Communication in Context",
         description: "Communication models, intercultural communication, speech acts, and public speaking techniques.",
         modules: 8,
       },
       {
         code: "CORE-READWRIT",
+        slug: "g11-s2-readwrite",
         title: "Reading and Writing Skills",
         description: "Text patterns, critical reading as reasoning, discourse evaluation, and purposeful writing.",
         modules: 8,
@@ -379,12 +388,14 @@ export const TRACKS_DATA: Record<string, TrackData> = {
       },
       {
         code: "CORE-STATPROB",
+        slug: "g11-s2-statprob",
         title: "Statistics and Probability",
         description: "Random variables, normal curve, estimation of parameters, hypothesis testing, and correlation.",
         modules: 8,
       },
       {
         code: "CORE-EARTHSCI",
+        slug: "g11-s1-earthlife",
         title: "Earth and Life Science",
         description: "Origin of universe, plate tectonics, mineral resources, bioenergetics, and ecosystem dynamics.",
         modules: 8,
@@ -440,6 +451,7 @@ export const TRACKS_DATA: Record<string, TrackData> = {
       },
       {
         code: "GAS-ORGMGT",
+        slug: "g11-s1-orgman",
         title: "Organization and Management",
         description: "Management theories, strategic planning, staffing, leadership motivation, and organizational control.",
         modules: 8,
@@ -453,18 +465,21 @@ export const TRACKS_DATA: Record<string, TrackData> = {
       },
       {
         code: "GAS-HUM1",
+        slug: "g11-s1-gashum1",
         title: "Humanities & Social Sciences 1",
         description: "Introduction to sociology, human rights, civic participation, and social movements.",
         modules: 8,
       },
       {
         code: "GAS-TRENDS",
+        slug: "g12-s2-trends21",
         title: "Trends, Networks & Critical Thinking",
         description: "Global trends, strategic decision making, neural connections, and technology impacts.",
         modules: 8,
       },
       {
         code: "GAS-3IS",
+        slug: "g12-s2-3is",
         title: "Inquiries, Investigations & Immersion",
         description: "Culminating research defense, data synthesis, and scholarly research presentation.",
         modules: 8,

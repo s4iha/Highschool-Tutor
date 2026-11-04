@@ -105,9 +105,9 @@ describe("Curriculum Deduplication & Distinct Subjects Utilities", () => {
   });
 
   describe("getDistinctShsSubjects", () => {
-    it("should return all 70 unique SHS subject offerings across tracks and strands", () => {
+    it("should return all 100 unique SHS subject offerings across tracks and strands", () => {
       const shs = getDistinctShsSubjects();
-      expect(shs).toHaveLength(70);
+      expect(shs).toHaveLength(100);
 
       shs.forEach((s) => {
         expect(s.level).toBe("Senior High School");
@@ -124,8 +124,8 @@ describe("Curriculum Deduplication & Distinct Subjects Utilities", () => {
       const totalCatalogCards = jhsCount + shsCount;
 
       expect(jhsCount).toBe(8);
-      expect(shsCount).toBe(70);
-      expect(totalCatalogCards).toBe(78);
+      expect(shsCount).toBe(100);
+      expect(totalCatalogCards).toBe(108);
     });
   });
 });

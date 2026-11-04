@@ -21,6 +21,18 @@ import {
 
 export { TRACKS_DATA, type TrackData };
 
+const TRACK_SUBJECTS_URL_MAP: Record<string, string> = {
+  "junior-high-core": "/subjects?level=JHS",
+  "stem-strand": "/subjects?track=STEM",
+  "abm-strand": "/subjects?track=ABM",
+  "humss-strand": "/subjects?track=HUMSS",
+  "shs-core": "/subjects?level=SHS&track=Core",
+  "gas-strand": "/subjects?track=GAS",
+  "tvl-track": "/subjects?track=TVL",
+  "arts-design-track": "/subjects?track=Arts+%26+Design",
+  "sports-track": "/subjects?track=Sports",
+};
+
 export function TrackDetail({ trackId }: { trackId: string }) {
   const track = TRACKS_DATA[trackId];
 
@@ -28,7 +40,7 @@ export function TrackDetail({ trackId }: { trackId: string }) {
     return notFound();
   }
 
-  const IconComponent = track.icon;
+  const subjectsHref = TRACK_SUBJECTS_URL_MAP[trackId] ?? "/subjects";
 
   return (
     <div className="min-h-screen pb-20 pt-8 sm:pt-12 bg-background">
@@ -52,20 +64,13 @@ export function TrackDetail({ trackId }: { trackId: string }) {
         <div className="relative overflow-hidden rounded-3xl bg-card border border-border p-6 sm:p-10 shadow-lg">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="space-y-4 max-w-3xl">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`size-14 rounded-2xl ${track.color} border flex items-center justify-center shadow-xs shrink-0`}
-                >
-                  <IconComponent className="size-7" />
-                </div>
-                <div>
-                  <h1 className="text-2xl sm:text-4xl font-black text-foreground font-heading tracking-tight">
-                    {track.name}
-                  </h1>
-                  <p className="text-xs sm:text-sm font-bold text-muted-foreground">
-                    DepEd MATATAG Curriculum • {track.grades}
-                  </p>
-                </div>
+              <div>
+                <h1 className="text-2xl sm:text-4xl font-black text-foreground font-heading tracking-tight">
+                  {track.name}
+                </h1>
+                <p className="text-xs sm:text-sm font-bold text-muted-foreground mt-1">
+                  DepEd MATATAG Curriculum • {track.grades}
+                </p>
               </div>
 
               <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
@@ -74,7 +79,7 @@ export function TrackDetail({ trackId }: { trackId: string }) {
             </div>
 
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3 w-full lg:w-auto shrink-0">
-              <Link href="/subjects" className="w-full">
+              <Link href={subjectsHref} className="w-full">
                 <Button className="w-full rounded-2xl h-12 font-bold text-sm shadow-md gap-2">
                   <ArrowRight className="size-4" />
                   <span>Browse Subject Scopes</span>
@@ -93,7 +98,7 @@ export function TrackDetail({ trackId }: { trackId: string }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column (2 Cols): Featured Subjects */}
           <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-start sm:items-center justify-between gap-2.5">
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold font-heading text-foreground">
                   Curriculum Subjects & Modules
@@ -102,7 +107,7 @@ export function TrackDetail({ trackId }: { trackId: string }) {
                   Official DepEd MATATAG competencies, lesson modules, and practice drills.
                 </p>
               </div>
-              <span className="text-xs font-bold text-primary px-3 py-1 rounded-full bg-primary/10">
+              <span className="text-xs font-bold text-primary px-3 py-1 rounded-full bg-primary/10 shrink-0 whitespace-nowrap">
                 {track.subjectsCount}
               </span>
             </div>
@@ -222,7 +227,7 @@ export function TrackDetail({ trackId }: { trackId: string }) {
               <p className="text-xs text-muted-foreground">
                 Access interactive lesson modules, AI hints, and DepEd DO 015 s. 2026 grade simulations.
               </p>
-              <Link href="/subjects" className="block pt-1">
+              <Link href={subjectsHref} className="block pt-1">
                 <Button className="w-full rounded-xl text-xs font-bold h-10 shadow-sm">
                   Explore Full Curriculum
                 </Button>

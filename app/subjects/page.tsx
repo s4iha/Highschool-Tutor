@@ -1,6 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
-import { GraduationCap, BookOpenCheck, ShieldCheck, Sparkles } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import { getAllSubjectScopeDefinitions } from "@/features/curriculum/utils/subject-scope-data";
 import { PublicSubjectCatalog } from "@/features/curriculum/components/PublicSubjectCatalog";
 import {
@@ -16,8 +16,27 @@ export const metadata: Metadata = buildPageMetadata({
   path: "/subjects",
 });
 
-export default function SubjectsPage() {
+export interface SubjectsPageProps {
+  searchParams?: Promise<{
+    level?: string;
+    track?: string;
+    strand?: string;
+  }>;
+}
+
+export default async function SubjectsPage({ searchParams }: SubjectsPageProps) {
   const subjects = getAllSubjectScopeDefinitions();
+  const params = await searchParams;
+
+  let initialLevel: "ALL" | "JHS" | "SHS" = "ALL";
+  if (params?.level?.toUpperCase() === "JHS") {
+    initialLevel = "JHS";
+  } else if (params?.level?.toUpperCase() === "SHS") {
+    initialLevel = "SHS";
+  }
+
+  const initialStrand = params?.track || params?.strand || "ALL";
+
   const breadcrumbSchema = buildBreadcrumbSchema([
     { name: "Home", path: "/" },
     { name: "Curriculum Subjects", path: "/subjects" },
@@ -61,7 +80,11 @@ export default function SubjectsPage() {
           </div>
 
           {/* Interactive Catalog Component */}
-          <PublicSubjectCatalog initialSubjects={subjects} />
+          <PublicSubjectCatalog
+            initialSubjects={subjects}
+            initialLevel={initialLevel}
+            initialStrand={initialStrand}
+          />
         </div>
       </div>
     </>

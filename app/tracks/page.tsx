@@ -61,7 +61,6 @@ export default function TracksIndexPage() {
         {/* Grid of Tracks */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tracks.map((track) => {
-            const Icon = track.icon;
             return (
               <div
                 key={track.id}
@@ -69,11 +68,6 @@ export default function TracksIndexPage() {
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-4">
-                    <div
-                      className={`w-12 h-12 rounded-2xl flex items-center justify-center border ${track.color}`}
-                    >
-                      <Icon className="w-6 h-6" />
-                    </div>
                     <Badge variant="outline" className={`font-semibold text-xs ${track.pill}`}>
                       {track.grades}
                     </Badge>

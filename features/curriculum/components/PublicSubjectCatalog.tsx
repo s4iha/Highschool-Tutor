@@ -6,13 +6,9 @@ import {
   Search,
   BookOpen,
   Clock,
-  GraduationCap,
   ArrowRight,
-  Sparkles,
   Filter,
-  CheckCircle2,
   ChevronRight,
-  BookOpenCheck,
 } from "lucide-react";
 import { Input } from "@/shared/components/ui/input";
 import { Button } from "@/shared/components/ui/button";
@@ -22,6 +18,8 @@ import { cn } from "@/lib/utils";
 
 export interface PublicSubjectCatalogProps {
   initialSubjects: SubjectScopeDefinition[];
+  initialLevel?: "ALL" | "JHS" | "SHS";
+  initialStrand?: string;
 }
 
 const STRAND_OPTIONS = [
@@ -37,10 +35,61 @@ const STRAND_OPTIONS = [
   { value: "TVL", label: "TVL Specializations" },
 ];
 
-export function PublicSubjectCatalog({ initialSubjects }: PublicSubjectCatalogProps) {
+const SHS_ONLY_STRANDS = [
+  "Applied",
+  "STEM",
+  "ABM",
+  "HUMSS",
+  "GAS",
+  "Arts & Design",
+  "Sports",
+  "TVL",
+];
+
+export function PublicSubjectCatalog({
+  initialSubjects,
+  initialLevel = "ALL",
+  initialStrand = "ALL",
+}: PublicSubjectCatalogProps) {
+  // Normalize initial strand to match STRAND_OPTIONS if matched case-insensitively
+  const resolvedInitialStrand = useMemo(() => {
+    if (!initialStrand || initialStrand === "ALL") return "ALL";
+    const found = STRAND_OPTIONS.find(
+      (opt) => opt.value.toLowerCase() === initialStrand.toLowerCase()
+    );
+    return found ? found.value : initialStrand;
+  }, [initialStrand]);
+
+  // If initial level is JHS and strand is SHS-only, reset strand to ALL
+  const startingStrand =
+    initialLevel === "JHS" &&
+    SHS_ONLY_STRANDS.some((s) => s.toLowerCase() === resolvedInitialStrand.toLowerCase())
+      ? "ALL"
+      : resolvedInitialStrand;
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [levelFilter, setLevelFilter] = useState<"ALL" | "JHS" | "SHS">("ALL");
-  const [strandFilter, setStrandFilter] = useState("ALL");
+  const [levelFilter, setLevelFilter] = useState<"ALL" | "JHS" | "SHS">(initialLevel);
+  const [strandFilter, setStrandFilter] = useState(startingStrand);
+
+  const handleLevelChange = (newLevel: "ALL" | "JHS" | "SHS") => {
+    setLevelFilter(newLevel);
+    if (
+      newLevel === "JHS" &&
+      SHS_ONLY_STRANDS.some((s) => s.toLowerCase() === strandFilter.toLowerCase())
+    ) {
+      setStrandFilter("ALL");
+    }
+  };
+
+  const handleStrandChange = (newStrand: string) => {
+    setStrandFilter(newStrand);
+    if (
+      SHS_ONLY_STRANDS.some((s) => s.toLowerCase() === newStrand.toLowerCase()) &&
+      levelFilter === "JHS"
+    ) {
+      setLevelFilter("SHS");
+    }
+  };
 
   const filteredSubjects = useMemo(() => {
     return initialSubjects.filter((subject) => {
@@ -50,8 +99,11 @@ export function PublicSubjectCatalog({ initialSubjects }: PublicSubjectCatalogPr
 
       // Strand / Track filter
       if (strandFilter !== "ALL") {
-        const matchesStrand = subject.strand.toLowerCase().includes(strandFilter.toLowerCase());
-        const matchesTrack = subject.track.toLowerCase().includes(strandFilter.toLowerCase());
+        const sf = strandFilter.toLowerCase();
+        const matchesStrand =
+          subject.strand.toLowerCase() === sf || subject.strand.toLowerCase().includes(sf);
+        const matchesTrack =
+          subject.track.toLowerCase() === sf || subject.track.toLowerCase().includes(sf);
         if (!matchesStrand && !matchesTrack) return false;
       }
 
@@ -95,12 +147,12 @@ export function PublicSubjectCatalog({ initialSubjects }: PublicSubjectCatalogPr
           </div>
 
           {/* Academic Level Pill Buttons */}
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-muted/40 border border-border/60 shrink-0 self-start md:self-auto">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 p-1 rounded-2xl bg-muted/40 border border-border/60 w-full md:w-auto">
             <button
               type="button"
-              onClick={() => setLevelFilter("ALL")}
+              onClick={() => handleLevelChange("ALL")}
               className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all",
+                "flex-1 sm:flex-initial text-center justify-center px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap",
                 levelFilter === "ALL"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -110,9 +162,9 @@ export function PublicSubjectCatalog({ initialSubjects }: PublicSubjectCatalogPr
             </button>
             <button
               type="button"
-              onClick={() => setLevelFilter("JHS")}
+              onClick={() => handleLevelChange("JHS")}
               className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all",
+                "flex-1 sm:flex-initial text-center justify-center px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap",
                 levelFilter === "JHS"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -122,9 +174,9 @@ export function PublicSubjectCatalog({ initialSubjects }: PublicSubjectCatalogPr
             </button>
             <button
               type="button"
-              onClick={() => setLevelFilter("SHS")}
+              onClick={() => handleLevelChange("SHS")}
               className={cn(
-                "px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all",
+                "flex-1 sm:flex-initial text-center justify-center px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap",
                 levelFilter === "SHS"
                   ? "bg-background text-foreground shadow-xs"
                   : "text-muted-foreground hover:text-foreground"
@@ -136,7 +188,7 @@ export function PublicSubjectCatalog({ initialSubjects }: PublicSubjectCatalogPr
         </div>
 
         {/* Strand Quick Filter Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 scrollbar-none text-xs">
+        <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
           <span className="text-muted-foreground font-semibold flex items-center gap-1.5 shrink-0 pr-1">
             <Filter className="size-3.5" />
             <span>Track:</span>
@@ -145,10 +197,10 @@ export function PublicSubjectCatalog({ initialSubjects }: PublicSubjectCatalogPr
             <button
               key={opt.value}
               type="button"
-              onClick={() => setStrandFilter(opt.value)}
+              onClick={() => handleStrandChange(opt.value)}
               className={cn(
                 "px-3 py-1 rounded-xl text-xs font-medium whitespace-nowrap transition-colors border shrink-0",
-                strandFilter === opt.value
+                strandFilter.toLowerCase() === opt.value.toLowerCase()
                   ? "bg-primary text-primary-foreground border-primary shadow-xs"
                   : "bg-muted/30 text-muted-foreground border-border/60 hover:bg-muted hover:text-foreground"
               )}
