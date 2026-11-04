@@ -67,12 +67,20 @@ export function CheckoutModal({
 
   const [showAuthIntercept, setShowAuthIntercept] = React.useState<boolean>(false);
 
-  const [referralInput, setReferralInput] = React.useState<string>(() => {
-    return typeof window !== "undefined" ? getClientReferralCookie() || "" : "";
-  });
-  const [showReferralInput, setShowReferralInput] = React.useState<boolean>(() => {
-    return typeof window !== "undefined" ? Boolean(getClientReferralCookie()) : false;
-  });
+  const emptySubscribe = React.useCallback(() => () => {}, []);
+  const cookieRef = React.useSyncExternalStore(
+    emptySubscribe,
+    () => getClientReferralCookie() ?? "",
+    () => ""
+  );
+
+  const [userReferral, setUserReferral] = React.useState<string | null>(null);
+  const [showReferralInputManual, setShowReferralInputManual] = React.useState<boolean>(false);
+
+  const referralInput = userReferral !== null ? userReferral : cookieRef;
+  const showReferralInput = showReferralInputManual || Boolean(referralInput);
+  const setReferralInput = (val: string) => setUserReferral(val);
+  const setShowReferralInput = (val: boolean) => setShowReferralInputManual(val);
 
   const { isChecking, isValid, affiliateName, errorMessage } =
     useValidateReferralCode(referralInput);

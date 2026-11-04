@@ -24,15 +24,15 @@ describe("Auth Intercept & Return Intent Utilities", () => {
       },
     };
 
-    (global as any).window = {
-      location: { pathname: "/#pricing" },
-    };
-    (global as any).sessionStorage = mockSessionStorage;
+    Object.assign(global, {
+      window: { location: { pathname: "/#pricing" } },
+      sessionStorage: mockSessionStorage,
+    });
   });
 
   afterAll(() => {
-    delete (global as any).window;
-    delete (global as any).sessionStorage;
+    delete (global as Record<string, unknown>).window;
+    delete (global as Record<string, unknown>).sessionStorage;
   });
 
   beforeEach(() => {
@@ -78,7 +78,7 @@ describe("Auth Intercept & Return Intent Utilities", () => {
 
   it("isReturnIntentValid should return false for invalid plans or missing intent", () => {
     expect(isReturnIntentValid(null)).toBe(false);
-    expect(isReturnIntentValid({ planId: "INVALID" as any, timestamp: Date.now() })).toBe(false);
+    expect(isReturnIntentValid({ planId: "INVALID" as unknown as "MONTHLY" | "ANNUAL", timestamp: Date.now() })).toBe(false);
   });
 
   it("should parse return intent from URL query parameters as fallback", () => {

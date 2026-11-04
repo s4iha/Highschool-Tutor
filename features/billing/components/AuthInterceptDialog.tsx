@@ -138,7 +138,7 @@ export function AuthInterceptDialog({
             <Link href={loginUrl}>
               <LogIn className="size-4" />
               <span>Continue to Sign In / Sign Up</span>
-              <ArrowRight className="size-4 ml-auto" />
+              <ArrowRight className="size-4" />
             </Link>
           </Button>
         </div>
