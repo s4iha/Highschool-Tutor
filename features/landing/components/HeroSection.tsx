@@ -98,8 +98,8 @@ export function HeroSection() {
             <div className="relative w-full max-w-[420px] aspect-[4/5] rounded-3xl overflow-visible mx-auto">
               <div className="w-full h-full rounded-3xl overflow-hidden shadow-2xl shadow-primary/10 border-4 border-card bg-gradient-to-b from-primary/10 to-muted relative">
                 <Image
-                  src="/images/hero-student.jpg"
-                  alt="High School Student Studying with HighSchool Tutor"
+                  src="/images/filipino-student-writing.jpg"
+                  alt="Filipino high school student studying DepEd MATATAG curriculum with HighSchool Tutor"
                   fill
                   priority
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 420px"

@@ -32,4 +32,23 @@ describe("HeroSection Component Source & Requirements Audit", () => {
     expect(heroSource).toContain("Earth &amp; Life Science");
     expect(heroSource).toContain("DepEd MATATAG");
   });
+
+  it("should reference authentic Filipino student image with 4:5 aspect ratio and proper SEO attributes", () => {
+    // TSK-025: Filipino hero image source
+    expect(heroSource).toContain("/images/filipino-student-writing.jpg");
+
+    // Verify image file exists on disk
+    const imagePath = path.join(process.cwd(), "public/images/filipino-student-writing.jpg");
+    expect(fs.existsSync(imagePath)).toBe(true);
+
+    // TSK-026: 4:5 vertical portrait aspect ratio & object-top positioning
+    expect(heroSource).toContain("aspect-[4/5]");
+    expect(heroSource).toContain("object-cover");
+    expect(heroSource).toContain("object-top");
+
+    // TSK-027: Descriptive alt text, priority, and sizes
+    expect(heroSource).toContain('alt="Filipino high school student studying DepEd MATATAG curriculum with HighSchool Tutor"');
+    expect(heroSource).toContain("priority");
+    expect(heroSource).toContain('sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 420px"');
+  });
 });
