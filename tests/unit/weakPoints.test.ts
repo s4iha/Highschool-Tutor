@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/features/auth/lib/session";
 
@@ -11,6 +13,7 @@ jest.mock("@/lib/prisma", () => ({
     quizSession: {
       create: jest.fn(),
       findUnique: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
     },
     subscription: {
       findFirst: jest.fn(),
@@ -116,6 +119,7 @@ describe("Diagnostic 'Weak Points' by Topic (DepEd DO 015 s. 2026 Passing Thresh
 
       expect(res.success).toBe(true);
       expect(res.weakPoints).toHaveLength(1);
+      expect(res.totalAttemptedLessons).toBe(2);
       expect(res.weakPoints[0].lessonNumber).toBe(1);
       expect(res.weakPoints[0].lessonTitle).toBe("Functions and Relations");
       expect(res.weakPoints[0].transmutedScore).toBeLessThan(75);
@@ -156,15 +160,17 @@ describe("Diagnostic 'Weak Points' by Topic (DepEd DO 015 s. 2026 Passing Thresh
 
       expect(res.success).toBe(true);
       expect(res.weakPoints).toHaveLength(0); // All attempted lessons passed!
+      expect(res.totalAttemptedLessons).toBe(1);
     });
 
-    it("should return empty list when no attempts exist for the subject", async () => {
+    it("should return empty list and totalAttemptedLessons === 0 when no attempts exist for the subject", async () => {
       (prisma.quizAttempt.findMany as jest.Mock).mockResolvedValue([]);
 
       const res = await getSubjectWeakPointsAction(testSubjectSlug);
 
       expect(res.success).toBe(true);
       expect(res.weakPoints).toEqual([]);
+      expect(res.totalAttemptedLessons).toBe(0);
     });
   });
 
@@ -182,6 +188,30 @@ describe("Diagnostic 'Weak Points' by Topic (DepEd DO 015 s. 2026 Passing Thresh
       expect(res.success).toBe(true);
       expect(res.sessionId).toBe("targeted_session_123");
       expect(res.redirectUrl).toContain("sessionId=targeted_session_123");
+    });
+  });
+
+  describe("SubjectWeakPointsCard Static Source Integrity", () => {
+    const cardPath = path.join(
+      process.cwd(),
+      "features/curriculum/components/SubjectWeakPointsCard.tsx"
+    );
+    const cardSource = fs.readFileSync(cardPath, "utf-8");
+
+    it("should hide card completely (render null) when totalAttemptedLessons === 0", () => {
+      expect(cardSource).toMatch(/totalAttemptedLessons\s*===\s*0/);
+    });
+
+    it("should use mastery-first terminology instead of aggressive DepEd DO 015 passing labels", () => {
+      expect(cardSource).not.toContain("DepEd DO 015 Passing Grade ≥ 75%");
+      expect(cardSource).toContain("Mastery Target ≥ 75%");
+      expect(cardSource).toContain("75% mastery benchmark");
+    });
+
+    it("should NOT render Sparkles icon in the Targeted Practice button and should be full-width on mobile", () => {
+      expect(cardSource).not.toMatch(/<Sparkles[^>]*\/>/);
+      expect(cardSource).toContain("w-full sm:w-auto");
+      expect(cardSource).toContain("justify-center");
     });
   });
 });
