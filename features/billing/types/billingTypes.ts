@@ -122,3 +122,15 @@ export interface FulfillmentResult {
   expiresAt?: Date | null;
   error?: string;
 }
+
+
+export interface ReturnIntent {
+  planId: "MONTHLY" | "ANNUAL";
+  referralCode?: string | null;
+  targetSubjectSlug?: string | null;
+  timestamp: number;
+  sourceUrl?: string;
+}
+
+export const RETURN_INTENT_STORAGE_KEY = "hst_return_intent";
+export const RETURN_INTENT_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours

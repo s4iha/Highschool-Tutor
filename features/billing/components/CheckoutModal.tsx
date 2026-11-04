@@ -32,6 +32,8 @@ import {
   formatPhp,
 } from "../utils/pricing";
 import { cn } from "@/lib/utils";
+import { AuthInterceptDialog } from "./AuthInterceptDialog";
+import { saveReturnIntent } from "../utils/returnIntent";
 
 export interface CheckoutModalProps {
   open: boolean;
@@ -63,6 +65,8 @@ export function CheckoutModal({
     isExistingSubscriber ? "ANNUAL" : initialPlan
   );
 
+  const [showAuthIntercept, setShowAuthIntercept] = React.useState<boolean>(false);
+
   const [referralInput, setReferralInput] = React.useState<string>(() => {
     return typeof window !== "undefined" ? getClientReferralCookie() || "" : "";
   });
@@ -78,6 +82,17 @@ export function CheckoutModal({
   });
 
   const handleCheckout = () => {
+    // If user is unauthenticated, intercept to save intent and show sign-in prompt
+    if (!user || !user.id) {
+      saveReturnIntent({
+        planId: selectedPlan,
+        referralCode: isValid ? referralInput.trim() : undefined,
+        sourceUrl: typeof window !== "undefined" ? window.location.pathname : "/",
+      });
+      setShowAuthIntercept(true);
+      return;
+    }
+
     checkoutMutation.mutate({
       planId: selectedPlan,
       referralCode: isValid ? referralInput.trim() : undefined,
@@ -85,6 +100,22 @@ export function CheckoutModal({
   };
 
   const activePrice = selectedPlan === "ANNUAL" ? ANNUAL_PRICE_PHP : MONTHLY_PRICE_PHP;
+
+  if (showAuthIntercept) {
+    return (
+      <AuthInterceptDialog
+        open={open}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setShowAuthIntercept(false);
+          }
+          onOpenChange(isOpen);
+        }}
+        selectedPlan={selectedPlan}
+        referralCode={isValid ? referralInput.trim() : undefined}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
