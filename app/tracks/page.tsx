@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { TRACKS_DATA } from "@/features/landing/components";
+import { TRACKS_DATA } from "@/features/landing/constants/tracks-data";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {

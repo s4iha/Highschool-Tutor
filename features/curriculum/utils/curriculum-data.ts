@@ -1,4 +1,4 @@
-import type { Subject, DistinctSubject } from "../types/curriculum.types";
+import type { Subject, DistinctSubject, ShsStrand } from "../types/curriculum.types";
 
 export const JHS_SUBJECTS: [string, string][] = [
   ["ENG", "English"],
@@ -24,7 +24,7 @@ export interface ShsSubjectDefinition {
   name: string;
   grade: 11 | 12;
   semester: 1 | 2;
-  strand: "Core" | "Applied" | "STEM" | "ABM" | "HUMSS" | "GAS" | "TVL";
+  strand: ShsStrand;
 }
 
 export const SHS_SUBJECT_CATALOG: ShsSubjectDefinition[] = [
@@ -117,17 +117,62 @@ export const SHS_SUBJECT_CATALOG: ShsSubjectDefinition[] = [
   { abbr: "GASCULM", name: "GAS Culminating Activity / Work Immersion", grade: 12, semester: 2, strand: "GAS" },
 
   // ---------------------------------------------------------------------------
-  // TVL Specialized Subjects (ICT & Home Economics)
+  // Arts and Design Track Subjects
   // ---------------------------------------------------------------------------
-  { abbr: "TVLCSS1", name: "Computer Systems Servicing 1", grade: 11, semester: 1, strand: "TVL" },
-  { abbr: "TVLCOOK1", name: "Commercial Cookery 1", grade: 11, semester: 1, strand: "TVL" },
-  { abbr: "TVLCSS2", name: "Computer Systems Servicing 2", grade: 11, semester: 2, strand: "TVL" },
-  { abbr: "TVLBREAD", name: "Bread and Pastry Production", grade: 11, semester: 2, strand: "TVL" },
-  { abbr: "TVLANIM", name: "Animation & Digital Arts", grade: 12, semester: 1, strand: "TVL" },
-  { abbr: "TVLFBS", name: "Food and Beverage Services", grade: 12, semester: 1, strand: "TVL" },
-  { abbr: "TVLPROG", name: "Computer Programming & Systems", grade: 12, semester: 2, strand: "TVL" },
-  { abbr: "TVLTOUR", name: "Tourism Promotion Services", grade: 12, semester: 2, strand: "TVL" },
-  { abbr: "TVLIMM", name: "TVL Industry Work Immersion", grade: 12, semester: 2, strand: "TVL" },
+  { abbr: "AD-CI1", name: "Creative Industries I: Arts and Design Appreciation and Production", grade: 11, semester: 1, strand: "Arts & Design" },
+  { abbr: "AD-CI2", name: "Creative Industries II: Performing Arts", grade: 11, semester: 1, strand: "Arts & Design" },
+  { abbr: "AD-PPD", name: "Physical and Personal Development in the Arts", grade: 11, semester: 2, strand: "Arts & Design" },
+  { abbr: "AD-DFI", name: "Developing Filipino Identity in the Arts", grade: 11, semester: 2, strand: "Arts & Design" },
+  { abbr: "AD-IEP", name: "Integrating the Elements and Principles of Organization in the Arts", grade: 12, semester: 1, strand: "Arts & Design" },
+  { abbr: "AD-LM", name: "Leadership and Management in Different Arts Fields", grade: 12, semester: 2, strand: "Arts & Design" },
+  { abbr: "AD-APP", name: "Apprenticeship and Exploration in Arts Production", grade: 12, semester: 1, strand: "Arts & Design" },
+  { abbr: "AD-EXHIBIT", name: "Performing Arts Production / Exhibit", grade: 12, semester: 2, strand: "Arts & Design" },
+
+  // ---------------------------------------------------------------------------
+  // Sports Track Subjects
+  // ---------------------------------------------------------------------------
+  { abbr: "SP-SFA", name: "Safety and First Aid", grade: 11, semester: 1, strand: "Sports" },
+  { abbr: "SP-HM", name: "Human Movement", grade: 11, semester: 1, strand: "Sports" },
+  { abbr: "SP-FC", name: "Fundamentals of Coaching", grade: 11, semester: 2, strand: "Sports" },
+  { abbr: "SP-SOAM", name: "Sports Officiating and Activity Management", grade: 11, semester: 2, strand: "Sports" },
+  { abbr: "SP-FSRL", name: "Fitness, Sports, and Recreation Leadership", grade: 12, semester: 1, strand: "Sports" },
+  { abbr: "SP-PASE", name: "Psychosocial Aspects of Sports and Exercise", grade: 12, semester: 1, strand: "Sports" },
+  { abbr: "SP-FTEP", name: "Fitness Testing and Exercise Programming", grade: 12, semester: 2, strand: "Sports" },
+  { abbr: "SP-PRAC", name: "Practicum in Sports (in-campus)", grade: 12, semester: 2, strand: "Sports" },
+  { abbr: "SP-APPR", name: "Sports Apprenticeship (off-campus)", grade: 12, semester: 2, strand: "Sports" },
+
+  // ---------------------------------------------------------------------------
+  // TVL Specialized Subjects (AFA, IA, HE, ICT)
+  // ---------------------------------------------------------------------------
+  // 1. Agri-Fishery Arts (AFA)
+  { abbr: "TVL-AGRI1", name: "Agricultural Crops Production", grade: 11, semester: 1, strand: "TVL" },
+  { abbr: "TVL-ANIMAL", name: "Animal Production (Poultry & Swine)", grade: 11, semester: 2, strand: "TVL" },
+  { abbr: "TVL-AQUA", name: "Aquaculture Operations", grade: 12, semester: 1, strand: "TVL" },
+  { abbr: "TVL-FOODPROC", name: "Food Processing & Quality Control", grade: 12, semester: 2, strand: "TVL" },
+
+  // 2. Industrial Arts (IA)
+  { abbr: "TVL-AUTO", name: "Automotive Servicing", grade: 11, semester: 1, strand: "TVL" },
+  { abbr: "TVL-SMAW", name: "Shielded Metal Arc Welding (SMAW)", grade: 11, semester: 2, strand: "TVL" },
+  { abbr: "TVL-EIM", name: "Electrical Installation and Maintenance", grade: 12, semester: 1, strand: "TVL" },
+  { abbr: "TVL-EPAS", name: "Electronic Products Assembly and Servicing", grade: 12, semester: 1, strand: "TVL" },
+  { abbr: "TVL-CARPENTRY", name: "Carpentry & Construction", grade: 12, semester: 2, strand: "TVL" },
+
+  // 3. Home Economics (HE)
+  { abbr: "TVL-COOK1", name: "Commercial Cookery 1", grade: 11, semester: 1, strand: "TVL" },
+  { abbr: "TVL-BREAD", name: "Bread and Pastry Production", grade: 11, semester: 2, strand: "TVL" },
+  { abbr: "TVL-FBS", name: "Food and Beverage Services", grade: 12, semester: 1, strand: "TVL" },
+  { abbr: "TVL-TOUR", name: "Tourism Promotion Services", grade: 12, semester: 2, strand: "TVL" },
+  { abbr: "TVL-CARE", name: "Caregiving & Community Services", grade: 11, semester: 2, strand: "TVL" },
+  { abbr: "TVL-FRONT", name: "Front Office Services", grade: 12, semester: 1, strand: "TVL" },
+  { abbr: "TVL-HOUSE", name: "Housekeeping Services", grade: 12, semester: 2, strand: "TVL" },
+
+  // 4. Information and Communications Technology (ICT)
+  { abbr: "TVL-CSS1", name: "Computer Systems Servicing 1", grade: 11, semester: 1, strand: "TVL" },
+  { abbr: "TVL-CSS2", name: "Computer Systems Servicing 2", grade: 11, semester: 2, strand: "TVL" },
+  { abbr: "TVL-ANIM", name: "Animation & Digital Arts", grade: 12, semester: 1, strand: "TVL" },
+  { abbr: "TVL-PROG", name: "Computer Programming & Systems", grade: 12, semester: 2, strand: "TVL" },
+  { abbr: "TVL-DRAFT", name: "Technical Drafting & CAD", grade: 11, semester: 2, strand: "TVL" },
+  { abbr: "TVL-IMM", name: "TVL Industry Work Immersion", grade: 12, semester: 2, strand: "TVL" },
 ];
 
 export function slugify(code: string) {
