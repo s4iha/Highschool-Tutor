@@ -46,7 +46,7 @@ export function PopularSubjectsSection() {
             Our Most Popular DepEd Subjects
           </h2>
           <Link
-            href="/curriculum"
+            href="/subjects"
             className="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline transition-colors group"
           >
             <span>View All 75+ DepEd Subjects</span>

@@ -80,7 +80,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/#subjects" className="hover:text-primary transition-colors">
+                <Link href="/subjects" className="hover:text-primary transition-colors">
                   Subjects Catalog
                 </Link>
               </li>

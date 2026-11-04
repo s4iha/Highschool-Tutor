@@ -179,3 +179,48 @@ export function buildBreadcrumbSchema(
     })),
   };
 }
+
+
+import type { SubjectScopeDefinition } from "@/features/curriculum/types/subjectScope.types";
+
+/**
+ * Builds Schema.org Course structured data for an individual subject scope page.
+ */
+export function buildSubjectCourseSchema(subject: SubjectScopeDefinition): SchemaCourse {
+  const siteUrl = getSiteUrl();
+  const subjectUrl = getCanonicalUrl(`/subjects/${subject.slug}`);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    "@id": `${subjectUrl}#course`,
+    name: `${subject.name} (${subject.grade})`,
+    description: subject.description,
+    courseCode: subject.code,
+    timeRequired: subject.timeAllotment,
+    provider: {
+      "@type": "EducationalOrganization",
+      name: "HighSchool Tutor",
+      url: siteUrl,
+    },
+    educationalLevel: `${subject.level} - ${subject.grade}`,
+    educationalCredentialAwarded: `DepEd MATATAG ${subject.name} Mastery`,
+    hasCourseInstance: {
+      "@type": "CourseInstance",
+      courseMode: "online",
+      inLanguage: ["en-PH", "fil-PH"],
+    },
+    about: [subject.track, subject.strand, "DepEd Order No. 015, s. 2026", "MATATAG Curriculum"],
+  };
+}
+
+/**
+ * Builds Schema.org BreadcrumbList structured data for an individual subject scope page.
+ */
+export function buildSubjectBreadcrumbSchema(subject: SubjectScopeDefinition): SchemaBreadcrumbList {
+  return buildBreadcrumbSchema([
+    { name: "Home", path: "/" },
+    { name: "Curriculum Subjects", path: "/subjects" },
+    { name: `${subject.name} (${subject.grade})`, path: `/subjects/${subject.slug}` },
+  ]);
+}

@@ -138,9 +138,11 @@ export interface SchemaFAQPage {
 export interface SchemaCourse {
   "@context": "https://schema.org";
   "@type": "Course";
-  "@id": string; // Track URL + "#course"
+  "@id": string; // Track or Subject URL + "#course"
   name: string;
   description: string;
+  courseCode?: string;
+  timeRequired?: string;
   provider: {
     "@type": "EducationalOrganization";
     name: string;
