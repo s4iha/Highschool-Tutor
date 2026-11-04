@@ -1,5 +1,37 @@
 # Project Backlog & Change Log
 
+## [2026-11-04]
+
+### Task 030 - Subject Scope 8-Lesson Syllabus Breakdown, Public Catalog Deduplication (108 Subjects), Hydration Fixes & Landing Page Accuracy
+
+- **Full Curriculum Scope & 8-Lesson Syllabus Breakdown (`/subjects/[slug]`)**:
+  - Extended `SubjectScopeLesson` interface and `SubjectScopeDefinition` in `features/curriculum/types/subjectScope.types.ts`.
+  - Built comprehensive DepEd Order No. 015, s. 2026 MATATAG syllabus registry in `features/curriculum/utils/subject-lessons-data.ts` delivering authentic 8-lesson curriculum breakdowns (with titles, 2–3 sentence summaries, 3–5 concept tags, and 3 practice drills each totaling 24 drills) for all 108 subjects and JHS grade×quarter variations.
+  - Implemented interactive Grade (Grades 7–10) & Quarter (Quarters 1–4) Switcher for the 8 JHS Core subjects in `features/curriculum/components/SubjectScopeView.tsx` with dynamic metadata, syllabus updates, and live `/curriculum/` CTA links.
+- **Public Catalog Deduplication (`/subjects`: 324 → 108 Distinct Subjects)**:
+  - Deduplicated public catalog from 324 redundant items to exactly 108 distinct subjects (8 JHS Core covering Grades 7–10 • Quarters 1–4 + 100 SHS subjects).
+  - Updated `getAllSubjectScopeDefinitions()` and `getAllSubjectScopeSlugs()` in `features/curriculum/utils/subject-scope-data.ts` to output 228 canonical slugs while cleanly handling legacy trimester bookmarks.
+  - Updated JHS subject cards in `features/curriculum/components/PublicSubjectCatalog.tsx` with `Grades 7–10 • Quarters 1–4` and `JHS-${ABBR}` badges.
+- **Zero Hydration Mismatch Errors**:
+  - Added `suppressHydrationWarning` to `<html lang="en">` in `app/layout.tsx` to eliminate hydration warnings from `next-themes`.
+  - Refactored `features/billing/components/CheckoutModal.tsx` using `useSyncExternalStore` for reading client referral cookies, avoiding SSR hydration divergence and eliminating cascading render lint errors.
+- **Centered Subscription Intercept Modal CTA**:
+  - Removed `ml-auto` from `<ArrowRight />` in `features/billing/components/AuthInterceptDialog.tsx`, perfectly centering the leading icon, text, and arrow together.
+- **Landing Page Feature Accuracy & Student Mastery Demo**:
+  - Removed unsupported claims of "parent reporting" and "automated gradebook" from `features/landing/components/AboutSection.tsx` and `features/landing/components/HowToUseAppSection.tsx`.
+  - Replaced the mock teacher LMS table in `features/landing/components/AcademicWorkflowDemo.tsx` with an authentic "Student Mastery & Weak Points" preview showcasing DO 015 transmuted scores, per-lesson mastery status badges, and diagnostic AI insights.
+- **Clean Iconless Academic Track Cards**:
+  - Removed arbitrary decorative track icons from `features/landing/components/CategorySection.tsx`, `app/tracks/page.tsx`, and `features/landing/components/TrackDetail.tsx` for clean typography-first headers.
+- **Post-Review Polish & UI/UX Bug Fixes (Bugs #1–#4)**:
+  - **Bug #1 (Subjects Filtering & Small Screen Button Layout)**: Auto-reconciled academic level and track/strand filter combinations in `PublicSubjectCatalog.tsx` (automatically switching between JHS and SHS to prevent empty result sets); added search parameter deep-linking (`initialLevel`, `initialStrand`) in `app/subjects/page.tsx`; added all 15 missing `slug` properties to `tracks-data.ts`; wrapped filter buttons with `flex-wrap` to eliminate horizontal clipping on mobile and desktop; mapped `/tracks/[id]` buttons directly to filtered `/subjects` views.
+  - **Bugs #2 & #3 (Landing Page Padding & Large Section Gaps)**: Removed outer `gap-12 sm:gap-16 pb-12` wrapper in `app/page.tsx` for flush section alignment; standardized vertical section padding to `py-12 sm:py-16 lg:py-20` and max-width gutters across all 9 landing sections; eliminated nested padding crowding in `AcademicWorkflowDemo.tsx` and `TrialNoticeSection.tsx`.
+  - **Bug #4 (Popular Subjects Swipable Track)**: Removed floating `<` and `>` chevron buttons in `PopularSubjectsSection.tsx` that obscured subject card text on mobile; implemented smooth touch-snap swiping and desktop mouse drag-to-scroll with click-capture prevention.
+- **Verification & Quality Assurance**:
+  - All automated unit test suites passed: 40/40 test suites, 253/253 tests passed cleanly (`npm test`).
+  - TypeScript strict compilation passed with 0 errors (`npx tsc --noEmit`).
+  - ESLint verification passed cleanly with 0 errors and 0 warnings (`npm run lint`).
+  - Next.js production build (`npm run build`) succeeded generating all 276 static pages cleanly.
+
 ## [2026-11-03]
 
 ### Task 029 - Authentic Filipino Hero Imagery, Frictionless Subscription Availment, DepEd MATATAG Scope Pages & Expanded Curriculum Catalog
