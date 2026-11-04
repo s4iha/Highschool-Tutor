@@ -1,5 +1,15 @@
 import type { SubjectScopeDefinition } from "../types/subjectScope.types";
-import { SUBJECTS, getSubjectBySlug } from "./curriculum-data";
+import {
+  SUBJECTS,
+  getSubjectBySlug,
+  parseJhsSlug,
+  JHS_SUBJECTS,
+  buildJhsSlug,
+  getDistinctShsSubjects,
+} from "./curriculum-data";
+import { getSubjectLessons, getJhsGradeQuarterScope } from "./subject-lessons-data";
+
+export { getJhsGradeQuarterScope };
 
 /**
  * Static metadata catalog mapping canonical slugs or base codes to official
@@ -1210,16 +1220,58 @@ export const BASE_SCOPE_REGISTRY: Record<string, BaseScopeRecord> = {
  * Resolves full DepEd MATATAG curriculum scope metadata for any canonical subject slug.
  */
 export function getSubjectScopeDefinition(slug: string): SubjectScopeDefinition | undefined {
-  const subject = getSubjectBySlug(slug);
+  let subject = getSubjectBySlug(slug);
+
+  // Backwards compatibility for jhs-base slugs (e.g. "jhs-math" -> "g7-q1-math")
+  if (!subject && slug.startsWith("jhs-")) {
+    const abbr = slug.replace("jhs-", "").toLowerCase();
+    subject = getSubjectBySlug(`g7-q1-${abbr}`);
+  }
+
   if (!subject) return undefined;
 
-  // Extract base abbreviation from subject code (e.g. "G11-S1-GENMATH" -> "GENMATH", "G7-Q1-MATH" -> "MATH")
+  // Check if subject is JHS
+  const jhsParse = parseJhsSlug(subject.slug);
+
+  if (jhsParse.isJhs) {
+    const baseCode = jhsParse.abbr;
+    const baseRecord = BASE_SCOPE_REGISTRY[baseCode];
+    const jhsScope = getJhsGradeQuarterScope(
+      baseCode,
+      (jhsParse.grade as "Grade 7" | "Grade 8" | "Grade 9" | "Grade 10") || "Grade 7",
+      (jhsParse.term as "Quarter 1" | "Quarter 2" | "Quarter 3" | "Quarter 4") || "Quarter 1"
+    );
+
+    return {
+      slug: subject.slug,
+      code: subject.code,
+      name: subject.name,
+      level: "Junior High School",
+      grade: subject.grade,
+      term: subject.term,
+      track: "Junior High School Core",
+      strand: "Core",
+      timeAllotment: baseRecord?.timeAllotment || "4 hours per week (160 hours per academic year)",
+      prerequisites: baseRecord?.prerequisites || [`Elementary ${subject.name}`],
+      corequisites: baseRecord?.corequisites,
+      description: jhsScope.description || baseRecord?.description || `${subject.name} curriculum under DepEd DO 015, s. 2026 MATATAG standards.`,
+      competencies: jhsScope.competencies.length > 0 ? jhsScope.competencies : (baseRecord?.competencies || []),
+      tesdaNcLevel: baseRecord?.tesdaNcLevel,
+      careerPathways: baseRecord?.careerPathways || ["Higher Education", "Vocational Careers", "Civic Leadership"],
+      featuredModulesCount: 8,
+      lessons: jhsScope.lessons,
+      isJhsCore: true,
+      abbr: baseCode,
+    };
+  }
+
+  // Senior High School Subject Resolution
   const parts = subject.code.split("-");
   const baseCode = parts[parts.length - 1];
 
   const scopeRecord = BASE_SCOPE_REGISTRY[baseCode] || {
     description: `${subject.name} is aligned with DepEd Order No. 015, s. 2026 MATATAG standards, providing 8 structured lesson modules and 24 practice tests with Socratic AI explanations.`,
-    timeAllotment: subject.level === "Junior High School" ? "4 hours per week (160 hours per academic year)" : "80 hours per semester",
+    timeAllotment: "80 hours per semester",
     prerequisites: ["None"],
     competencies: [
       `Demonstrate foundational knowledge and competencies in ${subject.name}`,
@@ -1229,6 +1281,13 @@ export function getSubjectScopeDefinition(slug: string): SubjectScopeDefinition 
     careerPathways: ["Higher Education", "Vocational Careers", "Civic Leadership"],
   };
 
+  const lessons = getSubjectLessons(
+    baseCode,
+    subject.name,
+    scopeRecord.competencies,
+    scopeRecord.description
+  );
+
   return {
     slug: subject.slug,
     code: subject.code,
@@ -1236,8 +1295,8 @@ export function getSubjectScopeDefinition(slug: string): SubjectScopeDefinition 
     level: subject.level,
     grade: subject.grade,
     term: subject.term,
-    track: subject.track || (subject.level === "Junior High School" ? "Junior High School Core" : "Academic Track"),
-    strand: subject.strand || (subject.level === "Junior High School" ? "Core" : "General"),
+    track: subject.track || "Academic Track",
+    strand: subject.strand || "General",
     timeAllotment: scopeRecord.timeAllotment,
     prerequisites: scopeRecord.prerequisites,
     corequisites: scopeRecord.corequisites,
@@ -1246,19 +1305,51 @@ export function getSubjectScopeDefinition(slug: string): SubjectScopeDefinition 
     tesdaNcLevel: scopeRecord.tesdaNcLevel,
     careerPathways: scopeRecord.careerPathways,
     featuredModulesCount: 8,
+    lessons,
+    isJhsCore: false,
+    abbr: baseCode,
   };
 }
 
 /**
- * Returns all canonical slugs available for pre-rendering.
+ * Returns all canonical slugs available for pre-rendering (excluding legacy trimester slugs).
+ * Total: 128 JHS Quarters + 100 SHS Semesters = 228 canonical slugs.
  */
 export function getAllSubjectScopeSlugs(): string[] {
-  return SUBJECTS.map((s) => s.slug);
+  return SUBJECTS.filter((s) => !/-t[1-3]-/.test(s.slug)).map((s) => s.slug);
 }
 
 /**
- * Returns all resolved subject scope definitions.
+ * Returns all deduplicated subject scope definitions for the public catalog (108 subjects).
+ * Total: 8 JHS Core (Grades 7–10 • Quarters 1–4) + 100 SHS Subjects = 108 subjects.
  */
 export function getAllSubjectScopeDefinitions(): SubjectScopeDefinition[] {
-  return SUBJECTS.map((s) => getSubjectScopeDefinition(s.slug)!).filter(Boolean);
+  const result: SubjectScopeDefinition[] = [];
+
+  // 1. 8 Distinct JHS Core Subjects
+  for (const [abbr] of JHS_SUBJECTS) {
+    const defaultSlug = buildJhsSlug(abbr, "Grade 7", "Quarter 1");
+    const def = getSubjectScopeDefinition(defaultSlug);
+    if (def) {
+      result.push({
+        ...def,
+        code: `JHS-${abbr}`,
+        grade: "Grades 7–10",
+        term: "Quarters 1–4",
+        isJhsCore: true,
+        abbr,
+      });
+    }
+  }
+
+  // 2. 100 Distinct SHS Subjects
+  const shsSubjects = getDistinctShsSubjects();
+  for (const shs of shsSubjects) {
+    const def = getSubjectScopeDefinition(shs.defaultSlug);
+    if (def) {
+      result.push(def);
+    }
+  }
+
+  return result;
 }
