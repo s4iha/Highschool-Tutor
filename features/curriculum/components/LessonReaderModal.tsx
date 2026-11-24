@@ -7,7 +7,7 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { MarkdownRenderer } from "@/shared/components/ui/MarkdownRenderer";
+import { formatMathAndUnicode } from "../utils/math-format";
 import { getLessonMaterialAction } from "../actions/lesson-material.actions";
 import { useAiPromptsModalStore } from "@/shared/hooks/useAiPromptsModalStore";
 
@@ -42,6 +43,7 @@ export function LessonReaderModal({
   onStartQuiz,
 }: LessonReaderModalProps) {
   const openPromptsModal = useAiPromptsModalStore((s) => s.openModal);
+  const queryClient = useQueryClient();
 
   const { data: result, isLoading } = useQuery({
     queryKey: ["lesson-material", subjectSlug, lessonNumber],
@@ -49,6 +51,12 @@ export function LessonReaderModal({
     enabled: isOpen && !!subjectSlug && lessonNumber > 0,
     staleTime: 1000 * 60 * 10,
   });
+
+  React.useEffect(() => {
+    if (result?.success) {
+      queryClient.invalidateQueries({ queryKey: ["student", "dashboard-data"] });
+    }
+  }, [result?.success, queryClient]);
 
   const material = result?.material;
 
@@ -97,7 +105,7 @@ export function LessonReaderModal({
             </div>
           ) : material?.content ? (
             <div className="prose prose-sm dark:prose-invert max-w-none text-foreground leading-relaxed">
-              <MarkdownRenderer content={material.content} />
+              <MarkdownRenderer content={formatMathAndUnicode(material.content)} />
             </div>
           ) : (
             <div className="p-8 text-center space-y-3">

@@ -9,6 +9,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Badge } from "@/shared/components/ui/badge";
 import { MarkdownRenderer } from "@/shared/components/ui/MarkdownRenderer";
+import { formatMathAndUnicode } from "../utils/math-format";
 import { useUpgradeModalStore } from "@/shared/hooks/useUpgradeModalStore";
 
 interface AITutorDrawerProps {
@@ -226,7 +227,7 @@ export function AITutorDrawer({
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="flex h-full flex-col p-0 sm:max-w-md md:max-w-lg">
         {/* Header */}
-        <SheetHeader className="border-b border-border/60 p-4 bg-muted/20">
+        <SheetHeader className="border-b border-border/60 p-4 pr-12 bg-muted/20">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-600 dark:text-indigo-400">
@@ -307,9 +308,9 @@ export function AITutorDrawer({
               </Badge>
             )}
           </div>
-          <p className="text-muted-foreground line-clamp-2 text-[11px] italic font-serif">
-            &ldquo;{currentQuestion.question}&rdquo;
-          </p>
+          <div className="text-muted-foreground line-clamp-2 text-[11px] italic font-serif">
+            &ldquo;<MarkdownRenderer content={formatMathAndUnicode(currentQuestion.question)} inline />&rdquo;
+          </div>
         </div>
 
         {/* Chat Messages */}
