@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/features/auth/lib/session";
 import { SUBJECT_BY_SLUG } from "../utils/curriculum-data";
 import { generateLessonContentWithGemini } from "../api/gemini-service";
-import { getLessonsAction } from "./curriculum.actions";
+import { getLessonsAction, ensureSubjectEnrolledAction } from "./curriculum.actions";
 import { canAccessLesson, getTrialStatus } from "../utils/tier-guardrails";
 
 export interface LessonMaterialData {
@@ -53,13 +53,22 @@ export async function getLessonMaterialAction(
         },
       });
       const isSubscribed = !!activeSub;
-      const trialStatus = getTrialStatus(sessionUser.createdAt);
+      const trialStatus = getTrialStatus(sessionUser.createdAt, undefined, sessionUser.subscription);
 
       if (!canAccessLesson(num, isSubscribed, 3, trialStatus.isTrialActive, trialStatus.isExpired)) {
         return {
           success: false,
           error: trialStatus.isExpired ? "TRIAL_EXPIRED" : "LOCKED_LESSON",
         };
+      }
+    }
+
+    // Auto-enroll authenticated student into this subject when viewing lesson material
+    if (sessionUser?.id) {
+      try {
+        await ensureSubjectEnrolledAction(subjectSlug);
+      } catch (enrollErr) {
+        console.warn("Failed to auto-enroll subject in getLessonMaterialAction:", enrollErr);
       }
     }
 

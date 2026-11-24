@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useOnboardingModalStore } from "@/shared/hooks/useOnboardingModalStore";
@@ -17,6 +17,7 @@ interface AuthPageProps {
 
 function AuthPageContent({ type }: AuthPageProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const callbackUrlParam = searchParams.get("callbackUrl");
 
@@ -52,6 +53,9 @@ function AuthPageContent({ type }: AuthPageProps) {
       return res.json();
     },
     onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["student", "dashboard-data"] });
+
       toast.success(
         isLogin ? "Welcome back! Redirecting..." : "Account created! Welcome aboard!",
         {

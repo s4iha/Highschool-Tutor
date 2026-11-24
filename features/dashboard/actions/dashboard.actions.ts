@@ -3,6 +3,10 @@
 import { prisma, runWithUser } from "@/lib/prisma";
 import { getCurrentUser } from "@/features/auth/lib/session";
 import { SUBJECT_BY_SLUG } from "@/features/curriculum/utils/curriculum-data";
+import {
+  calculateDepEdTransmutation,
+  getDepEdTransmutationRemarks,
+} from "@/features/curriculum/utils/transmutation";
 
 export interface DashboardMetrics {
   enrolledCount: number;
@@ -69,28 +73,6 @@ export async function completeTourAction(): Promise<{ success: boolean; error?: 
   }
 }
 
-/**
- * DepEd DO 015 s. 2026 MATATAG Transmutation Formula
- * Transmuted = 60 + (Raw% * 0.40) where Raw% >= 60% maps to >= 75%
- */
-function calculateTransmutedGrade(score: number, total: number): number {
-  if (total <= 0) return 0;
-  const rawPercentage = (score / total) * 100;
-  if (rawPercentage >= 100) return 100;
-  if (rawPercentage <= 0) return 60;
-  const transmuted = 60 + (rawPercentage * 40) / 100;
-  return Math.min(100, Math.max(60, Math.round(transmuted * 10) / 10));
-}
-
-function getTransmutedRemarks(avg: number | null): string {
-  if (avg === null) return "No evaluations yet";
-  if (avg >= 90) return "Mastered (Outstanding)";
-  if (avg >= 85) return "Mastered (Very Satisfactory)";
-  if (avg >= 80) return "Proficient (Satisfactory)";
-  if (avg >= 75) return "Competency Met";
-  return "Needs Review (<75%)";
-}
-
 export async function getDashboardDataAction(): Promise<{
   success: boolean;
   data?: DashboardRealtimeData;
@@ -116,7 +98,12 @@ export async function getDashboardDataAction(): Promise<{
       orderBy: { createdAt: "desc" },
     });
 
-    const adminConfig = await prisma.adminConfig?.findFirst?.({ orderBy: { updatedAt: "desc" } });
+    let adminConfig = null;
+    try {
+      adminConfig = await prisma.adminConfig?.findFirst?.({ orderBy: { updatedAt: "desc" } });
+    } catch (cfgErr) {
+      console.warn("Failed to fetch adminConfig in getDashboardDataAction, using defaults:", cfgErr);
+    }
     const targetLessons = adminConfig?.targetLessonsPerSubject ?? 8;
 
     // 3. Calculate Enrolled Subject Data & Progress
@@ -156,7 +143,7 @@ export async function getDashboardDataAction(): Promise<{
     for (const att of attempts) {
       uniqueLessonAttempts.add(`${att.subjectSlug}-${att.lessonNumber}`);
       if (att.total > 0) {
-        totalTransmutedScore += calculateTransmutedGrade(att.score, att.total);
+        totalTransmutedScore += calculateDepEdTransmutation(att.score, att.total);
         countedAttempts += 1;
       }
     }
@@ -190,7 +177,7 @@ export async function getDashboardDataAction(): Promise<{
       completedQuizzesCount: uniqueLessonAttempts.size,
       totalQuizzesCount,
       transmutedAverage,
-      transmutedRemarks: getTransmutedRemarks(transmutedAverage),
+      transmutedRemarks: getDepEdTransmutationRemarks(transmutedAverage),
       totalAiCreditsRemaining: remainingCredits,
       totalAiCreditsMax: maxCredits,
     };

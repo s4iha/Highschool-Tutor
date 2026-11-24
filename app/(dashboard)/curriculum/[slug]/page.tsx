@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import prisma from "@/lib/prisma";
+import { getCurrentUser } from "@/features/auth/lib/session";
 import { SUBJECT_BY_SLUG } from "@/features/curriculum/utils/curriculum-data";
 import { LessonList } from "@/features/curriculum/components/LessonList";
 import { CurriculumGuard } from "@/features/curriculum/components/CurriculumGuard";
@@ -31,10 +33,24 @@ export default async function SubjectLessonsPage({ params }: SubjectPageProps) {
     notFound();
   }
 
+  const sessionUser = await getCurrentUser();
+  const isAdmin = sessionUser?.role === "ADMIN";
+  let isSubscribed = isAdmin;
+  if (!isSubscribed && sessionUser?.id) {
+    const activeSub = await prisma.subscription.findFirst({
+      where: {
+        userId: sessionUser.id,
+        status: "ACTIVE",
+        expiresAt: { gte: new Date() },
+      },
+    });
+    isSubscribed = !!activeSub;
+  }
+
   return (
     <div className="container mx-auto max-w-7xl px-4 sm:px-6">
       <CurriculumGuard>
-        <LessonList subject={subject} />
+        <LessonList subject={subject} isSubscribed={isSubscribed} />
       </CurriculumGuard>
     </div>
   );

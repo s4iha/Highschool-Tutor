@@ -16,6 +16,7 @@ import { useUser } from "@/features/auth/hooks/useUser";
 import { authClient } from "@/lib/auth-client";
 import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface DashboardSidebarProps {
   activeTab?: DashboardTab;
@@ -27,6 +28,7 @@ export default function DashboardSidebar({
   onTabChange,
 }: DashboardSidebarProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const pathname = usePathname();
   const { user } = useUser();
   const {
@@ -60,6 +62,7 @@ export default function DashboardSidebar({
         console.warn("Client signOut warning:", clientErr);
       }
       await fetch("/api/auth/logout", { method: "POST" });
+      queryClient.clear();
       toast.success("Logged out successfully");
       router.push("/login");
       router.refresh();

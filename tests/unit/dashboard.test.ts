@@ -117,7 +117,7 @@ describe("Dashboard Server Actions & Real-Time Aggregations", () => {
           lessonNumber: 2,
           lessonTitle: "Rational Functions",
           score: 6,
-          total: 10, // 60% raw -> 60 + 24 = 84 transmuted
+          total: 10, // 60% raw -> 75 transmuted (DepEd DO 015 s. 2026)
           mode: "exam",
           createdAt: new Date(Date.now() - 10000),
         },
@@ -133,8 +133,8 @@ describe("Dashboard Server Actions & Real-Time Aggregations", () => {
       const { metrics, activeLearning, enrolledSubjects } = res.data!;
       expect(metrics.enrolledCount).toBe(1);
       expect(metrics.completedQuizzesCount).toBe(2);
-      expect(metrics.transmutedAverage).toBe(92); // (100 + 84) / 2 = 92
-      expect(metrics.transmutedRemarks).toBe("Mastered (Outstanding)");
+      expect(metrics.transmutedAverage).toBe(87.5); // (100 + 75) / 2 = 87.5
+      expect(metrics.transmutedRemarks).toBe("Mastered (Very Satisfactory)");
       expect(metrics.totalAiCreditsRemaining).toBe(17); // 20 - 3
 
       // Active learning points to next lesson after latest attempt (lesson 1 + 1 = 2)
