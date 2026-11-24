@@ -42,7 +42,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const role = user.roles?.[0]?.role || "STUDENT";
+    const isAdmin = user.roles?.some((r) => r.role === "ADMIN");
+    const role = isAdmin ? "ADMIN" : user.roles?.[0]?.role || "STUDENT";
 
     const token = await signToken({
       userId: user.id,

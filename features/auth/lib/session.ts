@@ -74,7 +74,8 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       return null;
     }
 
-    const role = user.roles?.[0]?.role || "STUDENT";
+    const isAdmin = user.roles?.some((r) => r.role === "ADMIN");
+    const role = isAdmin ? "ADMIN" : user.roles?.[0]?.role || "STUDENT";
     const latestSub = user.subscriptions?.[0] || null;
 
     return {
