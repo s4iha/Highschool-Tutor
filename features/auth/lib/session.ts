@@ -10,6 +10,11 @@ export interface SessionUser {
   role: string;
   image?: string | null;
   createdAt?: Date;
+  subscription?: {
+    status: string;
+    plan: string;
+    expiresAt: Date | null;
+  } | null;
 }
 
 export async function getCurrentUser(): Promise<SessionUser | null> {
@@ -56,7 +61,13 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { roles: true },
+      include: {
+        roles: true,
+        subscriptions: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+      },
     });
 
     if (!user || !user.email) {
@@ -64,6 +75,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
     }
 
     const role = user.roles?.[0]?.role || "STUDENT";
+    const latestSub = user.subscriptions?.[0] || null;
 
     return {
       id: user.id,
@@ -72,6 +84,13 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
       role,
       image: user.image || null,
       createdAt: user.createdAt,
+      subscription: latestSub
+        ? {
+            status: latestSub.status,
+            plan: latestSub.plan,
+            expiresAt: latestSub.expiresAt,
+          }
+        : null,
     };
   } catch (error) {
     console.error("getCurrentUser error:", error);

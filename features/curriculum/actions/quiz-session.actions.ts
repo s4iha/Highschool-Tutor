@@ -53,7 +53,7 @@ export async function createQuizSessionAction(input: CreateQuizSessionInput): Pr
       isSubscribed = !!activeSub;
     }
 
-    const trialStatus = getTrialStatus(sessionUser?.createdAt);
+    const trialStatus = getTrialStatus(sessionUser?.createdAt, undefined, sessionUser?.subscription);
     const isTrialExpired = trialStatus.isExpired;
     const isTrialActive = trialStatus.isTrialActive;
 
@@ -66,9 +66,33 @@ export async function createQuizSessionAction(input: CreateQuizSessionInput): Pr
       };
     }
 
-    // 2. Validate Mode and Clamp Allowed Question Counts
-    const mode = input.mode === "exam" ? "exam" : "study";
-    const allowedCounts = [5, 10, 15, 20, 24];
+    // 2. Validate Mode and Clamp Allowed Question Counts dynamically from AdminConfig
+    const requestedMode = input.mode === "exam" ? "exam" : "study";
+    if (requestedMode === "exam" && !isSubscribed && sessionUser?.role !== "ADMIN") {
+      return {
+        success: false,
+        error: "EXAM_MODE_LOCKED",
+      };
+    }
+    const mode = requestedMode;
+    let allowedCounts = [5, 10, 15, 20, 24];
+    try {
+      const config = await prisma.adminConfig.findFirst({
+        select: { availableQuestionCounts: true },
+      });
+      if (config?.availableQuestionCounts) {
+        const parsed = config.availableQuestionCounts
+          .split(",")
+          .map((s) => parseInt(s.trim(), 10))
+          .filter((n) => !isNaN(n) && n > 0);
+        if (parsed.length > 0) {
+          allowedCounts = Array.from(new Set([...parsed, 24]));
+        }
+      }
+    } catch (cfgErr) {
+      console.warn("Failed to fetch availableQuestionCounts, using fallback:", cfgErr);
+    }
+
     let count = Number(input.count);
     if (!allowedCounts.includes(count)) {
       count = 10;

@@ -1,5 +1,126 @@
 # Project Backlog & Change Log
 
+## [2026-11-24]
+
+### Task 034 - Trial Subject Access, Timer Badge, and Enterprise Tier Entitlements
+
+- **Free Trial Subject Access & Dashboard Flow**:
+  - Implemented `features/curriculum/utils/starter-subjects.ts` with `getStarterSubjectSlugs` and `enrollStarterSubjects`:
+    - Auto-provisions 3 starter subjects aligned with the student's selected grade level and quarter/semester upon completing onboarding (`/api/user/onboarding`).
+    - Unified starter subject migration in `/api/user/profile` when students switch between JHS and SHS grade levels.
+    - Added unit test suite `tests/unit/starter-subjects.test.ts`.
+  - Updated `features/dashboard/components/StudentDashboardView.tsx`:
+    - Replaced misleading "Unlock More Subjects" paywall trigger with an "Explore Curriculum" link (`/curriculum`) for active 30-day trial and paid users, eliminating false paywalls.
+    - Replaced duplicate "Enrolled Subjects" KPI card with "Lessons Completed" (counting mastered DepEd modules).
+  - Updated `app/api/user/me/route.ts` to include `"EXPIRED"` subscription records, ensuring client-side trial expiration overrides take immediate effect.
+- **Trial Badge Visual Icon Modernization**:
+  - Replaced ambiguous `Sparkles` icon with `Timer` icon in `features/dashboard/components/TrialCountdownWidget.tsx` and `features/curriculum/components/LessonList.tsx` for the days-remaining trial badges.
+- **Enterprise-Ready Entitlements & Guardrails**:
+  - Unified `TierEntitlements` in `features/curriculum/utils/tier-guardrails.ts`:
+    - Supports `subscriptionOverride` directly in `getTierEntitlements()`.
+    - 30-day Free Trial: Unlocks all 130+ subjects and lessons in Study Mode with 20 daily AI credits (`canAccessExamMode: false`, `canAccessTranslation: false`).
+    - Paid Passes (`ACTIVE`) & `ADMIN`: Unlocks Exam Mode (Graded), Multi-Dialect Translation, and Unlimited AI Tutoring.
+  - Gated Exam Mode in `features/curriculum/components/LessonList.tsx` (mode picker modal) and `features/curriculum/actions/quiz-session.actions.ts` (`createQuizSessionAction`), prompting upgrade modal if accessed without a paid pass.
+  - Added enterprise fair-use rate limiting in `features/curriculum/utils/ai-credits.ts`:
+    - `PAID_FAIR_USE_BURST_PER_MINUTE` (15/min burst ceiling).
+    - `PAID_FAIR_USE_DAILY_CEILING` (300/day fair-use ceiling) to protect against compromised credentials, runaway client loops, and Gemini API cost spikes.
+- **Verification Results**:
+  - Unit tests: 48/48 suites, 316/316 tests passed cleanly (`npm test`).
+  - ESLint: 0 errors, 0 warnings (`npm run lint`).
+  - Next.js Production Build: Prerendered 276 static pages successfully (`npm run build`).
+
+### Task 033 - Math Symbol Unicode Rendering & AI Tutor Header Close Button Overlap
+
+- **Mathematical Symbol & Escaped Unicode Sanitization**:
+  - Created `features/curriculum/utils/math-format.ts` with `decodeUnicodeEscapes` and `formatMathAndUnicode`:
+    - Automatically decodes raw escaped Unicode sequences (such as `\u2218` -> `∘` / composition operator, `\u00d7` -> `×`, `\u00b2` -> `²`, `\u221a` -> `√`, `\u2264` -> `≤`, etc.).
+    - Normalizes exponents outside LaTeX (e.g. `2x^2` -> `2x²`, `x^3` -> `x³`) for natural Philippine high school curriculum readability.
+    - Preserves LaTeX math expressions (`$...$`, `$$...$$`) for native KaTeX rendering.
+  - Added unit test suite `tests/unit/math-format.test.ts` (9 tests covering unicode code point decoding, multiple escapes, exponent normalization, and LaTeX preservation).
+  - Updated `shared/components/ui/MarkdownRenderer.tsx` to automatically decode unicode escape sequences on all rendered markdown content across the application.
+  - Updated `features/curriculum/api/gemini-service.ts`:
+    - Added Rule 8 to `generateQuizForLesson` prompt instructing Gemini to format mathematical formulas, variables, and expressions using clean Unicode math symbols or standard LaTeX notation (`$...$`).
+    - Added post-processing in `generateQuizForLesson` and `batchTranslateQuizQuestion` to clean questions, choices, and explanations with `formatMathAndUnicode`.
+    - Added sanitization to `buildTutorSystemPrompt` so the AI Tutor receives clean mathematical notation instead of raw escaped literals.
+  - Updated `features/curriculum/components/QuizRunner.tsx` to pass `displayQuestion`, `displayOptions`, and `displayExplanation` through `formatMathAndUnicode` before rendering.
+  - Updated `features/curriculum/components/LessonReaderModal.tsx` to format lesson material content with `formatMathAndUnicode`.
+- **AI Tutor Drawer Header Close Button Overlap Fix**:
+  - Added `pr-12` to `SheetHeader` in `features/curriculum/components/AITutorDrawer.tsx`, providing a dedicated 48px clearance from the right edge so the credits badge (`⚡ Unlimited` / `X left`) never collides with the close (`x`) button (`DialogPrimitive.Close` at `right-4 top-4`).
+  - Updated the Anchored Question Context Banner in `AITutorDrawer.tsx` to format the question string using `formatMathAndUnicode` and render it with `MarkdownRenderer inline`, replacing raw unparsed text.
+- **Verification Results**:
+  - Unit tests: 47/47 suites, 309/309 tests passed cleanly (`npm test`).
+  - ESLint: 0 errors, 0 warnings (`npm run lint`).
+  - Next.js Production Build: Prerendered 276 static pages successfully (`npm run build`).
+
+### Task 032 - PayMongo Checkout Verification & Super Admin Trial Re-activation Fixes
+
+- **PayMongo Checkout Verification (`create-session` & `verify-session`)**:
+  - Replaced Stripe-only `{CHECKOUT_SESSION_ID}` placeholder in `app/api/v1/billing/checkout/create-session/route.ts` `successUrl` with `&ref=${encodeURIComponent(referenceNumber)}`.
+  - Updated `app/api/v1/billing/checkout/verify-session/route.ts` to resolve transactions by `session_id` (ignoring literal `{CHECKOUT_SESSION_ID}`) or `ref` (`referenceNumber`), then reconcile via `retrievePayMongoCheckoutSession` so localhost payments verify without requiring incoming webhooks.
+  - Updated `features/billing/api/checkoutApi.ts`, `features/billing/hooks/useVerifySession.ts`, and `features/billing/components/PaymentCelebrationDialog.tsx` to support `ref`, invalidate `["student", "dashboard-data"]` on `PAID`, and display an actionable error + retry state if verification fails.
+- **Super Admin Trial Re-activation & Expiration Override**:
+  - Updated `getTrialStatus()` in `features/curriculum/utils/tier-guardrails.ts` to honor `Subscription` overrides (`status === "TRIAL"` with future `expiresAt` unlocks trial access regardless of `user.createdAt`; `status === "EXPIRED"` immediately locks trial access).
+  - Updated `getCurrentUser()` in `features/auth/lib/session.ts` to include the user's latest `subscription` and wired it into all `getTrialStatus()` call sites across server actions, SSR pages, `LessonList.tsx`, and `TrialCountdownWidget.tsx`.
+  - Hardened `PATCH /api/v1/admin/students` in `app/api/v1/admin/students/route.ts` with `ADMIN` role authorization, `StudentSubscriptionUpdateSchema` validation, `runAsAdmin`, and proper `expiresAt` updates for `TRIAL`, `ACTIVE`, and `EXPIRED` transitions.
+- **Verification Results**:
+  - Unit tests: 46/46 suites, 300/300 tests passed (`npm test`, including `__tests__/billing/verify-session.test.ts` and `__tests__/curriculum/tier-guardrails.test.ts`).
+  - ESLint (`npm run lint`) and Next.js production build (`npm run build`, 276 static pages) passed with 0 errors.
+
+### Task 031 - End-to-End Quiz Generation & Student Workflow Reliability
+
+- **PostgreSQL Schema Migration & Column Synchronization**:
+  - Generated and deployed tracked idempotent PostgreSQL migration `prisma/migrations/20261124130000_sync_admin_config_and_quiz_sessions/migration.sql` resolving runtime crash `P2022 ColumnNotFound: admin_config.availableQuestionCounts`.
+  - Added missing column `activeQuestionIndex` to `quiz_sessions` table and created indexes on `quiz_sessions(userId, completedAt, createdAt)` and `reminder_notices(userId, kind)`.
+  - Regenerated Prisma Client (`@prisma/client@7.9.1`).
+- **Unified DepEd DO 015 s. 2026 Piecewise Transmutation Utility**:
+  - Implemented shared `calculateDepEdTransmutation(score, total)`, `getDepEdTransmutationRemarks(avg)`, and `isPassingDepEd(grade)` in `features/curriculum/utils/transmutation.ts`.
+  - Accurately models official DepEd piecewise transmutation: `0% -> 60` (floor), `60% -> 75` (passing threshold), and `100% -> 100`.
+  - Replaced divergent legacy linear formula (`60 + raw% * 0.40`) in `features/dashboard/actions/dashboard.actions.ts`, aligning metrics across Dashboard Overview, Subject Progress, Weak Points, and Quiz Runner.
+- **Reliable Quiz Generation, Gemini Sizing & Resilient Fallbacks**:
+  - Configured `maxOutputTokens: 8192` in `generationConfig` inside `features/curriculum/api/gemini-service.ts` to prevent 24-question pool JSON array truncations on `gemini-3.5-flash-lite`.
+  - Added curated MATATAG syllabus fallback in `getLessonsAction` using `getSubjectScopeDefinition` when Gemini API encounters network or quota failures.
+  - Wrapped `prisma.adminConfig.findFirst()` queries in resilient `try/catch` handlers with robust fallback defaults in `curriculum.actions.ts`, `quiz-session.actions.ts`, and `dashboard.actions.ts`.
+  - Added support for both `?session=` and `?sessionId=` parameters across `app/(dashboard)/curriculum/[slug]/quiz/[lesson]/page.tsx` and `QuizRunner.tsx`.
+- **Auth & Onboarding TanStack Query Cache Synchronization**:
+  - Resolved `{ user: null }` cache poisoning bug by invalidating `["currentUser"]` and `["student", "dashboard-data"]` in `features/auth/components/AuthPage.tsx` upon login and registration.
+  - Implemented `resolveOnboardingDefaults` in `features/auth/utils/onboarding-defaults.ts` ensuring Senior High (`Grade 11`/`Grade 12`) defaults to `"Semester 1"` and Junior High (`Grade 7`–`Grade 10`) defaults to `"Quarter 1"`.
+  - Updated `subjectSchema` term validation regex in `features/curriculum/schemas/curriculum.schema.ts` to accept `Quarter [1-4]`, `Trimester [1-3]`, and `Semester [1-2]`.
+  - Added query cache invalidation on onboarding completion in `OnboardingModal.tsx` and full cache purge (`queryClient.clear()`) in `DashboardSidebar.tsx` upon logout.
+- **Accurate 30-Day Free Trial & Subject Enrollment Access**:
+  - Fixed 30-day trial lesson lock bug in `LessonQuizPage` by passing full trial status `(lessonNumber, isSubscribed, maxFreeLessons, trialStatus.isTrialActive, trialStatus.isExpired)` to `canAccessLesson`, unlocking Lessons 1–8 during active trials without false redirects to `?upgrade=true`.
+  - Added auto-enrollment to `TrialSubject` when viewing lesson material in `getLessonMaterialAction` and wired cache invalidation to `LessonReaderModal.tsx`.
+  - Derived `effectiveIsSubscribed` in `LessonList.tsx` from `isSubscribed || user?.role === "ADMIN" || user?.subscription?.status === "ACTIVE"`.
+  - Passed student's configured `tutoringPersona` (`socratic`, `detailed`, `exam-prep`) and active subscription status to `AITutorDrawer` and `TranslationControls` in `QuizRunner.tsx`.
+  - Guarded `getSubjectProgressAction` against unauthenticated cross-user database queries with `!sessionUser?.id`.
+- **Key Files Modified or Added**:
+  - `prisma/migrations/20261124130000_sync_admin_config_and_quiz_sessions/migration.sql`
+  - `features/curriculum/utils/transmutation.ts`
+  - `features/auth/utils/onboarding-defaults.ts`
+  - `features/curriculum/api/gemini-service.ts`
+  - `features/curriculum/actions/curriculum.actions.ts`
+  - `features/curriculum/actions/quiz-session.actions.ts`
+  - `features/curriculum/actions/lesson-material.actions.ts`
+  - `features/dashboard/actions/dashboard.actions.ts`
+  - `features/dashboard/components/DashboardSidebar.tsx`
+  - `features/auth/components/AuthPage.tsx`
+  - `features/auth/components/OnboardingModal.tsx`
+  - `features/curriculum/components/QuizRunner.tsx`
+  - `features/curriculum/components/LessonList.tsx`
+  - `features/curriculum/components/LessonReaderModal.tsx`
+  - `app/(dashboard)/curriculum/[slug]/page.tsx`
+  - `app/(dashboard)/curriculum/[slug]/quiz/[lesson]/page.tsx`
+  - `features/curriculum/schemas/curriculum.schema.ts`
+  - `__tests__/curriculum/transmutation.test.ts`
+  - `__tests__/curriculum/quiz-generation-and-session.test.ts`
+  - `__tests__/curriculum/tier-guardrails.test.ts`
+  - `__tests__/auth/onboarding-defaults.test.ts`
+  - `docs/tasks/TASK-031-fix-quiz-workflow-bugs.md`
+- **Verification Results**:
+  - Database migration applied and verified cleanly in local PostgreSQL.
+  - All automated test suites passed: 45/45 test suites, 296/296 tests passed cleanly (`npm test`).
+  - ESLint verification passed with zero errors and zero warnings (`npm run lint`).
+  - Next.js production build (`npm run build`) succeeded with zero TypeScript or compilation errors, prerendering all 276 static routes.
+
 ## [2026-11-04]
 
 ### Task 030 - Subject Scope 8-Lesson Syllabus Breakdown, Public Catalog Deduplication (108 Subjects), Hydration Fixes & Landing Page Accuracy
@@ -583,6 +704,127 @@
 ## [2026-10-26]
 
 # Project Backlog & Change Log
+
+## [2026-11-24]
+
+### Task 034 - Trial Subject Access, Timer Badge, and Enterprise Tier Entitlements
+
+- **Free Trial Subject Access & Dashboard Flow**:
+  - Implemented `features/curriculum/utils/starter-subjects.ts` with `getStarterSubjectSlugs` and `enrollStarterSubjects`:
+    - Auto-provisions 3 starter subjects aligned with the student's selected grade level and quarter/semester upon completing onboarding (`/api/user/onboarding`).
+    - Unified starter subject migration in `/api/user/profile` when students switch between JHS and SHS grade levels.
+    - Added unit test suite `tests/unit/starter-subjects.test.ts`.
+  - Updated `features/dashboard/components/StudentDashboardView.tsx`:
+    - Replaced misleading "Unlock More Subjects" paywall trigger with an "Explore Curriculum" link (`/curriculum`) for active 30-day trial and paid users, eliminating false paywalls.
+    - Replaced duplicate "Enrolled Subjects" KPI card with "Lessons Completed" (counting mastered DepEd modules).
+  - Updated `app/api/user/me/route.ts` to include `"EXPIRED"` subscription records, ensuring client-side trial expiration overrides take immediate effect.
+- **Trial Badge Visual Icon Modernization**:
+  - Replaced ambiguous `Sparkles` icon with `Timer` icon in `features/dashboard/components/TrialCountdownWidget.tsx` and `features/curriculum/components/LessonList.tsx` for the days-remaining trial badges.
+- **Enterprise-Ready Entitlements & Guardrails**:
+  - Unified `TierEntitlements` in `features/curriculum/utils/tier-guardrails.ts`:
+    - Supports `subscriptionOverride` directly in `getTierEntitlements()`.
+    - 30-day Free Trial: Unlocks all 130+ subjects and lessons in Study Mode with 20 daily AI credits (`canAccessExamMode: false`, `canAccessTranslation: false`).
+    - Paid Passes (`ACTIVE`) & `ADMIN`: Unlocks Exam Mode (Graded), Multi-Dialect Translation, and Unlimited AI Tutoring.
+  - Gated Exam Mode in `features/curriculum/components/LessonList.tsx` (mode picker modal) and `features/curriculum/actions/quiz-session.actions.ts` (`createQuizSessionAction`), prompting upgrade modal if accessed without a paid pass.
+  - Added enterprise fair-use rate limiting in `features/curriculum/utils/ai-credits.ts`:
+    - `PAID_FAIR_USE_BURST_PER_MINUTE` (15/min burst ceiling).
+    - `PAID_FAIR_USE_DAILY_CEILING` (300/day fair-use ceiling) to protect against compromised credentials, runaway client loops, and Gemini API cost spikes.
+- **Verification Results**:
+  - Unit tests: 48/48 suites, 316/316 tests passed cleanly (`npm test`).
+  - ESLint: 0 errors, 0 warnings (`npm run lint`).
+  - Next.js Production Build: Prerendered 276 static pages successfully (`npm run build`).
+
+### Task 033 - Math Symbol Unicode Rendering & AI Tutor Header Close Button Overlap
+
+- **Mathematical Symbol & Escaped Unicode Sanitization**:
+  - Created `features/curriculum/utils/math-format.ts` with `decodeUnicodeEscapes` and `formatMathAndUnicode`:
+    - Automatically decodes raw escaped Unicode sequences (such as `\u2218` -> `∘` / composition operator, `\u00d7` -> `×`, `\u00b2` -> `²`, `\u221a` -> `√`, `\u2264` -> `≤`, etc.).
+    - Normalizes exponents outside LaTeX (e.g. `2x^2` -> `2x²`, `x^3` -> `x³`) for natural Philippine high school curriculum readability.
+    - Preserves LaTeX math expressions (`$...$`, `$$...$$`) for native KaTeX rendering.
+  - Added unit test suite `tests/unit/math-format.test.ts` (9 tests covering unicode code point decoding, multiple escapes, exponent normalization, and LaTeX preservation).
+  - Updated `shared/components/ui/MarkdownRenderer.tsx` to automatically decode unicode escape sequences on all rendered markdown content across the application.
+  - Updated `features/curriculum/api/gemini-service.ts`:
+    - Added Rule 8 to `generateQuizForLesson` prompt instructing Gemini to format mathematical formulas, variables, and expressions using clean Unicode math symbols or standard LaTeX notation (`$...$`).
+    - Added post-processing in `generateQuizForLesson` and `batchTranslateQuizQuestion` to clean questions, choices, and explanations with `formatMathAndUnicode`.
+    - Added sanitization to `buildTutorSystemPrompt` so the AI Tutor receives clean mathematical notation instead of raw escaped literals.
+  - Updated `features/curriculum/components/QuizRunner.tsx` to pass `displayQuestion`, `displayOptions`, and `displayExplanation` through `formatMathAndUnicode` before rendering.
+  - Updated `features/curriculum/components/LessonReaderModal.tsx` to format lesson material content with `formatMathAndUnicode`.
+- **AI Tutor Drawer Header Close Button Overlap Fix**:
+  - Added `pr-12` to `SheetHeader` in `features/curriculum/components/AITutorDrawer.tsx`, providing a dedicated 48px clearance from the right edge so the credits badge (`⚡ Unlimited` / `X left`) never collides with the close (`x`) button (`DialogPrimitive.Close` at `right-4 top-4`).
+  - Updated the Anchored Question Context Banner in `AITutorDrawer.tsx` to format the question string using `formatMathAndUnicode` and render it with `MarkdownRenderer inline`, replacing raw unparsed text.
+- **Verification Results**:
+  - Unit tests: 47/47 suites, 309/309 tests passed cleanly (`npm test`).
+  - ESLint: 0 errors, 0 warnings (`npm run lint`).
+  - Next.js Production Build: Prerendered 276 static pages successfully (`npm run build`).
+
+### Task 032 - PayMongo Checkout Verification & Super Admin Trial Re-activation Fixes
+
+- **PayMongo Checkout Verification (`create-session` & `verify-session`)**:
+  - Replaced Stripe-only `{CHECKOUT_SESSION_ID}` placeholder in `app/api/v1/billing/checkout/create-session/route.ts` `successUrl` with `&ref=${encodeURIComponent(referenceNumber)}`.
+  - Updated `app/api/v1/billing/checkout/verify-session/route.ts` to resolve transactions by `session_id` (ignoring literal `{CHECKOUT_SESSION_ID}`) or `ref` (`referenceNumber`), then reconcile via `retrievePayMongoCheckoutSession` so localhost payments verify without requiring incoming webhooks.
+  - Updated `features/billing/api/checkoutApi.ts`, `features/billing/hooks/useVerifySession.ts`, and `features/billing/components/PaymentCelebrationDialog.tsx` to support `ref`, invalidate `["student", "dashboard-data"]` on `PAID`, and display an actionable error + retry state if verification fails.
+- **Super Admin Trial Re-activation & Expiration Override**:
+  - Updated `getTrialStatus()` in `features/curriculum/utils/tier-guardrails.ts` to honor `Subscription` overrides (`status === "TRIAL"` with future `expiresAt` unlocks trial access regardless of `user.createdAt`; `status === "EXPIRED"` immediately locks trial access).
+  - Updated `getCurrentUser()` in `features/auth/lib/session.ts` to include the user's latest `subscription` and wired it into all `getTrialStatus()` call sites across server actions, SSR pages, `LessonList.tsx`, and `TrialCountdownWidget.tsx`.
+  - Hardened `PATCH /api/v1/admin/students` in `app/api/v1/admin/students/route.ts` with `ADMIN` role authorization, `StudentSubscriptionUpdateSchema` validation, `runAsAdmin`, and proper `expiresAt` updates for `TRIAL`, `ACTIVE`, and `EXPIRED` transitions.
+- **Verification Results**:
+  - Unit tests: 46/46 suites, 300/300 tests passed (`npm test`, including `__tests__/billing/verify-session.test.ts` and `__tests__/curriculum/tier-guardrails.test.ts`).
+  - ESLint (`npm run lint`) and Next.js production build (`npm run build`, 276 static pages) passed with 0 errors.
+
+### Task 031 - End-to-End Quiz Generation & Student Workflow Reliability
+
+- **PostgreSQL Schema Migration & Column Synchronization**:
+  - Generated and deployed tracked idempotent PostgreSQL migration `prisma/migrations/20261124130000_sync_admin_config_and_quiz_sessions/migration.sql` resolving runtime crash `P2022 ColumnNotFound: admin_config.availableQuestionCounts`.
+  - Added missing column `activeQuestionIndex` to `quiz_sessions` table and created indexes on `quiz_sessions(userId, completedAt, createdAt)` and `reminder_notices(userId, kind)`.
+  - Regenerated Prisma Client (`@prisma/client@7.9.1`).
+- **Unified DepEd DO 015 s. 2026 Piecewise Transmutation Utility**:
+  - Implemented shared `calculateDepEdTransmutation(score, total)`, `getDepEdTransmutationRemarks(avg)`, and `isPassingDepEd(grade)` in `features/curriculum/utils/transmutation.ts`.
+  - Accurately models official DepEd piecewise transmutation: `0% -> 60` (floor), `60% -> 75` (passing threshold), and `100% -> 100`.
+  - Replaced divergent legacy linear formula (`60 + raw% * 0.40`) in `features/dashboard/actions/dashboard.actions.ts`, aligning metrics across Dashboard Overview, Subject Progress, Weak Points, and Quiz Runner.
+- **Reliable Quiz Generation, Gemini Sizing & Resilient Fallbacks**:
+  - Configured `maxOutputTokens: 8192` in `generationConfig` inside `features/curriculum/api/gemini-service.ts` to prevent 24-question pool JSON array truncations on `gemini-3.5-flash-lite`.
+  - Added curated MATATAG syllabus fallback in `getLessonsAction` using `getSubjectScopeDefinition` when Gemini API encounters network or quota failures.
+  - Wrapped `prisma.adminConfig.findFirst()` queries in resilient `try/catch` handlers with robust fallback defaults in `curriculum.actions.ts`, `quiz-session.actions.ts`, and `dashboard.actions.ts`.
+  - Added support for both `?session=` and `?sessionId=` parameters across `app/(dashboard)/curriculum/[slug]/quiz/[lesson]/page.tsx` and `QuizRunner.tsx`.
+- **Auth & Onboarding TanStack Query Cache Synchronization**:
+  - Resolved `{ user: null }` cache poisoning bug by invalidating `["currentUser"]` and `["student", "dashboard-data"]` in `features/auth/components/AuthPage.tsx` upon login and registration.
+  - Implemented `resolveOnboardingDefaults` in `features/auth/utils/onboarding-defaults.ts` ensuring Senior High (`Grade 11`/`Grade 12`) defaults to `"Semester 1"` and Junior High (`Grade 7`–`Grade 10`) defaults to `"Quarter 1"`.
+  - Updated `subjectSchema` term validation regex in `features/curriculum/schemas/curriculum.schema.ts` to accept `Quarter [1-4]`, `Trimester [1-3]`, and `Semester [1-2]`.
+  - Added query cache invalidation on onboarding completion in `OnboardingModal.tsx` and full cache purge (`queryClient.clear()`) in `DashboardSidebar.tsx` upon logout.
+- **Accurate 30-Day Free Trial & Subject Enrollment Access**:
+  - Fixed 30-day trial lesson lock bug in `LessonQuizPage` by passing full trial status `(lessonNumber, isSubscribed, maxFreeLessons, trialStatus.isTrialActive, trialStatus.isExpired)` to `canAccessLesson`, unlocking Lessons 1–8 during active trials without false redirects to `?upgrade=true`.
+  - Added auto-enrollment to `TrialSubject` when viewing lesson material in `getLessonMaterialAction` and wired cache invalidation to `LessonReaderModal.tsx`.
+  - Derived `effectiveIsSubscribed` in `LessonList.tsx` from `isSubscribed || user?.role === "ADMIN" || user?.subscription?.status === "ACTIVE"`.
+  - Passed student's configured `tutoringPersona` (`socratic`, `detailed`, `exam-prep`) and active subscription status to `AITutorDrawer` and `TranslationControls` in `QuizRunner.tsx`.
+  - Guarded `getSubjectProgressAction` against unauthenticated cross-user database queries with `!sessionUser?.id`.
+- **Key Files Modified or Added**:
+  - `prisma/migrations/20261124130000_sync_admin_config_and_quiz_sessions/migration.sql`
+  - `features/curriculum/utils/transmutation.ts`
+  - `features/auth/utils/onboarding-defaults.ts`
+  - `features/curriculum/api/gemini-service.ts`
+  - `features/curriculum/actions/curriculum.actions.ts`
+  - `features/curriculum/actions/quiz-session.actions.ts`
+  - `features/curriculum/actions/lesson-material.actions.ts`
+  - `features/dashboard/actions/dashboard.actions.ts`
+  - `features/dashboard/components/DashboardSidebar.tsx`
+  - `features/auth/components/AuthPage.tsx`
+  - `features/auth/components/OnboardingModal.tsx`
+  - `features/curriculum/components/QuizRunner.tsx`
+  - `features/curriculum/components/LessonList.tsx`
+  - `features/curriculum/components/LessonReaderModal.tsx`
+  - `app/(dashboard)/curriculum/[slug]/page.tsx`
+  - `app/(dashboard)/curriculum/[slug]/quiz/[lesson]/page.tsx`
+  - `features/curriculum/schemas/curriculum.schema.ts`
+  - `__tests__/curriculum/transmutation.test.ts`
+  - `__tests__/curriculum/quiz-generation-and-session.test.ts`
+  - `__tests__/curriculum/tier-guardrails.test.ts`
+  - `__tests__/auth/onboarding-defaults.test.ts`
+  - `docs/tasks/TASK-031-fix-quiz-workflow-bugs.md`
+- **Verification Results**:
+  - Database migration applied and verified cleanly in local PostgreSQL.
+  - All automated test suites passed: 45/45 test suites, 296/296 tests passed cleanly (`npm test`).
+  - ESLint verification passed with zero errors and zero warnings (`npm run lint`).
+  - Next.js production build (`npm run build`) succeeded with zero TypeScript or compilation errors, prerendering all 276 static routes.
 
 ## [2026-10-27]
 

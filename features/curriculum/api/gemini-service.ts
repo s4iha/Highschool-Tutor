@@ -1,5 +1,6 @@
 import type { Subject, Lesson, QuizQuestion, TutorMessage } from "../types/curriculum.types";
 import { quizQuestionSchema, lessonSchema } from "../schemas/curriculum.schema";
+import { formatMathAndUnicode } from "../utils/math-format";
 import { z } from "zod";
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -68,6 +69,7 @@ async function callGemini(
 
   const generationConfig: Record<string, unknown> = {
     temperature: 0.2,
+    maxOutputTokens: 8192,
   };
 
   if (responseSchema) {
@@ -186,7 +188,8 @@ STRICT FORMATTING AND QUESTION QUALITY RULES:
 4. Provide exactly 4 options: A, B, C, D.
 5. Provide a clear, definitive correct answer (A, B, C, or D).
 6. Provide a detailed explanation explaining why the correct option is right and why other options are incorrect.
-7. Tone: Academic, encouraging, and aligned with DepEd DO 015 s. 2026 competencies.`;
+7. Tone: Academic, encouraging, and aligned with DepEd DO 015 s. 2026 competencies.
+8. Mathematical & Scientific Formatting: Use standard, clean mathematical notation. For mathematical formulas, variables, and expressions, either use clean Unicode symbols (e.g., ∘ for composition, × for multiplication, ÷ for division, ²/³ for exponents, √ for root) or standard LaTeX notation ($...$ for inline math). NEVER output raw escaped unicode literals like "\\u2218".`;
 
   const schema = {
     type: "ARRAY",
@@ -220,13 +223,22 @@ STRICT FORMATTING AND QUESTION QUALITY RULES:
   const parsed = JSON.parse(rawJson);
   const validated = z.array(quizQuestionSchema).parse(parsed);
 
-  // Fallback sanitizer to guarantee no greeting or numbering prefixes slip through
+  // Fallback sanitizer to guarantee no greeting or numbering prefixes slip through, and clean math/unicode formatting
   return validated.map((q) => ({
     ...q,
-    question: q.question
-      .replace(/^(Kumusta|Magandang araw|Hello|Hi|Greetings)[\s!,.-]*/i, "")
-      .replace(/^(Question|Tanong|\d+)[\s.:-]+/i, "")
-      .trim(),
+    question: formatMathAndUnicode(
+      q.question
+        .replace(/^(Kumusta|Magandang araw|Hello|Hi|Greetings)[\s!,.-]*/i, "")
+        .replace(/^(Question|Tanong|\d+)[\s.:-]+/i, "")
+        .trim()
+    ),
+    options: {
+      A: formatMathAndUnicode(q.options.A),
+      B: formatMathAndUnicode(q.options.B),
+      C: formatMathAndUnicode(q.options.C),
+      D: formatMathAndUnicode(q.options.D),
+    },
+    explanation: formatMathAndUnicode(q.explanation),
   })) as QuizQuestion[];
 }
 
@@ -256,13 +268,20 @@ export function buildTutorSystemPrompt(params: {
     ? `Active Quiz Question #${params.questionIndex + 1}${params.totalQuestions ? ` of ${params.totalQuestions}` : ""}`
     : "Active Quiz Question";
 
+  const cleanedQuestion = formatMathAndUnicode(params.question);
+  const cleanedOptA = formatMathAndUnicode(params.options?.A || "");
+  const cleanedOptB = formatMathAndUnicode(params.options?.B || "");
+  const cleanedOptC = formatMathAndUnicode(params.options?.C || "");
+  const cleanedOptD = formatMathAndUnicode(params.options?.D || "");
+  const cleanedExplanation = formatMathAndUnicode(params.explanation || "");
+
   return `You are "Tutor Kuya/Ate", a helpful, empathetic, and brilliant Filipino AI academic tutor for HighSchool Tutor.
 Current Subject: ${params.subjectName}
 Lesson Topic: ${params.lessonTitle}
-${questionHeader}: "${params.question}"
-Options: A) ${params.options.A}, B) ${params.options.B}, C) ${params.options.C}, D) ${params.options.D}
+${questionHeader}: "${cleanedQuestion}"
+Options: A) ${cleanedOptA}, B) ${cleanedOptB}, C) ${cleanedOptC}, D) ${cleanedOptD}
 Correct Answer: Option ${params.answer}
-Official Explanation: ${params.explanation}
+Official Explanation: ${cleanedExplanation}
 ${params.userSelectedAnswer ? `Student's Currently Selected Answer: Option ${params.userSelectedAnswer}` : ""}
 
 Guidance Rules:
@@ -397,9 +416,9 @@ Explanation: ${item.explanation}`;
 
   const parsed = JSON.parse(rawJson) as { question: string; explanation: string };
   const result: TranslatableQuizQuestion = {
-    question: parsed.question || item.question,
+    question: formatMathAndUnicode(parsed.question || item.question),
     options: item.options, // Preserve original English choices 100%
-    explanation: parsed.explanation || item.explanation,
+    explanation: formatMathAndUnicode(parsed.explanation || item.explanation),
   };
   translationCache.set(cacheKey, JSON.stringify(result));
   return result;

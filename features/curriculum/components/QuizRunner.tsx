@@ -38,7 +38,10 @@ import { MarkdownRenderer } from "@/shared/components/ui/MarkdownRenderer";
 import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
 import { TranslationControls } from "./TranslationControls";
 import { AITutorDrawer } from "./AITutorDrawer";
+import { toast } from "sonner";
+import { calculateDepEdTransmutation } from "../utils/transmutation";
 import { sampleQuizQuestions } from "../utils/quiz-sampler";
+import { formatMathAndUnicode } from "../utils/math-format";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -59,7 +62,10 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
   const { user } = useUser();
   const openPromptsModal = useAiPromptsModalStore((s) => s.openModal);
 
-  const [sessionId, setSessionId] = React.useState<string | null>(initialSessionId || null);
+  const urlSession = searchParams.get("session") || searchParams.get("sessionId");
+  const effectiveInitialSessionId = initialSessionId || urlSession || null;
+
+  const [sessionId, setSessionId] = React.useState<string | null>(effectiveInitialSessionId);
   const rawModeParam = (searchParams.get("mode") as "study" | "exam") || "study";
   const [mode, setMode] = React.useState<"study" | "exam">(rawModeParam);
   const countParam = searchParams.get("count");
@@ -119,7 +125,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
     let isMounted = true;
     const initSession = async () => {
       try {
-        let activeSessionId = initialSessionId;
+        let activeSessionId = effectiveInitialSessionId;
         if (!activeSessionId) {
           const res = await createQuizSessionAction({
             subjectSlug: subject.slug,
@@ -135,9 +141,19 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
             router.push(`/curriculum/${subject.slug}`);
             return;
           }
+          if (res.error === "EXAM_MODE_LOCKED") {
+            useUpgradeModalStore.getState().openUpgradeModal({
+              featureName: "Official Exam Mode & Grade Transmutation",
+              reason: "Exam Mode is exclusive to HighSchool Tutor Monthly and Annual Pass subscribers. Upgrade now to simulate official DepEd timed exams with recorded transmutation grades.",
+            });
+            router.push(`/curriculum/${subject.slug}`);
+            return;
+          }
           if (res.success && res.sessionId) {
             activeSessionId = res.sessionId;
             if (isMounted) setSessionId(res.sessionId);
+          } else if (!res.success) {
+            toast.error(res.error || "Failed to initialize quiz session. Loading fallback questions...");
           }
         }
 
@@ -163,18 +179,25 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
                 setUserAnswers(restoredAnswers);
               }
             }
+          } else if (isMounted && !sessionRes.success) {
+            toast.error(sessionRes.error || "Failed to restore quiz session.");
           }
         } else {
           // Fallback if session creation failed
           const res = await getQuizAction(subject.slug, lessonNumber, false);
-          if (isMounted && res.success && res.questions.length > 0) {
-            setLessonTitle(res.lessonTitle);
-            const sampled = sampleQuizQuestions(res.questions, initialCount);
-            setQuestions(sampled);
+          if (isMounted) {
+            if (res.success && res.questions && res.questions.length > 0) {
+              setLessonTitle(res.lessonTitle);
+              const sampled = sampleQuizQuestions(res.questions, initialCount);
+              setQuestions(sampled);
+            } else {
+              toast.error(res.error || "Unable to load quiz questions at this time.");
+            }
           }
         }
       } catch (err) {
         console.error("Failed to initialize quiz session:", err);
+        toast.error("Failed to initialize quiz session. Please refresh or try again.");
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -185,7 +208,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
     return () => {
       isMounted = false;
     };
-  }, [subject.slug, lessonNumber, initialSessionId, initialCount, rawModeParam, router]);
+  }, [subject.slug, lessonNumber, effectiveInitialSessionId, initialCount, rawModeParam, router]);
 
   const loadQuiz = async () => {
     setLoading(true);
@@ -211,6 +234,8 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
           setMode(sessionRes.session.mode);
           setSelectedCount(sessionRes.session.questionCount);
         }
+      } else {
+        toast.error(sessRes.error || "Failed to generate new quiz session.");
       }
     } catch (err) {
       console.error("Error reloading quiz session:", err);
@@ -368,17 +393,9 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
   // Quiz Results Summary View
   if (isSubmitted) {
     const finalScore = calculateScore();
-    const percent = Math.round((finalScore / questions.length) * 100);
 
     // DepEd DO 015 s. 2026 Transmutation Formula
-    let transmuted = 60;
-    if (percent >= 100) {
-      transmuted = 100;
-    } else if (percent >= 60) {
-      transmuted = Math.round(75 + ((percent - 60) * 25) / 40);
-    } else {
-      transmuted = Math.round(60 + (percent / 60) * 14);
-    }
+    const transmuted = calculateDepEdTransmutation(finalScore, questions.length);
 
     const isMastered = transmuted >= 75;
 
@@ -464,17 +481,28 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
 
   const selectedAnswer = userAnswers[currentIndex];
   const isAnswered = Boolean(selectedAnswer);
-  const displayQuestion =
+  const rawQuestion =
     language !== "English" && translatedContent.question
       ? translatedContent.question
       : currentQ.question;
-  const displayOptions = currentQ.options; // Keep multiple choice options strictly in English
-  const displayExplanation =
+  const displayQuestion = formatMathAndUnicode(rawQuestion);
+
+  const displayOptions = currentQ.options
+    ? {
+        A: formatMathAndUnicode(currentQ.options.A),
+        B: formatMathAndUnicode(currentQ.options.B),
+        C: formatMathAndUnicode(currentQ.options.C),
+        D: formatMathAndUnicode(currentQ.options.D),
+      }
+    : undefined;
+
+  const rawExplanation =
     language !== "English" && translatedContent.explanation
       ? translatedContent.explanation
       : currentQ.explanation;
+  const displayExplanation = formatMathAndUnicode(rawExplanation);
 
-  const isPremiumUser = user?.role === "ADMIN"; // Admin and subscribed users
+  const isPremiumUser = user?.role === "ADMIN" || user?.subscription?.status === "ACTIVE"; // Admin and subscribed users
 
   return (
     <div className="mx-auto max-w-3xl flex flex-col h-[calc(100dvh-5.5rem)] min-h-[560px] max-h-[880px] pb-2">
@@ -675,7 +703,7 @@ export function QuizRunner({ subject, lessonNumber, initialSessionId }: QuizRunn
           lessonTitle={lessonTitle}
           currentQuestion={currentQ}
           language={language}
-          persona="socratic"
+          persona={(user?.profile?.tutoringPersona as "socratic" | "detailed" | "exam-prep") || "socratic"}
           questionIndex={currentIndex}
           totalQuestions={questions.length}
           userSelectedAnswer={userAnswers[currentIndex]}

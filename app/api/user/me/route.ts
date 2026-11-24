@@ -78,7 +78,7 @@ export async function GET() {
     const latestSubscription = await prisma.subscription.findFirst({
       where: {
         userId: user.id,
-        status: { in: ["ACTIVE", "TRIAL"] },
+        status: { in: ["ACTIVE", "TRIAL", "EXPIRED"] },
       },
       orderBy: { createdAt: "desc" },
     });

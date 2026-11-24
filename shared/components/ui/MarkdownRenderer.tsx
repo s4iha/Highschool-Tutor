@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import { cn } from "@/lib/utils";
+import { decodeUnicodeEscapes } from "@/features/curriculum/utils/math-format";
 
 interface MarkdownRendererProps {
   content?: string | null;
@@ -14,6 +15,8 @@ interface MarkdownRendererProps {
 
 export function MarkdownRenderer({ content, className, inline = false }: MarkdownRendererProps) {
   if (!content) return null;
+
+  const sanitizedContent = decodeUnicodeEscapes(content);
 
   if (inline) {
     return (
@@ -32,7 +35,7 @@ export function MarkdownRenderer({ content, className, inline = false }: Markdow
             ),
           }}
         >
-          {content}
+          {sanitizedContent}
         </ReactMarkdown>
       </span>
     );
@@ -75,7 +78,7 @@ export function MarkdownRenderer({ content, className, inline = false }: Markdow
           h3: ({ children }) => <h3 className="text-xs font-semibold my-1">{children}</h3>,
         }}
       >
-        {content}
+        {sanitizedContent}
       </ReactMarkdown>
     </div>
   );

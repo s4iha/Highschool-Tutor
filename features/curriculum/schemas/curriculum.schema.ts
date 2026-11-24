@@ -6,7 +6,7 @@ export const subjectSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/, "slug must be lowercase kebab-case"),
   name: z.string().min(2),
   grade: z.string().regex(/^Grade (7|8|9|10|11|12)$/),
-  term: z.string().regex(/^(Trimester [1-3]|Semester [1-2])$/),
+  term: z.string().regex(/^(Quarter [1-4]|Trimester [1-3]|Semester [1-2])$/),
   level: z.enum(["Junior High School", "Senior High School"]),
 });
 

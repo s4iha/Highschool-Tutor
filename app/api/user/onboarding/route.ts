@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/features/auth/lib/session";
+import { enrollStarterSubjects } from "@/features/curriculum/utils/starter-subjects";
 import { z } from "zod";
 
 const onboardingSchema = z.object({
@@ -55,6 +56,9 @@ export async function POST(req: Request) {
       where: { id: sessionUser.id },
       data: { name: fullName },
     });
+
+    // Auto-enroll 3 starter subjects aligned with the student's selected grade & term
+    await enrollStarterSubjects(sessionUser.id, gradeLevel, termPreference);
 
     return NextResponse.json({ success: true, profile });
   } catch (error) {

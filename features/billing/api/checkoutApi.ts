@@ -28,10 +28,22 @@ export async function createCheckoutSessionApi(
 }
 
 export async function verifyCheckoutSessionApi(
-  sessionId: string
+  sessionOrParams: string | { sessionId?: string | null; ref?: string | null }
 ): Promise<VerifySessionResponse> {
+  const params = new URLSearchParams();
+  if (typeof sessionOrParams === "string") {
+    params.set("session_id", sessionOrParams);
+  } else {
+    if (sessionOrParams.sessionId && sessionOrParams.sessionId !== "{CHECKOUT_SESSION_ID}") {
+      params.set("session_id", sessionOrParams.sessionId);
+    }
+    if (sessionOrParams.ref) {
+      params.set("ref", sessionOrParams.ref);
+    }
+  }
+
   const response = await fetch(
-    `/api/v1/billing/checkout/verify-session?session_id=${encodeURIComponent(sessionId)}`,
+    `/api/v1/billing/checkout/verify-session?${params.toString()}`,
     {
       method: "GET",
       headers: {

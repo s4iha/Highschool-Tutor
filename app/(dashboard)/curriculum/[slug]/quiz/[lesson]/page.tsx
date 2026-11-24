@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/features/auth/lib/session";
 import { SUBJECT_BY_SLUG } from "@/features/curriculum/utils/curriculum-data";
-import { canAccessLesson } from "@/features/curriculum/utils/tier-guardrails";
+import { canAccessLesson, getTrialStatus } from "@/features/curriculum/utils/tier-guardrails";
 import { QuizRunner } from "@/features/curriculum/components/QuizRunner";
 import { CurriculumGuard } from "@/features/curriculum/components/CurriculumGuard";
 
@@ -13,6 +13,7 @@ interface QuizPageProps {
   }>;
   searchParams?: Promise<{
     session?: string;
+    sessionId?: string;
     mode?: string;
     count?: string;
   }>;
@@ -45,8 +46,9 @@ export default async function LessonQuizPage({ params, searchParams }: QuizPageP
 
   // Server-side paywall security guardrail: enforce lesson tier access
   const sessionUser = await getCurrentUser();
-  let isSubscribed = false;
-  if (sessionUser?.id) {
+  const isAdmin = sessionUser?.role === "ADMIN";
+  let isSubscribed = isAdmin;
+  if (!isSubscribed && sessionUser?.id) {
     const activeSub = await prisma.subscription.findFirst({
       where: {
         userId: sessionUser.id,
@@ -57,9 +59,21 @@ export default async function LessonQuizPage({ params, searchParams }: QuizPageP
     isSubscribed = !!activeSub;
   }
 
-  if (!canAccessLesson(lessonNumber, isSubscribed)) {
+  let adminConfig = null;
+  try {
+    adminConfig = await prisma.adminConfig.findFirst();
+  } catch (cfgErr) {
+    console.warn("Failed to fetch adminConfig in LessonQuizPage:", cfgErr);
+  }
+  const maxFreeLessons = adminConfig?.maxFreeLessons ?? 3;
+  const trialDurationDays = adminConfig?.trialDurationDays ?? 30;
+  const trialStatus = getTrialStatus(sessionUser?.createdAt, trialDurationDays, sessionUser?.subscription);
+
+  if (!canAccessLesson(lessonNumber, isSubscribed, maxFreeLessons, trialStatus.isTrialActive, trialStatus.isExpired)) {
     redirect(`/curriculum/${slug}?upgrade=true&lesson=${lessonNumber}`);
   }
+
+  const initialSessionId = resolvedSearchParams.session || resolvedSearchParams.sessionId;
 
   return (
     <div className="container mx-auto max-w-7xl px-4 sm:px-6">
@@ -67,7 +81,7 @@ export default async function LessonQuizPage({ params, searchParams }: QuizPageP
         <QuizRunner
           subject={subject}
           lessonNumber={lessonNumber}
-          initialSessionId={resolvedSearchParams.session}
+          initialSessionId={initialSessionId}
         />
       </CurriculumGuard>
     </div>

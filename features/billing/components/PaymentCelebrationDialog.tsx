@@ -9,6 +9,8 @@ import {
   BookOpen,
   Brain,
   Loader2,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import {
   Dialog,
@@ -25,28 +27,29 @@ function PaymentCelebrationDialogInner() {
 
   const isSuccessParam = searchParams?.get("payment") === "success";
   const sessionId = searchParams?.get("session_id") || null;
+  const refParam = searchParams?.get("ref") || null;
+  const trackingKey = refParam || (sessionId && sessionId !== "{CHECKOUT_SESSION_ID}" ? sessionId : null);
 
-  const [dismissedSessionId, setDismissedSessionId] = React.useState<string | null>(null);
-  const isOpen = Boolean(isSuccessParam && sessionId && dismissedSessionId !== sessionId);
+  const [dismissedKey, setDismissedKey] = React.useState<string | null>(null);
+  const isOpen = Boolean(isSuccessParam && (sessionId || refParam) && dismissedKey !== (trackingKey || "success"));
 
-  const { data, isPaid, isLoading, isPending } = useVerifySession(
-    isOpen ? sessionId : null
+  const { data, isPaid, isFailed, isLoading, isPending, isError, error, refetch } = useVerifySession(
+    isOpen ? { sessionId, ref: refParam } : null
   );
 
   const handleClose = () => {
-    if (sessionId) {
-      setDismissedSessionId(sessionId);
-    }
+    setDismissedKey(trackingKey || "success");
     // Clean up query parameters without full page reload
     if (typeof window !== "undefined" && window.history) {
       const url = new URL(window.location.href);
       url.searchParams.delete("payment");
       url.searchParams.delete("session_id");
+      url.searchParams.delete("ref");
       window.history.replaceState({}, "", url.pathname);
     }
   };
 
-  if (!isSuccessParam || !sessionId) {
+  if (!isSuccessParam || (!sessionId && !refParam)) {
     return null;
   }
 
@@ -55,16 +58,26 @@ function PaymentCelebrationDialogInner() {
       <DialogContent className="sm:max-w-md rounded-3xl p-6 bg-card border-border/60 shadow-2xl text-center">
         <DialogHeader className="space-y-2 items-center">
           <div className="size-16 rounded-3xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center border border-emerald-500/20 shadow-xs mb-1 animate-bounce">
-            <PartyPopper className="size-8" />
+            {isError || isFailed ? (
+              <AlertCircle className="size-8 text-amber-500" />
+            ) : (
+              <PartyPopper className="size-8" />
+            )}
           </div>
 
           <DialogTitle className="text-2xl font-bold font-heading text-foreground">
-            {isPaid ? "Payment Verified! 🎉" : "Verifying Payment..."}
+            {isPaid
+              ? "Payment Verified! 🎉"
+              : isError || isFailed
+              ? "Verification Needs Attention"
+              : "Verifying Payment..."}
           </DialogTitle>
 
           <DialogDescription className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto">
             {isPaid
               ? "Your subscription is now active! All 130+ DepEd MATATAG subjects and Socratic AI tutoring are unlocked."
+              : isError || isFailed
+              ? (error instanceof Error ? error.message : "We could not verify this payment session automatically. Please retry or contact support.")
               : isPending || isLoading
               ? "Reconciling your payment with PayMongo. Your access will activate in just a moment..."
               : "Thank you for subscribing! Your transaction has been recorded."}
@@ -80,6 +93,11 @@ function PaymentCelebrationDialogInner() {
                 <>
                   <CheckCircle2 className="size-3.5" />
                   <span>ACTIVE</span>
+                </>
+              ) : isError || isFailed ? (
+                <>
+                  <AlertCircle className="size-3.5 text-amber-500" />
+                  <span className="text-amber-600 dark:text-amber-400">UNVERIFIED</span>
                 </>
               ) : (
                 <>
@@ -134,13 +152,32 @@ function PaymentCelebrationDialogInner() {
           </div>
         </div>
 
-        <Button
-          onClick={handleClose}
-          className="w-full h-11 rounded-2xl font-semibold gap-2 shadow-md"
-        >
-          <Sparkles className="size-4" />
-          <span>Start Learning Now</span>
-        </Button>
+        {isError || isFailed ? (
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => refetch()}
+              className="flex-1 h-11 rounded-2xl font-semibold gap-2"
+            >
+              <RefreshCw className="size-4" />
+              <span>Retry Verification</span>
+            </Button>
+            <Button
+              onClick={handleClose}
+              className="flex-1 h-11 rounded-2xl font-semibold"
+            >
+              <span>Close</span>
+            </Button>
+          </div>
+        ) : (
+          <Button
+            onClick={handleClose}
+            className="w-full h-11 rounded-2xl font-semibold gap-2 shadow-md"
+          >
+            <Sparkles className="size-4" />
+            <span>Start Learning Now</span>
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   );

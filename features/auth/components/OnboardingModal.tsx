@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useOnboardingModalStore } from "@/shared/hooks/useOnboardingModalStore";
 import { useUser, UserData } from "@/features/auth/hooks/useUser";
+import { resolveOnboardingDefaults } from "@/features/auth/utils/onboarding-defaults";
 import {
   Dialog,
   DialogContent,
@@ -22,18 +23,17 @@ interface OnboardingFormProps {
 
 function OnboardingForm({ user, onClose }: OnboardingFormProps) {
   const queryClient = useQueryClient();
+  const defaults = resolveOnboardingDefaults(
+    user?.profile?.gradeLevel,
+    user?.profile?.track,
+    user?.profile?.termPreference
+  );
   const [fullName, setFullName] = useState(
     user?.profile?.fullName?.trim() || user?.name?.trim() || ""
   );
-  const [gradeLevel, setGradeLevel] = useState(
-    user?.profile?.gradeLevel?.trim() || "Grade 11"
-  );
-  const [track, setTrack] = useState(
-    user?.profile?.track?.trim() || "STEM Strand"
-  );
-  const [termPreference, setTermPreference] = useState(
-    user?.profile?.termPreference?.trim() || "Quarter 1"
-  );
+  const [gradeLevel, setGradeLevel] = useState(defaults.gradeLevel);
+  const [track, setTrack] = useState(defaults.track);
+  const [termPreference, setTermPreference] = useState(defaults.termPreference);
 
   const mutation = useMutation({
     mutationFn: async (data: { fullName: string; gradeLevel: string; track: string; termPreference: string }) => {
@@ -50,6 +50,7 @@ function OnboardingForm({ user, onClose }: OnboardingFormProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["student", "dashboard-data"] });
       toast.success("Profile Setup Complete!", {
         description: "Welcome to your HighSchool Tutor learning journey.",
       });

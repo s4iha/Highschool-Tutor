@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { prisma, runAsAdmin } from "@/lib/prisma";
+import { getCurrentUser } from "@/features/auth/lib/session";
+import { StudentSubscriptionUpdateSchema } from "@/features/admin/schemas/adminSchemas";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -110,55 +112,81 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { userId, status, plan = "MONTHLY" } = body;
-
-    if (!userId || !status) {
+    const sessionUser = await getCurrentUser();
+    if (!sessionUser || sessionUser.role !== "ADMIN") {
       return NextResponse.json(
-        { success: false, error: "Missing required fields (userId, status)" },
+        { success: false, error: "Unauthorized: Administrator access required." },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const parsed = StudentSubscriptionUpdateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { success: false, error: parsed.error.issues[0]?.message || "Invalid input" },
         { status: 400 }
       );
     }
 
-    // Try updating DB subscription if available
-    try {
-      const existingSub = await prisma.subscription.findFirst({
+    const { userId, status } = parsed.data;
+    const plan = body.plan === "ANNUAL" ? "ANNUAL" : "MONTHLY";
+
+    const config = await prisma.adminConfig.findFirst({ orderBy: { updatedAt: "desc" } });
+    const annualPrice = config?.annualPricePhp ?? 2999;
+    const monthlyPrice = config?.monthlyPricePhp ?? 299;
+    const trialDurationDays = config?.trialDurationDays ?? 30;
+    const now = new Date();
+
+    await runAsAdmin(async (tx) => {
+      const existingSub = await tx.subscription.findFirst({
         where: { userId },
         orderBy: { createdAt: "desc" },
       });
 
+      const resolvedPlan = body.plan ? plan : (existingSub?.plan || "MONTHLY");
+      let expiresAt: Date | undefined;
+      if (status === "TRIAL") {
+        expiresAt = new Date(now.getTime() + trialDurationDays * 24 * 60 * 60 * 1000);
+      } else if (status === "ACTIVE") {
+        const durationDays = resolvedPlan === "ANNUAL" ? 365 : 30;
+        expiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+      } else if (status === "EXPIRED") {
+        expiresAt = new Date(now.getTime() - 1000);
+      }
+
+      const startedAt = status === "ACTIVE" || status === "TRIAL" ? now : undefined;
+
       if (existingSub) {
-        await prisma.subscription.update({
+        await tx.subscription.update({
           where: { id: existingSub.id },
           data: {
             status,
-            startedAt: status === "ACTIVE" ? new Date() : undefined,
+            ...(body.plan ? { plan: resolvedPlan } : {}),
+            ...(startedAt ? { startedAt } : {}),
+            ...(expiresAt ? { expiresAt } : {}),
           },
         });
       } else {
-        const config = await prisma.adminConfig.findFirst({ orderBy: { updatedAt: "desc" } });
-        const annualPrice = config?.annualPricePhp ?? 2999;
-        const monthlyPrice = config?.monthlyPricePhp ?? 299;
-
-        await prisma.subscription.create({
+        await tx.subscription.create({
           data: {
             userId,
-            plan: plan === "ANNUAL" ? "ANNUAL" : "MONTHLY",
+            plan: resolvedPlan,
             status,
-            amountPhp: plan === "ANNUAL" ? annualPrice : monthlyPrice,
-            startedAt: status === "ACTIVE" ? new Date() : undefined,
+            amountPhp: status === "TRIAL" ? 0 : resolvedPlan === "ANNUAL" ? annualPrice : monthlyPrice,
+            startedAt: startedAt ?? now,
+            expiresAt,
           },
         });
       }
-    } catch (dbErr) {
-      console.warn("Could not persist subscription to DB:", dbErr);
-    }
+    });
 
     return NextResponse.json({
       success: true,
       message: `Subscription status updated to ${status} for user ${userId}`,
     });
   } catch (err) {
+    console.error("PATCH /api/v1/admin/students error:", err);
     return NextResponse.json(
       { success: false, error: (err as Error).message },
       { status: 500 }

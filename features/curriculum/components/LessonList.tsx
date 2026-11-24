@@ -15,6 +15,7 @@ import {
   Lock,
   Crown,
   Clock,
+  Timer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -68,14 +69,28 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
 
   const { openUpgradeModal } = useUpgradeModalStore();
   const { user } = useUser();
+  const effectiveIsSubscribed = React.useMemo(() => {
+    return isSubscribed || user?.role === "ADMIN" || user?.subscription?.status === "ACTIVE";
+  }, [isSubscribed, user?.role, user?.subscription?.status]);
+
+  React.useEffect(() => {
+    if (searchParams.get("upgrade") === "true") {
+      const lesson = searchParams.get("lesson");
+      openUpgradeModal({
+        featureName: lesson ? `Lesson ${lesson} Quiz` : "Premium Curriculum",
+        reason: "Unlock full access to all curriculum lessons and interactive practice tests.",
+      });
+    }
+  }, [searchParams, openUpgradeModal]);
+
   const { data: config } = usePublicConfigQuery();
   const maxFreeLessons = config?.maxFreeLessons ?? 3;
   const trialDurationDays = config?.trialDurationDays ?? 30;
   const targetLessonsPerSubject = config?.targetLessonsPerSubject ?? 8;
 
   const trialStatus = React.useMemo(() => {
-    return getTrialStatus(user?.createdAt, trialDurationDays);
-  }, [user?.createdAt, trialDurationDays]);
+    return getTrialStatus(user?.createdAt, trialDurationDays, user?.subscription);
+  }, [user?.createdAt, trialDurationDays, user?.subscription]);
 
   const isTrialActive = trialStatus.isTrialActive;
 
@@ -203,7 +218,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
               <span className="text-xs font-semibold text-muted-foreground">
                 {subject.grade} — {subject.term}
               </span>
-              {isSubscribed ? (
+              {effectiveIsSubscribed ? (
                 <Badge
                   variant="outline"
                   className="text-xs gap-1 font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 ml-1"
@@ -216,7 +231,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                   variant="outline"
                   className="text-xs gap-1 font-semibold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 ml-1"
                 >
-                  <Sparkles className="size-3" />
+                  <Timer className="size-3" />
                   {trialStatus.daysRemaining}d Trial Left
                 </Badge>
               ) : (
@@ -237,7 +252,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            {!isSubscribed && (
+            {!effectiveIsSubscribed && (
               <Button
                 variant="outline"
                 size="sm"
@@ -325,7 +340,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
             <BookOpen className="size-5 text-primary" />
             <span>Curriculum Lessons ({lessons.length})</span>
           </h2>
-          {!isSubscribed && (
+          {!effectiveIsSubscribed && (
             <span className="text-xs text-muted-foreground font-medium">
               {isTrialActive
                 ? "All Lessons Unlocked during 30-Day Free Trial"
@@ -356,7 +371,7 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
               const stat = progress.lessonScores[lesson.number];
               const isMastered = stat?.status === "Mastered";
               const isNeedsReview = stat?.status === "Needs Review";
-              const isAccessible = canAccessLesson(lesson.number, isSubscribed, maxFreeLessons, isTrialActive, trialStatus.isExpired);
+              const isAccessible = canAccessLesson(lesson.number, effectiveIsSubscribed, maxFreeLessons, isTrialActive, trialStatus.isExpired);
 
               return (
                 <Card
@@ -600,9 +615,16 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                       <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                         <Trophy className="size-4" />
                       </div>
-                      <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
-                        Exam Mode (Graded)
-                      </Badge>
+                      {effectiveIsSubscribed ? (
+                        <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                          Exam Mode (Graded)
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[10px] border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/10 gap-1 font-semibold">
+                          <Lock className="size-2.5" />
+                          <span>Paid Pass</span>
+                        </Badge>
+                      )}
                     </div>
                     <h3 className="font-bold text-sm text-foreground">Exam Mode</h3>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
@@ -610,15 +632,32 @@ export function LessonList({ subject, isSubscribed = false }: LessonListProps) {
                     </p>
                   </div>
 
-                  <Button asChild size="sm" className="w-full rounded-xl text-xs font-bold gap-1.5 shadow-xs">
-                    <Link
-                      href={`/curriculum/${subject.slug}/quiz/${selectedLessonForMode.number}?mode=exam&count=${selectedCount}`}
-                      onClick={() => setSelectedLessonForMode(null)}
+                  {effectiveIsSubscribed ? (
+                    <Button asChild size="sm" className="w-full rounded-xl text-xs font-bold gap-1.5 shadow-xs cursor-pointer">
+                      <Link
+                        href={`/curriculum/${subject.slug}/quiz/${selectedLessonForMode.number}?mode=exam&count=${selectedCount}`}
+                        onClick={() => setSelectedLessonForMode(null)}
+                      >
+                        <Play className="size-3.5 fill-current" />
+                        <span>Start Exam Mode</span>
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setSelectedLessonForMode(null);
+                        openUpgradeModal({
+                          featureName: "Official Exam Mode & Grade Transmutation",
+                          reason: "Upgrade to an Annual or Monthly Pass to unlock official timed exam simulations with recorded DepEd DO 015 s. 2026 transmutation grades.",
+                        });
+                      }}
+                      className="w-full rounded-xl text-xs font-bold gap-1.5 shadow-xs bg-amber-500 hover:bg-amber-600 text-white cursor-pointer"
                     >
-                      <Play className="size-3.5 fill-current" />
-                      <span>Start Exam Mode</span>
-                    </Link>
-                  </Button>
+                      <Crown className="size-3.5" />
+                      <span>Unlock Exam Mode</span>
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

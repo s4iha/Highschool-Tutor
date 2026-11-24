@@ -15,19 +15,27 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url);
-    const sessionId = searchParams.get("session_id");
+    const rawSessionId = searchParams.get("session_id")?.trim() || "";
+    const ref = searchParams.get("ref")?.trim() || "";
+    const isValidSessionId =
+      Boolean(rawSessionId) && rawSessionId !== "{CHECKOUT_SESSION_ID}";
 
-    if (!sessionId) {
+    if (!isValidSessionId && !ref) {
       return NextResponse.json(
-        { success: false, error: "session_id parameter is required" },
+        { success: false, error: "session_id or ref parameter is required" },
         { status: 400 }
       );
     }
 
-    let transaction = await prisma.paymentTransaction.findUnique({
-      where: { paymongoSessionId: sessionId },
-      include: { subscription: true },
-    });
+    let transaction = isValidSessionId
+      ? await prisma.paymentTransaction.findUnique({
+          where: { paymongoSessionId: rawSessionId },
+          include: { subscription: true },
+        })
+      : await prisma.paymentTransaction.findUnique({
+          where: { referenceNumber: ref },
+          include: { subscription: true },
+        });
 
     if (!transaction) {
       return NextResponse.json(
@@ -44,28 +52,38 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Fallback status reconciliation if still PENDING (e.g. slight webhook latency)
+    const effectiveSessionId = transaction.paymongoSessionId;
+
+    // Fallback status reconciliation if still PENDING (e.g. slight webhook latency or localhost)
     if (transaction.status === "PENDING") {
       try {
-        const remoteSession = await retrievePayMongoCheckoutSession(sessionId);
-        const payments = remoteSession?.attributes?.payments || [];
+        const remoteSession = await retrievePayMongoCheckoutSession(effectiveSessionId);
+        const payments =
+          remoteSession?.attributes?.payments ||
+          remoteSession?.attributes?.payment_intent?.attributes?.payments ||
+          [];
         const latestPayment = payments[0];
         const isPaid =
           remoteSession?.attributes?.status === "paid" ||
-          latestPayment?.attributes?.status === "paid";
+          latestPayment?.attributes?.status === "paid" ||
+          remoteSession?.attributes?.payment_intent?.attributes?.status === "succeeded";
 
         if (isPaid) {
           const fulfillment = await fulfillPayMongoCheckoutPayment({
-            sessionId,
+            sessionId: effectiveSessionId,
             paymentId: latestPayment?.id,
-            paymentMethod: latestPayment?.attributes?.source?.type,
+            paymentMethod:
+              latestPayment?.attributes?.source?.type ||
+              remoteSession?.attributes?.payment_method_used,
             referenceNumber: transaction.referenceNumber,
-            paidAtTimestamp: latestPayment?.attributes?.paid_at,
+            paidAtTimestamp:
+              latestPayment?.attributes?.paid_at ||
+              remoteSession?.attributes?.paid_at,
           });
 
           if (fulfillment.success) {
             transaction = await prisma.paymentTransaction.findUnique({
-              where: { paymongoSessionId: sessionId },
+              where: { paymongoSessionId: effectiveSessionId },
               include: { subscription: true },
             });
           }

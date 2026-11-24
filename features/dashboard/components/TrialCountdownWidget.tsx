@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Clock, Crown, Sparkles, AlertCircle, ArrowRight } from "lucide-react";
+import { Clock, Crown, Timer, AlertCircle, ArrowRight } from "lucide-react";
 import { useUser } from "@/features/auth/hooks/useUser";
 import { usePublicConfigQuery } from "@/features/settings";
 import { getTrialStatus } from "@/features/curriculum/utils/tier-guardrails";
@@ -26,8 +26,8 @@ export function TrialCountdownWidget({ className }: TrialCountdownWidgetProps) {
 
   const trialDurationDays = config?.trialDurationDays ?? 30;
   const trialStatus = React.useMemo(() => {
-    return getTrialStatus(user?.createdAt, trialDurationDays);
-  }, [user?.createdAt, trialDurationDays]);
+    return getTrialStatus(user?.createdAt, trialDurationDays, user?.subscription);
+  }, [user?.createdAt, trialDurationDays, user?.subscription]);
 
   // If user has an active paid subscription, render a subtle premium status badge
   if (isPaidActive) {
@@ -119,7 +119,7 @@ export function TrialCountdownWidget({ className }: TrialCountdownWidgetProps) {
                 30-Day Free Trial — Full Access
               </h4>
               <Badge variant="secondary" className="gap-1 bg-primary/15 text-primary text-[10px] font-semibold">
-                <Sparkles className="size-3" />
+                <Timer className="size-3" />
                 {daysRemaining} {daysRemaining === 1 ? "day" : "days"} remaining
               </Badge>
             </div>
