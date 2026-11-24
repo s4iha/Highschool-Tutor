@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCurrentUser } from "@/features/auth/lib/session";
 import { SUBJECT_BY_SLUG } from "@/features/curriculum/utils/curriculum-data";
+import { getStarterSubjectSlugs } from "@/features/curriculum/utils/starter-subjects";
 import { z } from "zod";
 
 const updateProfileSchema = z.object({
@@ -138,38 +139,13 @@ export async function PUT(req: Request) {
               });
             }
           }
-        } else if (!isOldJhs && isNewJhs) {
-          // Switched from SHS to JHS: clear old subjects and enroll starter JHS subjects
+        } else if ((!isOldJhs && isNewJhs) || (isOldJhs && !isNewJhs)) {
+          // Switched between JHS and SHS tiers: clear old subjects and enroll starter subjects
           await prisma.trialSubject.deleteMany({
             where: { userId: sessionUser.id },
           });
-          const defaultJhsSlugs = [
-            `g${newGradeNum}-q1-math`,
-            `g${newGradeNum}-q1-sci`,
-            `g${newGradeNum}-q1-eng`,
-          ];
-          for (const slug of defaultJhsSlugs) {
-            const sub = SUBJECT_BY_SLUG.get(slug);
-            if (sub) {
-              await prisma.trialSubject.create({
-                data: {
-                  userId: sessionUser.id,
-                  subjectSlug: slug,
-                  subjectLabel: sub.name,
-                },
-              }).catch(() => {});
-            }
-          }
-        } else if (isOldJhs && !isNewJhs) {
-          // Switched from JHS to SHS: clear old subjects and enroll starter SHS subjects
-          await prisma.trialSubject.deleteMany({
-            where: { userId: sessionUser.id },
-          });
-          const defaultShsSlugs =
-            newGradeNum === "12"
-              ? ["g12-s1-lit21", "g12-s1-pracres2", "g12-s1-phys1"]
-              : ["g11-s1-genmath", "g11-s1-oralcomm", "g11-s1-earthlife"];
-          for (const slug of defaultShsSlugs) {
+          const starterSlugs = getStarterSubjectSlugs(gradeLevel, termPreference || existingProfile?.termPreference || "");
+          for (const slug of starterSlugs) {
             const sub = SUBJECT_BY_SLUG.get(slug);
             if (sub) {
               await prisma.trialSubject.create({

@@ -18,6 +18,11 @@ import {
   targetedPracticeInputSchema,
 } from "../schemas/curriculum.schema";
 import { selectTargetedPracticeQuestions } from "../utils/quiz-sampler";
+import { getSubjectScopeDefinition } from "../utils/subject-scope-data";
+import {
+  calculateDepEdTransmutation,
+  getDepEdTransmutationRemarks,
+} from "../utils/transmutation";
 import {
   checkAndConsumeAiCredit,
   getAiCreditBalance,
@@ -56,8 +61,24 @@ export async function getLessonsAction(subjectSlug: string): Promise<{
       return { success: true, lessons: cached.lessons as unknown as Lesson[] };
     }
 
-    // 2. Generate via Gemini AI
-    const generated = await generateLessonsForSubject(subject);
+    // 2. Generate via Gemini AI with curated MATATAG syllabus fallback
+    let generated: Lesson[];
+    try {
+      generated = await generateLessonsForSubject(subject);
+    } catch (genErr) {
+      console.warn("generateLessonsForSubject failed, falling back to curated MATATAG syllabus:", genErr);
+      const staticScope = getSubjectScopeDefinition(subjectSlug);
+      if (staticScope && Array.isArray(staticScope.lessons) && staticScope.lessons.length > 0) {
+        generated = staticScope.lessons.map((l) => ({
+          number: l.lessonNumber,
+          title: l.title,
+          summary: l.summary,
+          keyConcepts: l.keyConcepts,
+        }));
+      } else {
+        throw genErr;
+      }
+    }
 
     // 3. Store in PostgreSQL cache
     await prisma.cachedLesson.upsert({
@@ -129,11 +150,21 @@ export async function ensureSubjectEnrolledAction(subjectSlug: string): Promise<
         })
       : null;
 
-    const adminConfig = await prisma.adminConfig.findFirst();
+    let adminConfig = null;
+    try {
+      adminConfig = await prisma.adminConfig.findFirst();
+    } catch (cfgErr) {
+      console.warn("prisma.adminConfig.findFirst failed in ensureSubjectEnrolledAction, using defaults:", cfgErr);
+    }
     const maxTrialSubjects = adminConfig?.maxTrialSubjects ?? FREE_TIER_MAX_TRIAL_SUBJECTS;
-    const trialStatus = getTrialStatus(user?.createdAt, adminConfig?.trialDurationDays ?? 30);
+    const trialStatus = getTrialStatus(
+      user?.createdAt,
+      adminConfig?.trialDurationDays ?? 30,
+      sessionUser.subscription
+    );
+    const isAdmin = sessionUser.role === "ADMIN";
 
-    if (!canAccessSubject(enrolledSlugs, subjectSlug, isSubscribed, maxTrialSubjects, trialStatus.isTrialActive)) {
+    if (!canAccessSubject(enrolledSlugs, subjectSlug, isSubscribed || isAdmin, maxTrialSubjects, trialStatus.isTrialActive, trialStatus.isExpired)) {
       return {
         success: false,
         enrolled: false,
@@ -271,7 +302,7 @@ export async function askTutorAction(rawInput: unknown): Promise<{
           expiresAt: { gte: new Date() },
         },
       });
-      const trialStatus = getTrialStatus(sessionUser.createdAt);
+      const trialStatus = getTrialStatus(sessionUser.createdAt, undefined, sessionUser.subscription);
       if (!activeSub && trialStatus.isExpired) {
         return {
           success: false,
@@ -498,10 +529,19 @@ export async function getSubjectProgressAction(subjectSlug: string): Promise<{
 }> {
   try {
     const sessionUser = await getCurrentUser();
+    if (!sessionUser?.id) {
+      return {
+        lessonScores: {},
+        totalAttempted: 0,
+        totalMastered: 0,
+        totalLessons: 0,
+      };
+    }
+
     const attempts = await prisma.quizAttempt.findMany({
       where: {
         subjectSlug,
-        ...(sessionUser?.id ? { userId: sessionUser.id } : {}),
+        userId: sessionUser.id,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -511,14 +551,7 @@ export async function getSubjectProgressAction(subjectSlug: string): Promise<{
     for (const a of attempts) {
       const percentage = a.total > 0 ? (a.score / a.total) * 100 : 0;
       // DepEd DO 015 s. 2026 Transmutation:
-      let transmuted = 60;
-      if (percentage >= 100) {
-        transmuted = 100;
-      } else if (percentage >= 60) {
-        transmuted = Math.round(75 + ((percentage - 60) * 25) / 40);
-      } else {
-        transmuted = Math.round(60 + (percentage / 60) * 14);
-      }
+      const transmuted = calculateDepEdTransmutation(a.score, a.total);
 
       // In DepEd DO 015, passing grade is >= 75% transmuted.
       // Full Competency Mastery requires at least 10 questions.
@@ -605,23 +638,9 @@ export async function getUserQuizAttemptsAction(limit = 10): Promise<{
     });
 
     const attempts: UserQuizAttemptItem[] = records.map((rec) => {
-      const percent = rec.total > 0 ? (rec.score / rec.total) * 100 : 0;
       // DepEd DO 015 s. 2026 transmutation formula:
-      // 60% raw score transmutes to 75 (passing).
-      let transmuted = 60;
-      if (percent >= 100) {
-        transmuted = 100;
-      } else if (percent >= 60) {
-        transmuted = Math.round(75 + ((percent - 60) * 25) / 40);
-      } else {
-        transmuted = Math.round(60 + (percent / 60) * 14);
-      }
-
-      let descriptor = "Needs Review (<75%)";
-      if (transmuted >= 90) descriptor = "Mastered (Outstanding)";
-      else if (transmuted >= 85) descriptor = "Mastered (Very Satisfactory)";
-      else if (transmuted >= 80) descriptor = "Proficient (Satisfactory)";
-      else if (transmuted >= 75) descriptor = "Competency Met";
+      const transmuted = calculateDepEdTransmutation(rec.score, rec.total);
+      const descriptor = getDepEdTransmutationRemarks(transmuted);
 
       const dateFormatted = new Intl.DateTimeFormat("en-US", {
         month: "short",
@@ -723,17 +742,8 @@ export async function getSubjectWeakPointsAction(subjectSlug: string): Promise<{
     }> = [];
 
     for (const [lessonNum, att] of latestAttemptByLesson.entries()) {
-      const percentage = att.total > 0 ? (att.score / att.total) * 100 : 0;
-      let transmuted = 60;
-      if (percentage >= 100) {
-        transmuted = 100;
-      } else if (percentage >= 60) {
-        transmuted = Math.round(75 + ((percentage - 60) * 25) / 40);
-      } else {
-        transmuted = Math.round(60 + (percentage / 60) * 14);
-      }
-
       // DepEd DO 015 Passing Threshold: Transmuted score < 75 is a weak point
+      const transmuted = calculateDepEdTransmutation(att.score, att.total);
       if (transmuted < 75) {
         const lesson = lessonMap.get(lessonNum);
         weakPoints.push({
@@ -799,7 +809,7 @@ export async function createTargetedPracticeAction(rawInput: unknown): Promise<{
       });
       isSubscribed = !!activeSub;
     }
-    const trialStatus = getTrialStatus(sessionUser?.createdAt);
+    const trialStatus = getTrialStatus(sessionUser?.createdAt, undefined, sessionUser?.subscription);
     if (!canAccessLesson(input.lessonNumber, isSubscribed, 3, trialStatus.isTrialActive, trialStatus.isExpired)) {
       return {
         success: false,

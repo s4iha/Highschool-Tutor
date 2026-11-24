@@ -37,6 +37,8 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getUserQuizAttemptsAction } from "@/features/curriculum/actions/curriculum.actions";
+import { getTrialStatus } from "@/features/curriculum/utils/tier-guardrails";
+import { usePublicConfigQuery } from "@/features/settings";
 import { useAiPromptsModalStore } from "@/shared/hooks/useAiPromptsModalStore";
 import { AiPromptsHelpModal } from "@/shared/components/ui/AiPromptsHelpModal";
 import { AiPromptsFab } from "@/shared/components/ui/AiPromptsFab";
@@ -55,6 +57,16 @@ export default function StudentDashboardView({
   const activeTab = propActiveTab || store.activeTab;
   const setActiveTab = store.setActiveTab;
   const { openUpgradeModal } = useUpgradeModalStore();
+  const { data: config } = usePublicConfigQuery();
+  const trialDurationDays = config?.trialDurationDays ?? 30;
+  const trialStatus = React.useMemo(() => {
+    return getTrialStatus(user?.createdAt, trialDurationDays, user?.subscription);
+  }, [user?.createdAt, trialDurationDays, user?.subscription]);
+
+  const hasFullAccess =
+    user?.role === "ADMIN" ||
+    user?.subscription?.status === "ACTIVE" ||
+    trialStatus.isTrialActive;
 
   const subjectsViewMode = store.subjectsViewMode || "grid";
   const setSubjectsViewMode = store.setSubjectsViewMode;
@@ -113,6 +125,7 @@ export default function StudentDashboardView({
           ? `Lesson ${sub.completedLessons} completed`
           : "Lesson 1: Not started",
       quizzesDone: `${sub.completedLessons} of ${sub.totalLessons}`,
+      completedLessons: sub.completedLessons,
       averageScore: sub.lastScorePercent ?? 0,
       status:
         (sub.lastScorePercent ?? 0) >= 75
@@ -121,6 +134,13 @@ export default function StudentDashboardView({
           ? "Needs Review"
           : "Not Started",
     }));
+  }, [dashboardData?.enrolledSubjects]);
+
+  const totalCompletedLessons = React.useMemo(() => {
+    return (dashboardData?.enrolledSubjects || []).reduce(
+      (acc, sub) => acc + (sub.completedLessons || 0),
+      0
+    );
   }, [dashboardData?.enrolledSubjects]);
 
   // Hook for Driver.js Onboarding Tour
@@ -230,14 +250,14 @@ export default function StudentDashboardView({
 
             <div className="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-1">
               <div className="flex items-center justify-between text-muted-foreground">
-                <span className="text-xs font-bold">Enrolled Subjects</span>
-                <BookOpen className="w-4 h-4 text-teal-500" />
+                <span className="text-xs font-bold">Lessons Completed</span>
+                <Check className="w-4 h-4 text-emerald-500" />
               </div>
               <span className="text-2xl font-black text-foreground">
-                {dynamicEnrolledSubjects.length}
+                {totalCompletedLessons}
               </span>
               <p className="text-[11px] text-muted-foreground">
-                Active DepEd Courses
+                DepEd Modules Mastered
               </p>
             </div>
           </div>
@@ -479,19 +499,32 @@ export default function StudentDashboardView({
                 </button>
               </div>
 
-              <Button
-                size="sm"
-                onClick={() =>
-                  openUpgradeModal({
-                    featureName: "All High School Subjects",
-                    reason: "Upgrade to unlock all DepEd subjects across Junior & Senior High.",
-                  })
-                }
-                className="rounded-xl text-xs font-bold gap-1.5"
-              >
-                <Crown className="w-3.5 h-3.5" />
-                <span>Unlock More Subjects</span>
-              </Button>
+              {hasFullAccess ? (
+                <Button
+                  asChild
+                  size="sm"
+                  className="rounded-xl text-xs font-bold gap-1.5"
+                >
+                  <Link href="/curriculum">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>Explore Curriculum</span>
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    openUpgradeModal({
+                      featureName: "All High School Subjects",
+                      reason: "Upgrade to unlock all DepEd subjects across Junior & Senior High.",
+                    })
+                  }
+                  className="rounded-xl text-xs font-bold gap-1.5"
+                >
+                  <Crown className="w-3.5 h-3.5" />
+                  <span>Unlock More Subjects</span>
+                </Button>
+              )}
             </div>
           </div>
 

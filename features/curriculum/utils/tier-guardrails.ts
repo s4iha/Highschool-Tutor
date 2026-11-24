@@ -29,13 +29,70 @@ export interface TrialStatus {
   isExpired: boolean;
 }
 
+export interface SubscriptionTrialOverride {
+  status?: string | null;
+  expiresAt?: string | Date | null;
+}
+
 /**
- * Calculates trial status based on the user's registration date.
+ * Calculates trial status based on explicit admin/subscription override first,
+ * falling back to the user's registration date.
  */
 export function getTrialStatus(
   createdAt?: string | Date | null,
-  trialDays: number = DEFAULT_TRIAL_DURATION_DAYS
+  trialDays: number = DEFAULT_TRIAL_DURATION_DAYS,
+  subscriptionOverride?: SubscriptionTrialOverride | null
 ): TrialStatus {
+  const now = Date.now();
+  const totalTrialMs = trialDays * 24 * 60 * 60 * 1000;
+
+  if (subscriptionOverride?.status === "EXPIRED") {
+    return {
+      isTrialActive: false,
+      daysRemaining: 0,
+      hoursRemaining: 0,
+      percentRemaining: 0,
+      expiresAt: subscriptionOverride.expiresAt
+        ? new Date(subscriptionOverride.expiresAt)
+        : new Date(0),
+      isExpired: true,
+    };
+  }
+
+  if (subscriptionOverride?.status === "TRIAL") {
+    const expiresAt = subscriptionOverride.expiresAt
+      ? new Date(subscriptionOverride.expiresAt)
+      : new Date(now + totalTrialMs);
+    const msRemaining = expiresAt.getTime() - now;
+
+    if (msRemaining <= 0) {
+      return {
+        isTrialActive: false,
+        daysRemaining: 0,
+        hoursRemaining: 0,
+        percentRemaining: 0,
+        expiresAt,
+        isExpired: true,
+      };
+    }
+
+    const hoursRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60)));
+    const daysRemaining = Math.max(1, Math.ceil(msRemaining / (1000 * 60 * 60 * 24)));
+    const percentRemaining = Math.min(
+      100,
+      Math.max(0, Math.round((msRemaining / totalTrialMs) * 100))
+    );
+
+    return {
+      isTrialActive: true,
+      daysRemaining,
+      hoursRemaining,
+      percentRemaining,
+      expiresAt,
+      isExpired: false,
+    };
+  }
+
   if (!createdAt) {
     return {
       isTrialActive: false,
@@ -48,8 +105,6 @@ export function getTrialStatus(
   }
 
   const createdTime = new Date(createdAt).getTime();
-  const now = Date.now();
-  const totalTrialMs = trialDays * 24 * 60 * 60 * 1000;
   const expiresAt = new Date(createdTime + totalTrialMs);
   const msRemaining = expiresAt.getTime() - now;
 
@@ -97,6 +152,8 @@ export interface TierEntitlements {
   canAccessAllLessons: boolean;
   canAccessAllSubjects: boolean;
   unlimitedAiTutor: boolean;
+  canAccessExamMode: boolean;
+  canAccessTranslation: boolean;
   isHardLocked: boolean;
 }
 
@@ -108,35 +165,55 @@ export function getTierEntitlements(
     enableAiTutorTrial?: boolean;
     userCreatedAt?: string | Date | null;
     trialDurationDays?: number;
+    subscriptionOverride?: SubscriptionTrialOverride | null;
   }
 ): TierEntitlements {
-  const trialStatus = limits?.userCreatedAt
-    ? getTrialStatus(
-        limits.userCreatedAt,
-        limits?.trialDurationDays ?? DEFAULT_TRIAL_DURATION_DAYS
-      )
-    : undefined;
+  const trialStatus =
+    limits?.userCreatedAt !== undefined || limits?.subscriptionOverride !== undefined
+      ? getTrialStatus(
+          limits.userCreatedAt,
+          limits?.trialDurationDays ?? DEFAULT_TRIAL_DURATION_DAYS,
+          limits?.subscriptionOverride
+        )
+      : undefined;
 
   const isTrialActive = trialStatus?.isTrialActive ?? false;
   const isTrialExpired = trialStatus?.isExpired ?? false;
-  const hasFullAccess = isSubscribed || isTrialActive;
 
-  if (hasFullAccess) {
+  if (isSubscribed) {
     return {
-      isSubscribed,
-      isTrialActive,
+      isSubscribed: true,
+      isTrialActive: false,
       trialStatus,
       maxTrialSubjects: Infinity,
       maxLessonsPerSubject: Infinity,
       canAccessAllLessons: true,
       canAccessAllSubjects: true,
       unlimitedAiTutor: true,
+      canAccessExamMode: true,
+      canAccessTranslation: true,
+      isHardLocked: false,
+    };
+  }
+
+  if (isTrialActive) {
+    return {
+      isSubscribed: false,
+      isTrialActive: true,
+      trialStatus,
+      maxTrialSubjects: Infinity,
+      maxLessonsPerSubject: Infinity,
+      canAccessAllLessons: true,
+      canAccessAllSubjects: true,
+      unlimitedAiTutor: false, // 20 daily credits during trial
+      canAccessExamMode: false, // Study Mode only
+      canAccessTranslation: false, // Exclusive to paid passes
       isHardLocked: false,
     };
   }
 
   // Hard locked when trial has expired and user is not subscribed
-  const isHardLocked = !isSubscribed && isTrialExpired;
+  const isHardLocked = isTrialExpired;
 
   return {
     isSubscribed: false,
@@ -147,8 +224,17 @@ export function getTierEntitlements(
     canAccessAllLessons: false,
     canAccessAllSubjects: false,
     unlimitedAiTutor: false,
+    canAccessExamMode: false,
+    canAccessTranslation: false,
     isHardLocked,
   };
+}
+
+export function canAccessExamMode(
+  isSubscribed: boolean = false,
+  isAdmin: boolean = false
+): boolean {
+  return isSubscribed || isAdmin;
 }
 
 export function canAccessLesson(

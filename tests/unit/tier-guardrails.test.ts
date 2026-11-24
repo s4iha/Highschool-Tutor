@@ -116,6 +116,16 @@ describe("Tier Guardrails & Entitlement Logic", () => {
       expect(entitlements.canAccessAllSubjects).toBe(true);
       expect(entitlements.maxTrialSubjects).toBe(Infinity);
       expect(entitlements.maxLessonsPerSubject).toBe(Infinity);
+      expect(entitlements.canAccessExamMode).toBe(false);
+      expect(entitlements.canAccessTranslation).toBe(false);
+      expect(entitlements.unlimitedAiTutor).toBe(false);
+    });
+
+    it("should grant exam mode, translation, and unlimited AI to paid subscribers and admins", () => {
+      const paidEntitlements = getTierEntitlements(true);
+      expect(paidEntitlements.canAccessExamMode).toBe(true);
+      expect(paidEntitlements.canAccessTranslation).toBe(true);
+      expect(paidEntitlements.unlimitedAiTutor).toBe(true);
     });
   });
 });

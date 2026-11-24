@@ -1,6 +1,8 @@
 import { prisma, runWithUser } from "@/lib/prisma";
 
 export const FREE_TIER_DAILY_CREDITS = 20;
+export const PAID_FAIR_USE_BURST_PER_MINUTE = 15;
+export const PAID_FAIR_USE_DAILY_CEILING = 300;
 
 export interface AiCreditCheckResult {
   allowed: boolean;
@@ -11,7 +13,7 @@ export interface AiCreditCheckResult {
 
 /**
  * Checks if a user has available daily AI credits and consumes 1 credit if permitted.
- * Premium subscribers with ACTIVE status have unlimited credits.
+ * Premium subscribers with ACTIVE status have unlimited credits subject to fair-use rate limiting.
  */
 export async function checkAndConsumeAiCredit(
   userId: string | null | undefined,
@@ -32,6 +34,48 @@ export async function checkAndConsumeAiCredit(
   });
 
   if (activeSub) {
+    // Enforce fair-use rate limiting guardrails for paid subscribers
+    if (typeof prisma.aiCreditUsage?.count === "function") {
+      const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+      try {
+        const recentBurstCount = await prisma.aiCreditUsage.count({
+          where: {
+            userId,
+            createdAt: { gte: oneMinuteAgo },
+          },
+        });
+        if (recentBurstCount >= PAID_FAIR_USE_BURST_PER_MINUTE) {
+          return {
+            allowed: false,
+            remaining: 0,
+            isUnlimited: true,
+            error:
+              "You are sending requests too quickly. Please pause for a moment before asking Tutor Kuya/Ate again.",
+          };
+        }
+
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayUsageCount = await prisma.aiCreditUsage.count({
+          where: {
+            userId,
+            createdAt: { gte: todayStart },
+          },
+        });
+        if (todayUsageCount >= PAID_FAIR_USE_DAILY_CEILING) {
+          return {
+            allowed: false,
+            remaining: 0,
+            isUnlimited: true,
+            error:
+              "You have reached the daily fair-use tutoring ceiling (300 interactions). To ensure server stability for all students, access resets at midnight PHT.",
+          };
+        }
+      } catch (err) {
+        console.warn("Fair use rate limit check warning:", err);
+      }
+    }
+
     return { allowed: true, remaining: 9999, isUnlimited: true };
   }
 
