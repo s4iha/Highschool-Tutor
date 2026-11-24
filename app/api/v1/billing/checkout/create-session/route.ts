@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     });
 
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/+$/, "");
-    const successUrl = `${appUrl}/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`;
+    const successUrl = `${appUrl}/dashboard?payment=success&ref=${encodeURIComponent(referenceNumber)}`;
     const cancelUrl = `${appUrl}/dashboard?payment=cancelled`;
 
     // Create session in PayMongo

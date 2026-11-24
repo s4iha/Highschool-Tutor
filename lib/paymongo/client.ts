@@ -130,7 +130,7 @@ export async function retrievePayMongoCheckoutSession(
   const authHeader = getPayMongoAuthHeader(options?.secretKey);
 
   const response = await customFetch(
-    `https://api.paymongo.com/v2/checkout_sessions/${encodeURIComponent(sessionId)}`,
+    `https://api.paymongo.com/v1/checkout_sessions/${encodeURIComponent(sessionId)}`,
     {
       method: "GET",
       headers: {
