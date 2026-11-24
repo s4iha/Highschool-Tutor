@@ -20,7 +20,8 @@ export async function GET() {
     }
 
     // 1. Auto-assign STUDENT role if missing
-    let userRole = user.roles?.[0]?.role || sessionUser.role || "STUDENT";
+    const isAdmin = user.roles?.some((r) => r.role === "ADMIN") || sessionUser.role === "ADMIN";
+    let userRole = isAdmin ? "ADMIN" : (user.roles?.[0]?.role || sessionUser.role || "STUDENT");
     if (user.roles.length === 0) {
       try {
         const createdRole = await prisma.userRole.create({

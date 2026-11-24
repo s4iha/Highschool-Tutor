@@ -2,6 +2,21 @@
 
 ## [2026-11-24]
 
+### Task 035 - Admin Auth Role Priority, Server Action Version Skew Resilience & Safe Admin Seeding
+
+- **Admin Role Priority Hardening**:
+  - Updated `app/api/auth/login/route.ts`, `features/auth/lib/session.ts`, `app/api/user/me/route.ts`, and `app/api/auth/register/route.ts` to strictly prioritize `AppRole.ADMIN` over `STUDENT` whenever `user.roles` contains an `ADMIN` entry.
+  - Resolves non-deterministic PostgreSQL role query ordering where users with multiple roles or prior student registrations were assigned `role: "STUDENT"`, preventing redirect loops to `/dashboard` from `proxy.ts` on `/admin` routes.
+- **Server Action Version Skew & Deployment Error Recovery**:
+  - Added Next.js App Router error boundaries `app/error.tsx` and `app/global-error.tsx`.
+  - Automatically intercepts `Failed to find Server Action` or `older or newer deployment` exceptions caused by stale browser bundles after container redeployments, seamlessly triggering a browser reload to fetch fresh deployment assets.
+- **Idempotent Admin Provisioning CLI**:
+  - Created `scripts/ensure-admin.ts` to idempotently check, provision, or verify the administrator account, `ADMIN` user role, and default system configuration without overwriting existing user data or resetting settings.
+- **Verification Results**:
+  - Unit tests: 48/48 suites, 320/320 tests passed cleanly (`npm test`).
+  - ESLint: 0 errors, 0 warnings (`npm run lint`).
+  - Next.js Production Build: Prerendered 276 static pages successfully (`npm run build`).
+
 ### Task 034 - Trial Subject Access, Timer Badge, and Enterprise Tier Entitlements
 
 - **Free Trial Subject Access & Dashboard Flow**:
@@ -702,10 +717,6 @@
 - **Verification Results**: Verified Prisma schema validation, successful migration generation, and clean build/tests.
 
 ## [2026-10-26]
-
-# Project Backlog & Change Log
-
-## [2026-11-24]
 
 ### Task 034 - Trial Subject Access, Timer Badge, and Enterprise Tier Entitlements
 

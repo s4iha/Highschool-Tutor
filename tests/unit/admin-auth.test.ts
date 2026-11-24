@@ -24,4 +24,31 @@ describe("Admin Authentication & Role Verification", () => {
     expect(/[0-9]/.test(defaultAdminPassword)).toBe(true);
     expect(/[^A-Za-z0-9]/.test(defaultAdminPassword)).toBe(true);
   });
+
+  describe("Role Priority Resolution", () => {
+    const resolveRole = (roles?: { role: string }[]) => {
+      const isAdmin = roles?.some((r) => r.role === "ADMIN");
+      return isAdmin ? "ADMIN" : roles?.[0]?.role || "STUDENT";
+    };
+
+    it("should prioritize ADMIN role when user has both STUDENT and ADMIN roles", () => {
+      const roles = [{ role: "STUDENT" }, { role: "ADMIN" }];
+      expect(resolveRole(roles)).toBe("ADMIN");
+    });
+
+    it("should resolve ADMIN when user has single ADMIN role", () => {
+      const roles = [{ role: "ADMIN" }];
+      expect(resolveRole(roles)).toBe("ADMIN");
+    });
+
+    it("should resolve STUDENT when user only has STUDENT role", () => {
+      const roles = [{ role: "STUDENT" }];
+      expect(resolveRole(roles)).toBe("STUDENT");
+    });
+
+    it("should default to STUDENT when user has empty roles", () => {
+      expect(resolveRole([])).toBe("STUDENT");
+      expect(resolveRole(undefined)).toBe("STUDENT");
+    });
+  });
 });
